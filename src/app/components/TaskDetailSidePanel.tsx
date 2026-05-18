@@ -642,7 +642,6 @@ function EmpowerRequirementView({
     <>
       <div className="shrink-0 border-b border-border-default bg-white px-6 py-4">
         <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25px]">
-          <span className="rounded-[4px] border border-border-soft bg-surface-muted px-2 py-0.5 text-text-secondary">Requirement</span>
           <span className={requirementStatus === 'Fulfilled' ? 'text-brand-green' : 'text-brand-orange'}>{requirementStatus}</span>
         </div>
         <h2 className="text-[18px] font-semibold leading-tight text-text-heading">{requirementName}</h2>

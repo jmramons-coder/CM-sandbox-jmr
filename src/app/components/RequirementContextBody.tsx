@@ -122,9 +122,6 @@ export function RequirementContextBody({
   return (
     <>
       <div className="shrink-0 border-b border-border-default bg-white px-6 py-4">
-        <span className="mb-2 inline-flex rounded-full border border-brand-blue/25 bg-surface-selected px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-blue">
-          Requirement
-        </span>
         <div className="mb-2 flex w-full min-w-0 items-center gap-2">
           {isRequirementAiSourced(requirement.source) ? <MiniAiSourceBadge /> : null}
           <LozengeTag label={requirement.category} type="Neutral" subtle />
