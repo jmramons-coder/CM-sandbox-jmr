@@ -24,6 +24,10 @@ function readGitCredentialsToken() {
 
 const TOKEN = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? readGitCredentialsToken();
 const COMMIT_MESSAGE = process.env.GITHUB_COMMIT_MESSAGE ?? 'Update CM multicase sandbox';
+const COMMIT_AUTHOR = {
+  name: process.env.GITHUB_AUTHOR_NAME ?? 'J Manuel Ramon',
+  email: process.env.GITHUB_AUTHOR_EMAIL ?? '',
+};
 
 const IGNORE = new Set(['.git', 'node_modules', 'dist', '.env', '.DS_Store']);
 
@@ -50,6 +54,10 @@ async function main() {
     console.error(
       'No valid GitHub token. Set GITHUB_TOKEN, or update ~/.git-credentials with a classic PAT (repo scope).',
     );
+    process.exit(1);
+  }
+  if (!COMMIT_AUTHOR.email) {
+    console.error('Set GITHUB_AUTHOR_EMAIL to a GitHub-verified email (Vercel requires a linked author).');
     process.exit(1);
   }
 
