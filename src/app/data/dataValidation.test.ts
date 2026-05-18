@@ -108,6 +108,19 @@ describe('dataset validation gates', () => {
     });
   });
 
+  it('keeps SBLI assistant responses linked to real case ids', () => {
+    const dataset = SYSTEM_DATASETS[0];
+    expect(dataset.assistantResponses.length).toBeGreaterThan(0);
+    const caseIds = new Set(dataset.cases.map((row) => row.id));
+    dataset.assistantResponses.forEach((response) => {
+      response.linkedObjects
+        .filter((ref) => ref.kind === 'case')
+        .forEach((ref) => {
+          expect(caseIds.has(ref.id)).toBe(true);
+        });
+    });
+  });
+
   it('smoke-validates all generated dataset profiles', () => {
     DATASET_GENERATION_PROFILES.forEach((profile) => {
       const generated = generateDatasetFromProfile(profile);

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEMO_CASE_IDS } from '../data/demoCaseIds';
 import { getInsightBundle } from './caseInsightsData';
 
 const pre = ['A', 'B', 'C', 'D', 'E'] as const;
@@ -24,11 +25,36 @@ describe('getInsightBundle', () => {
     expect(bundle.sections[0]?.body).not.toContain('probate');
   });
 
-  it('keeps Billy IP fixture narrative independent of subtype options', () => {
-    const bundle = getInsightBundle('IP26-5546112', 'pre-approval', pre, post, 'active', {
+  it('returns SBLI WOP narrative for Billy Bud case', () => {
+    const bundle = getInsightBundle(DEMO_CASE_IDS.wopClaim, 'pre-approval', pre, post, 'active', {
       caseKind: 'claim',
-      claimSubType: 'disability_benefit',
+      claimSubType: 'waiver_of_premium',
     });
-    expect(bundle.sections[0]?.headline).toContain('winter morning');
+    expect(bundle.sections[0]?.headline).toContain('Waiver of premium');
+    expect(bundle.sections[0]?.body).toContain('Billy Bud');
+  });
+
+  it('maps legacy IP26 id to SBLI WOP bundle', () => {
+    const bundle = getInsightBundle('IP26-5546112', 'pre-approval', pre, post, 'active');
+    expect(bundle.sections[0]?.body).toContain('Billy Bud');
+  });
+
+  it('returns death claim narrative for CD44', () => {
+    const bundle = getInsightBundle(DEMO_CASE_IDS.deathClaim, 'pre-approval', pre, post, 'active');
+    expect(bundle.sections.some((s) => s.body.includes('Marie Dupont'))).toBe(true);
+  });
+
+  it('returns NB underwriting narrative for Marc Tremblay', () => {
+    const bundle = getInsightBundle(DEMO_CASE_IDS.nbFullUw, 'pre-approval', pre, post, 'active');
+    const text = bundle.sections.map((s) => `${s.headline} ${s.body}`).join(' ');
+    expect(text).toContain('Marc Tremblay');
+    expect(text).toContain('MIB');
+  });
+
+  it('returns simplified NB narrative for Elena Rossi', () => {
+    const bundle = getInsightBundle(DEMO_CASE_IDS.nbSimpleUw, 'pre-approval', pre, post, 'active');
+    const text = bundle.sections.map((s) => `${s.headline} ${s.body}`).join(' ');
+    expect(text).toContain('Elena Rossi');
+    expect(text).toContain('Accelerated');
   });
 });

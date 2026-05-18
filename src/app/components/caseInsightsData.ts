@@ -1,152 +1,149 @@
 import type { CaseKind, ClaimSubType } from '../domain/objectRefs';
 import { insightStageNarratives } from '../domain/claimSubTypeContent';
+import { DEMO_CASE_IDS, resolveSbliCaseId } from '../data/demoCaseIds';
 import type { CasePhase, DecisionTabState } from '../types';
 
 /** Rich step content for the AI journey insight story */
 export type InsightSection = {
   label: string;
   headline: string;
-  /** Primary narrative — flows as part of one vertical story */
   body: string;
-  /** Optional second beat in the same section (continuation, not a separate card) */
   continuation?: string;
-  /** Compact AI telemetry chips (confidence, model, last refresh, …) */
   aiSignals?: { label: string; value: string }[];
-  /** One line: who touched this step (routing, crew, assessor) */
   actorsLine?: string;
 };
 
 export type InsightBundle = {
-  /** Flat list of sections matching the case's single phase */
   sections: InsightSection[];
-  /** @deprecated kept for backward compat — same as sections for the matching phase */
   pre: InsightSection[];
-  /** @deprecated kept for backward compat */
   post: InsightSection[];
 };
 
-const BILLY_PRE: InsightSection[] = [
+const CD26_WOP: InsightSection[] = [
   {
     label: 'FNOL Received',
-    headline: 'The file opens on a winter morning in Manchester',
+    headline: 'Waiver of premium claim opens after the accident',
     body:
-      'A motorcycle accident on January 30th pulls Billy Bud out of his warehouse supervisor role. First notice lands in Amplify within hours: policy number, injury narrative, and the start of an Income Protection journey that the crew will thread for months.',
-    continuation:
-      'Identity and policy checks pass on first pass — no duplicate cover, no lapse — so the story can move forward without rework.',
+      'Billy Bud filed a Waiver of Premium claim Jan 30, 2026 following a motorcycle accident. SBLI Term Life 20 ($500,000) is in force with the WOP rider active since Mar 2021.',
+    continuation: 'Identity and policy checks passed — duplicate cover and lapse rules clear.',
     aiSignals: [
       { label: 'Intake confidence', value: '97%' },
-      { label: 'Source', value: 'Portal + telephony capture' },
+      { label: 'Product', value: 'SBLI Term Life 20' },
     ],
-    actorsLine: 'Opened by case intake · Validated by AI document gate',
+    actorsLine: 'Case intake · AI document gate',
   },
   {
-    label: 'Initial Triage',
-    headline: 'Routing that respects complexity, not just queue depth',
+    label: 'Medical evidence',
+    headline: 'Total disability supported for WOP rider',
     body:
-      'The claim is classified as stand-alone IP with an own-occupation test and an eight-week deferred period. Priority reflects medical complexity and earnings exposure — the IP Claims team receives it with a Green RAG and a single owner.',
-    continuation:
-      'Triage notes highlight the Harley-Davidson business context so later medical and RTW discussions stay anchored to real duties, not generic job titles.',
+      'Attending physician statement, surgical report, and employer confirmation align on total disability. The 90-day waiting period was satisfied Apr 30, 2026.',
     aiSignals: [
-      { label: 'Queue match', value: 'IP Claims — Victor Ramon' },
-      { label: 'AI routing', value: 'No conflict rules fired' },
+      { label: 'Evidence', value: 'Complete' },
+      { label: 'Waiting period', value: 'Satisfied' },
     ],
-    actorsLine: 'Triage engine · Team lead acknowledgment',
-  },
-  {
-    label: 'Requirement Gathering',
-    headline: 'Seven gates, one thread — nothing left hanging',
-    body:
-      'Every pre-approval requirement now sits in a fulfilled state: claimant interview, identity, employer confirmation, surgical report, APS, FCE, and orthopaedic opinion. The document engine cross-checks dates, authors, and diagnoses so the assessor is never arguing with the file.',
-    continuation:
-      'When you see [[requirements]] in other tabs, you are looking at the same spine this paragraph describes — not a side checklist, but the contract between policy and evidence.',
-    aiSignals: [
-      { label: 'Documents', value: '7 / 7 validated' },
-      { label: 'Last cross-check', value: 'Mar 26, 2026' },
-    ],
-    actorsLine: 'Claimant & providers · AI rule engine · Assessor review',
-  },
-  {
-    label: 'Medical Review',
-    headline: 'Clinical story matches occupational reality',
-    body:
-      'Surgery and FCE line up: prolonged standing, stairs, and load-bearing duties are not viable yet. Diabetes and weight are in the chart as rehab complicators — material to recovery, but not used to deny eligibility under this policy wording.',
-    continuation:
-      'The crew’s read is that total disability for the stated occupation is well supported; residual questions are about trajectory, not basic eligibility.',
-    aiSignals: [
-      { label: 'Medical consensus', value: 'Aligned' },
-      { label: 'Risk flags', value: 'Healing / mobility' },
-    ],
-    actorsLine: 'Medical review crew · Orthopaedic + FCE synthesis',
+    actorsLine: 'Medical review · Victor Ramon',
   },
   {
     label: 'Decision',
-    headline: 'Recommendation on the table — human authority last',
+    headline: 'Ready to approve waiver of premium',
     body:
-      'At ninety-one percent confidence the AI crew recommends full monthly benefit within the sixty-five percent pre-tax cap and policy minimums. What remains is a formal decision: approve, decline, modify, or request information — recorded once in the Decision tab.',
-    continuation:
-      'That act closes pre-approval and hands the narrative to post-approval restoration, where requirements will again pace the journey — interview, monitoring, RTW, closure.',
+      'At 91% confidence the AI recommends approving the WOP claim — no exclusions or contestability issues. Record the decision in the Decision tab to formalize.',
     aiSignals: [
       { label: 'Confidence', value: '91%' },
-      { label: 'Recommendation', value: 'Approve · full benefit' },
+      { label: 'Recommendation', value: 'Approve WOP' },
     ],
-    actorsLine: 'AI crew · Awaiting assessor decision',
+    actorsLine: 'AI crew · Assessor decision',
   },
 ];
 
-const BILLY_POST: InsightSection[] = [
+const CD44_DEATH: InsightSection[] = [
   {
-    label: 'Restoration Plan',
-    headline: 'From approval to a shared plan the claimant can hold',
+    label: 'FNOL',
+    headline: 'Death benefit claim for Thomas Dupont',
     body:
-      'Post-approval begins with a conversation, not a PDF: you and Billy align on physician cadence, physiotherapy, and guardrails before benefits settle into a rhythm. AI proposes three interview slots; the claimant chooses on the portal or email — the task lands in My Tasks when they answer.',
-    continuation:
-      'This step is where abstract “recovery” becomes dated appointments and clear expectations.',
-    aiSignals: [
-      { label: 'Scheduler', value: 'AI calendar hold' },
-      { label: 'Channel', value: 'Portal + email' },
-    ],
-    actorsLine: 'Assessor · Claimant · AI scheduler',
+      'Marie Dupont (beneficiary) filed Feb 3, 2026 following death of insured Thomas Dupont on Jan 28, 2026 (acute myocardial infarction). Policy in force 6y 11m.',
+    aiSignals: [{ label: 'Intake', value: 'Complete' }],
+    actorsLine: 'Beneficiary · Claims intake',
   },
   {
-    label: 'Recovery Underway',
-    headline: 'Benefits and rehab in the same frame',
+    label: 'Contestability',
+    headline: 'MIB vs application — clean comparison',
     body:
-      'With the plan agreed, payment rhythm and clinical milestones move together. Setbacks are expected — the system is built to surface them as tasks or requirement updates rather than surprises in a monthly review.',
-    continuation:
-      'Think of this chapter as the long middle of the story where discipline matters more than drama.',
+      'Contestability period lapsed. APS, toxicology, and identity verification complete. MIB comparison shows no material misrepresentation.',
     aiSignals: [
-      { label: 'Watch mode', value: 'Active benefit + rehab' },
+      { label: 'Confidence', value: '96%' },
+      { label: 'MIB', value: 'No adverse hit' },
     ],
-    actorsLine: 'Assessor · Case manager · Monitoring rules',
+    actorsLine: 'Contestability review crew',
   },
   {
-    label: 'Monitoring',
-    headline: 'Signals, SLAs, and proportionate escalation',
+    label: 'Payout decision',
+    headline: '$500,000 ACH to Marie Dupont',
     body:
-      'Pharmacy, self-report, and clinical touchpoints feed a risk score. When drift exceeds thresholds, the crew creates work — it does not wait for the quarterly file review.',
-    aiSignals: [
-      { label: 'Signal depth', value: 'Multi-source' },
-    ],
-    actorsLine: 'AI monitoring · Assessor on exception',
-  },
-  {
-    label: 'RTW Planning',
-    headline: 'Return-to-work as a negotiated path',
-    body:
-      'Employer statement, phased hours, and medical clearance are sequenced before a hard RTW date. Accommodations are documented so disputes do not reopen the medical question later.',
-    actorsLine: 'Assessor · Employer · Treating physicians',
-  },
-  {
-    label: 'Case Closure',
-    headline: 'A clean ending: benefits, letters, archive',
-    body:
-      'Closure ties off payments, sends the right claimant and employer communications, and leaves an audit trail that matches the requirements grid — nothing informal left in email alone.',
-    aiSignals: [
-      { label: 'Closure gate', value: 'Requirements complete' },
-    ],
-    actorsLine: 'Assessor · Communications template engine',
+      'Human sign-off is the remaining gate before releasing the death benefit. Recommend approve $500,000 ACH payout to primary beneficiary.',
+    aiSignals: [{ label: 'Recommendation', value: 'Approve payout' }],
+    actorsLine: 'Assessor · Senior review (if escalated)',
   },
 ];
+
+const NB66_FULL_UW: InsightSection[] = [
+  {
+    label: 'Application intake',
+    headline: 'Marc Tremblay · full underwriting path',
+    body:
+      'SBLI Term Life 20 · $625,000 · age 42. T2 diabetes disclosed (diet-controlled). MIB hit: prior decline 2022 — accelerated UW not available.',
+    aiSignals: [{ label: 'Path', value: 'Full UW' }],
+    actorsLine: 'NB intake · MIB rules',
+  },
+  {
+    label: 'Evidence gathering',
+    headline: 'Paramedical and APS drive the timeline',
+    body:
+      'Paramedical exam scheduled May 19, 2026. APS outstanding. Preliminary scoring +75 debits — rated offer anticipated after labs and APS.',
+    aiSignals: [{ label: 'Confidence', value: '88%' }],
+    actorsLine: 'Underwriter · Exam vendor',
+  },
+  {
+    label: 'Offer',
+    headline: 'Rating decision pending evidence',
+    body:
+      'Once APS and paramedical results are in, the crew can issue a rated offer or request additional requirements.',
+    actorsLine: 'Chief underwriter · AI scoring',
+  },
+];
+
+const NB98_SIMPLE_UW: InsightSection[] = [
+  {
+    label: 'Accelerated eligibility',
+    headline: 'Elena Rossi · simplified UW path',
+    body:
+      'SBLI Simple Term Life · $350,000 · age 35. Accelerated criteria met: age band, amount, disclosures, and MIB all clear.',
+    aiSignals: [{ label: 'Path', value: 'Accelerated' }],
+    actorsLine: 'Digital intake · Rules engine',
+  },
+  {
+    label: 'Tele-interview',
+    headline: 'Same-day coverage eligible after interview',
+    body:
+      'Tele-interview scheduled May 17, 2026. LegacyShield digital vault activated. Standard rates likely on clean pass.',
+    aiSignals: [{ label: 'Confidence', value: '95%' }],
+    actorsLine: 'Interview scheduler · Applicant',
+  },
+  {
+    label: 'Issue',
+    headline: 'Anticipated clean issue',
+    body:
+      'No adverse disclosures or MIB alerts. Pending interview confirmation to bind coverage.',
+    actorsLine: 'Underwriter · AI pre-issue check',
+  },
+];
+
+const CASE_INSIGHT_BUNDLES: Record<string, InsightSection[]> = {
+  [DEMO_CASE_IDS.wopClaim]: CD26_WOP,
+  [DEMO_CASE_IDS.deathClaim]: CD44_DEATH,
+  [DEMO_CASE_IDS.nbFullUw]: NB66_FULL_UW,
+  [DEMO_CASE_IDS.nbSimpleUw]: NB98_SIMPLE_UW,
+};
 
 function genericSections(
   stages: readonly string[],
@@ -175,24 +172,37 @@ export function getInsightBundle(
   decisionTabState: DecisionTabState,
   options?: InsightBundleOptions,
 ): InsightBundle {
-  if (caseId === 'IP26-5546112') {
-    const pre = [...BILLY_PRE];
-    if (phase === 'pre-approval' && decisionTabState === 'locked') {
-      pre[4] = {
-        ...pre[4],
-        headline: 'Decision — waiting on requirements',
-        body:
-          'The Decision tab is visible but the lock is on: one or more pre-approval requirements still need a fulfilled or waived state. The story pauses here until the requirement grid is clean — then the same ninety-one percent recommendation is ready to formalize.',
-        continuation: undefined,
-        aiSignals: [
-          { label: 'Status', value: 'Tab locked' },
-          { label: 'Next', value: 'Complete Requirements' },
-        ],
-        actorsLine: 'Assessor · Requirements engine',
-      };
+  const resolvedId = resolveSbliCaseId(caseId);
+  const curated = CASE_INSIGHT_BUNDLES[resolvedId];
+  if (curated) {
+    const pre = [...curated];
+    if (
+      resolvedId === DEMO_CASE_IDS.wopClaim &&
+      phase === 'pre-approval' &&
+      decisionTabState === 'locked'
+    ) {
+      const decisionIdx = pre.findIndex((s) => s.label === 'Decision');
+      if (decisionIdx >= 0) {
+        pre[decisionIdx] = {
+          ...pre[decisionIdx],
+          headline: 'Decision — waiting on requirements',
+          body:
+            'The Decision tab is locked until all pre-decision requirements are fulfilled or waived. Complete the requirements grid, then the WOP approval recommendation is ready to record.',
+          continuation: undefined,
+          aiSignals: [
+            { label: 'Status', value: 'Tab locked' },
+            { label: 'Next', value: 'Complete requirements' },
+          ],
+          actorsLine: 'Assessor · Requirements engine',
+        };
+      }
     }
-    const sections = phase === 'post-approval' ? [...BILLY_POST] : pre;
-    return { sections, pre, post: [...BILLY_POST] };
+    const sections = phase === 'post-approval' ? genericSections(postStages, options?.caseKind, options?.claimSubType) : pre;
+    return {
+      sections,
+      pre,
+      post: genericSections(postStages, options?.caseKind, options?.claimSubType),
+    };
   }
   const stages = phase === 'post-approval' ? postStages : preStages;
   const sections = genericSections(stages, options?.caseKind, options?.claimSubType);

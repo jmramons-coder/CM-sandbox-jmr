@@ -75,7 +75,8 @@ import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter';
 import { getCaseType, parseCaseTypeCodeFromId, resolveCopy } from '../domain/caseTypes';
 import { claimSubTypeLabel, resolveClaimSubType } from '../domain/claimSubTypes';
 import { copilotClaimContextHint } from '../domain/claimSubTypeContent';
-import { buildDatasetAssistantReply } from '../domain/assistantResponses';
+import { buildAssistantReply } from '../domain/assistantReplyBuilder';
+import { DEFAULT_DEMO_CASE_ID, DEMO_CASE_IDS } from '../data/demoCaseIds';
 import { PriorityChip, SearchBar, SectionLabel } from './ds';
 import { WorkspaceAssistantPanel } from './WorkspaceAssistantPanel';
 import { ModuleTabsBar } from './ModuleTabsBar';
@@ -892,7 +893,7 @@ export function CaseView({
   singlePhase?: CasePhase;
   breadcrumb?: React.ReactNode;
 } = {}) {
-  const { caseId = 'IP26-5546112' } = useParams();
+  const { caseId = DEFAULT_DEMO_CASE_ID } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { addOpenCase } = useCasesNav();
@@ -1218,7 +1219,7 @@ export function CaseView({
       };
       cycle();
       return () => { cancelled = true; timers.forEach(clearTimeout); };
-    } else if (guide === 'task-pushed' && data.id === 'IP26-5546200') {
+    } else if (guide === 'task-pushed' && data.id === 'CD26-5546112') {
       // Requirements tab with Plan Verification pending (stage 2), 10 reqs visible.
       // After 2s the Tasks badge pulses from 2 → 3 in red. Stays on requirements.
       if (data.requirements.length === 0) {
@@ -1262,7 +1263,7 @@ export function CaseView({
       };
       cycle();
       return () => { cancelled = true; timers.forEach(clearTimeout); };
-    } else if (guide === 'accept-meeting' && data.id === 'IP26-5546200') {
+    } else if (guide === 'accept-meeting' && data.id === 'CD26-5546112') {
       // 3-click loop synced with the cursor overlay in PlatformGuideModal:
       //   1) Click Tasks tab  → tasks content appears        (~1.5s)
       //   2) Click first row  → side panel slides in          (~3.5s)
@@ -1298,7 +1299,7 @@ export function CaseView({
       };
       cycle();
       return () => { cancelled = true; timers.forEach(clearTimeout); };
-    } else if (guide === 'approve-flow' && data.id === 'IP26-5546112') {
+    } else if (guide === 'approve-flow' && data.id === 'CD26-5546112') {
       // Self-running approval cycle synced to the cursor animation in the guide.
       // Starts on Overview so the Requirements content only appears on "click".
       // Cursor clicks Requirements at ~1s, Decision at ~3.4s, Record Decision at ~5.5s.
@@ -1344,7 +1345,7 @@ export function CaseView({
         cancelled = true;
         timers.forEach(clearTimeout);
       };
-    } else if (guide === 'new-case-appears' && data.id === 'IP26-5546112') {
+    } else if (guide === 'new-case-appears' && data.id === 'CD26-5546112') {
       // Set decision as completed so all stepper steps show done.
       // The sidebar + navigation cycle is handled by CasesWorkspace.
       data.humanDecision = {
@@ -1362,20 +1363,20 @@ export function CaseView({
   }, [location.search, caseId]);
   const [aiToastPauseAfter, setAiToastPauseAfter] = useState<string | null>('create-case');
   useEffect(() => {
-    if (caseId === 'IP26-5546200' && aiToastPauseAfter === 'create-case') {
+    if (caseId === 'CD26-5546112' && aiToastPauseAfter === 'create-case') {
       const timer = setTimeout(() => setAiToastPauseAfter('nc-restore'), 500);
       return () => clearTimeout(timer);
     }
   }, [caseId, aiToastPauseAfter]);
   useEffect(() => {
-    if (caseId === 'IP26-5546200' && activeTab === 'requirements' && aiToastPauseAfter === 'nc-restore') {
+    if (caseId === 'CD26-5546112' && activeTab === 'requirements' && aiToastPauseAfter === 'nc-restore') {
       const timer = setTimeout(() => setAiToastPauseAfter(null), 300);
       return () => clearTimeout(timer);
     }
   }, [caseId, activeTab, aiToastPauseAfter]);
 
   useEffect(() => {
-    if (caseId !== 'IP26-5546200' || !overdueTaskCompleted || reqCascadeStarted) return;
+    if (caseId !== 'CD26-5546112' || !overdueTaskCompleted || reqCascadeStarted) return;
     if (activeTab !== 'requirements') return;
     setReqCascadeStarted(true);
     const reqs = data.requirements;
@@ -1918,7 +1919,7 @@ export function CaseView({
     setAiCopilotMessages((m) => [...m, { id: uid, role: 'user', text, at: Date.now() }]);
     const short = text.length > 80 ? `${text.slice(0, 80)}…` : text;
     const hint = copilotClaimContextHint(data.caseKind, data.claimSubType);
-    const datasetReply = buildDatasetAssistantReply(activeDataset, text, `case:${data.id}`);
+    const datasetReply = buildAssistantReply(activeDataset, text, `case:${data.id}`);
     const fallback = `Preview — copilot would respond about “${short}” using case ${data.id} and this workspace. A live integration would stream an answer with citations, policy hooks, and suggested follow-ups.`;
     const body = datasetReply?.text ?? fallback;
     const replyText = hint ? `${hint}\n\n${body}` : body;
@@ -1931,12 +1932,15 @@ export function CaseView({
           role: 'assistant',
           text: replyText,
           at: Date.now(),
+          artifact: datasetReply?.artifact,
+          followUps: datasetReply?.followUps,
         },
       ]);
     }, 420);
   }, [activeDataset, data.id, data.caseKind, data.claimSubType]);
 
-  const canUseLegacyCaseFallbacks = dataSource.legacyMockOverlayEnabled && (data.id === 'IP26-5546112' || data.id === 'IP26-5546200');
+  const canUseLegacyCaseFallbacks =
+    dataSource.legacyMockOverlayEnabled && data.id === DEMO_CASE_IDS.wopClaim;
 
   const contextualTasks = useMemo(() => {
     const prioritizeCreatedTask = <T extends { id: string }>(rows: T[]) => {
@@ -1958,7 +1962,7 @@ export function CaseView({
       task,
     }));
     if (!canUseLegacyCaseFallbacks) return prioritizeCreatedTask(datasetRows);
-    if (data.id === 'IP26-5546112') {
+    if (data.id === 'CD26-5546112') {
       const decisionPending = data.phase === 'pre-approval' && data.decisionTabState !== 'completed';
 
       const decisionRow = {
@@ -1978,7 +1982,7 @@ export function CaseView({
       }
       return prioritizeCreatedTask([...tail, ...datasetRows]);
     }
-    if (data.id === 'IP26-5546200') {
+    if (data.id === 'CD26-5546112') {
       const baseTasks = [
         { id: 'TSK-BB-RP-02', taskType: 'Review restoration plan progress', priority: 'Normal' as const, status: 'To Do', dueDate: 'Apr 5, 2026', assignee: 'Victor Ramon' },
         { id: 'TSK-BB-PT-01', taskType: 'Validate PT appointment outcomes', priority: 'Normal' as const, status: 'To Do', dueDate: 'Apr 10, 2026', assignee: 'Victor Ramon' },
@@ -2877,7 +2881,7 @@ export function CaseView({
               data.caseStatus = `Closed: ${label}`;
               setActiveTab('decision');
               bumpData();
-              if (aiActivityEnabled && caseId === 'IP26-5546112' && decision.decisionType === 'approve') {
+              if (aiActivityEnabled && caseId === 'CD26-5546112' && decision.decisionType === 'approve') {
                 setTimeout(() => {
                   setAiActivitySeq({
                     id: `decision-${Date.now()}`,
@@ -2885,7 +2889,7 @@ export function CaseView({
                     stepDelayMs: 800,
                     startedAt: Date.now(),
                     steps: [
-                      { id: 'create-case', label: 'Creating post-approval case IP26-5546200', status: 'pending' },
+                      { id: 'create-case', label: 'Creating post-approval case CD26-5546112', status: 'pending' },
                       { id: 'nc-restore', label: 'Building restoration plan & generating requirements', status: 'pending' },
                       { id: 'nc-schedule', label: 'Scheduling client meeting — 3 time slots proposed', status: 'pending' },
                       { id: 'nc-confirm', label: 'Billy Bud confirmed preferred time slot', status: 'pending' },
@@ -4442,13 +4446,13 @@ export function CaseView({
           pauseAfterStepId={aiToastPauseAfter}
           onStepDone={(stepId) => {
             if (stepId === 'create-case') {
-              addOpenCase('IP26-5546200');
+              addOpenCase('CD26-5546112');
             }
-            const newCaseData = getCaseOverview('IP26-5546200', activeDataset, dataSource.legacyMockOverlayEnabled, {
+            const newCaseData = getCaseOverview('CD26-5546112', activeDataset, dataSource.legacyMockOverlayEnabled, {
               anatomy: platformSettings.anatomy,
               enabledObjectDomains: dataSource.enabledObjectDomains,
             });
-            const newCaseSummary = listCaseSummaries(activeDataset).find((c) => c.id === 'IP26-5546200');
+            const newCaseSummary = listCaseSummaries(activeDataset).find((c) => c.id === 'CD26-5546112');
             if (stepId === 'nc-restore') {
               newCaseData.restorationPlan = [
                 'Monthly physician follow-ups to monitor recovery progress',

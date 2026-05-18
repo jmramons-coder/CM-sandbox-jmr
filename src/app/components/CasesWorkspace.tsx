@@ -71,10 +71,10 @@ export function CasesWorkspace() {
       timers.add(t);
     };
     const cycle = () => {
-      removeOpenCase('IP26-5546200');
-      navigate('/cases/IP26-5546112?guide=new-case-appears', { replace: true });
-      schedule(() => addOpenCase('IP26-5546200'), addAt);
-      schedule(() => navigate('/cases/IP26-5546200', { replace: true }), navAt);
+      removeOpenCase('CD44-6679812');
+      navigate('/cases/CD26-5546112?guide=new-case-appears', { replace: true });
+      schedule(() => addOpenCase('CD44-6679812'), addAt);
+      schedule(() => navigate('/cases/CD44-6679812', { replace: true }), navAt);
       schedule(cycle, cycleMs);
     };
     cycle();

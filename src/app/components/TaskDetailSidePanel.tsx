@@ -175,7 +175,7 @@ function EmpowerTaskDetailContent({
   const isTeamTaskAvailable = isOnTeamTasks && !task.pickedUpBy;
   const isTeamTaskLocked = isOnTeamTasks && !!task.pickedUpBy;
 
-  const caseId = task.caseId || (dataSource.legacyMockOverlayEnabled ? 'IP26-5546112' : 'N/A');
+  const caseId = task.caseId || 'N/A';
   const claimantName = task.claimantName || (dataSource.legacyMockOverlayEnabled ? 'Billy Bud' : 'N/A');
   const taskCaseRecord = activeDataset.cases.find((item) => item.id === caseId);
   const linkedPolicyIds = new Set(taskCaseRecord?.linkedObjects.filter((ref) => ref.kind === 'policy').map((ref) => ref.id) ?? []);
@@ -280,7 +280,7 @@ function EmpowerTaskDetailContent({
   const handleLinkedObjectClick = (id: string) => {
     const target = linkedObjects.find((item) => item.id === id || item.kind === id);
     if (target?.kind === 'case' || target?.kind === 'client') {
-      navigate(target.href ?? `/cases/${task.caseId || 'IP26-5546112'}`);
+      navigate(target.href ?? (task.caseId ? `/cases/${task.caseId}` : '/cases'));
       return;
     }
     if (target?.kind === 'document') {

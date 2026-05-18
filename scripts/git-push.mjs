@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import git from 'isomorphic-git';
 import http from 'isomorphic-git/http/node';
@@ -6,7 +7,22 @@ import http from 'isomorphic-git/http/node';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const REMOTE_URL =
   process.env.GITHUB_REMOTE_URL ?? 'https://github.com/jmramon-coder/CM-Multicase_SANDBOX-EQ-JMR.git';
-const TOKEN = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
+function readGitCredentialsToken() {
+  try {
+    const creds = readFileSync(path.join(process.env.HOME ?? '', '.git-credentials'), 'utf8');
+    for (const line of creds.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed.includes('github.com')) continue;
+      const url = new URL(trimmed);
+      if (url.password) return decodeURIComponent(url.password);
+    }
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+}
+
+const TOKEN = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? readGitCredentialsToken();
 const COMMIT_MESSAGE = process.env.GITHUB_COMMIT_MESSAGE ?? 'Update CM multicase sandbox';
 
 const IGNORE = new Set(['.git', 'node_modules', 'dist', '.env', '.DS_Store']);
@@ -31,7 +47,9 @@ async function walkFiles(dir, base = dir) {
 
 async function main() {
   if (!TOKEN) {
-    console.error('Set GITHUB_TOKEN (classic PAT with repo scope) or GH_TOKEN, then re-run.');
+    console.error(
+      'No valid GitHub token. Set GITHUB_TOKEN, or update ~/.git-credentials with a classic PAT (repo scope).',
+    );
     process.exit(1);
   }
 

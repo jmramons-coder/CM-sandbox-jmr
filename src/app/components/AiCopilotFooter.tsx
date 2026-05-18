@@ -34,8 +34,9 @@ import { AiCueSparkle } from './AiCueSparkle';
 import { AiContextChip, AiContextPill } from './AiContextPill';
 import type { LiveContext } from '../contexts/LiveContextProvider';
 
-export const GLOBAL_COPILOT_CASE_PRIORITIES_PROMPT =
-  'Which of my cases need attention this week, and what should I do first on each?';
+import { GLOBAL_COPILOT_CASE_PRIORITIES_PROMPT } from '../constants/copilot-prompts';
+
+export { GLOBAL_COPILOT_CASE_PRIORITIES_PROMPT };
 
 /* ─── Artifact types ─── */
 

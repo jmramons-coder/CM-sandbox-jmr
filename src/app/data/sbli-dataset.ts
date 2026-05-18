@@ -25,6 +25,7 @@ import {
   SBLI_SIMPLE_TASK_RECORDS,
 } from './sbli-simple-service-records';
 import { getSbliDocumentPreviewUrl } from '../utils/sbli-document-assets';
+import { SBLI_ASSISTANT_RESPONSES } from './sbli-assistant-responses';
 
 const requirementDocumentLinksById = new Map(SBLI_REQUIREMENT_DOCUMENT_LINKS.map((link) => [link.id, link]));
 const legacyRequirementIdMap: Record<string, string> = {
@@ -2198,7 +2199,7 @@ export const SBLI_DATASET: SystemDataset = {
     ...SBLI_DOCUMENT_EVIDENCE_RECORDS.map(enrichSbliEvidence),
     ...SBLI_SIMPLE_DOCUMENT_EVIDENCE.map(enrichSbliEvidence),
   ],
-  "assistantResponses": [],
+  "assistantResponses": SBLI_ASSISTANT_RESPONSES,
   "aiActions": [],
   "legacyMockOverlayEnabled": false
 };

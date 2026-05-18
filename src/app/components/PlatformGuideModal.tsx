@@ -143,7 +143,7 @@ const STEPS: GuideStep[] = [
     ],
     icon: Briefcase,
     accent: 'blue',
-    preview: { src: '/cases/IP26-5546112', ...FULL_APP, overlay: 'zoneHighlight' },
+    preview: { src: '/cases/CD26-5546112', ...FULL_APP, overlay: 'zoneHighlight' },
   },
   {
     id: 'requirements-decision',
@@ -158,7 +158,7 @@ const STEPS: GuideStep[] = [
     icon: ClipboardCheck,
     accent: 'blue',
     preview: {
-      src: '/cases/IP26-5546112?guide=approve-flow',
+      src: '/cases/CD26-5546112?guide=approve-flow',
       ...FULL_APP,
       overlay: 'mouseTabs',
     },
@@ -170,9 +170,9 @@ const STEPS: GuideStep[] = [
     title: 'The AI Crew takes it from here',
     body: 'The moment you approve, the AI activity island appears in the bottom-left corner — a live feed of the agentic crew working in the background.',
     bullets: [
-      'Creates the post-approval case IP26-5546200.',
-      'Builds the restoration plan and generates its requirements.',
-      'Pushes a follow-up task straight to your queue.',
+      'Highlights the death benefit case CD44-6679812 for contestability sign-off.',
+      'Surfaces open requirements and document follow-ups.',
+      'Pushes priority tasks to your queue.',
     ],
     callout:
       'Requires AI activity to be enabled — active by default via the bottom-left toggle.',
@@ -182,17 +182,17 @@ const STEPS: GuideStep[] = [
   {
     id: 'new-case',
     navLabel: 'New post-approval case',
-    eyebrow: 'Step 5 — Case IP26-5546200',
-    title: 'Post-approval case appears in the sidebar',
-    body: 'After the decision, the pre-approval stepper is fully completed. The AI agents create post-approval case IP26-5546200 — it pops into the sidebar with a pulsing blue dot. Click it to open.',
+    eyebrow: 'Step 5 — Case CD44-6679812',
+    title: 'Another priority case appears in the sidebar',
+    body: 'After the WOP decision on CD26-5546112, the tour surfaces the Dupont death claim CD44-6679812 — it pops into the sidebar with a pulsing blue dot. Click it to open.',
     bullets: [
-      'All pre-approval steps show as completed on IP26-5546112.',
-      'New case IP26-5546200 appears at the top of Open Cases with an unseen dot.',
+      'WOP decision recorded on CD26-5546112.',
+      'Death claim CD44-6679812 appears in Open Cases with an unseen dot.',
     ],
     icon: Gauge,
     accent: 'green',
     preview: {
-      src: '/cases/IP26-5546112?guide=new-case-appears',
+      src: '/cases/CD26-5546112?guide=new-case-appears',
       ...FULL_APP,
       overlay: 'mouseNewCase',
     },
@@ -201,11 +201,11 @@ const STEPS: GuideStep[] = [
     id: 'task-pushed',
     navLabel: 'Plan verification begins',
     eyebrow: 'Step 6 — Plan verification',
-    title: 'Restoration plan kicks in',
-    body: 'The AI crew generates 10 post-approval requirements for the restoration plan. The stepper advances to Plan Verification and a new task drops into the queue — schedule the first appointment with the claimant.',
+    title: 'Contestability review kicks in',
+    body: 'The AI crew summarizes MIB vs application evidence on the death claim. A new task drops into the queue — complete human sign-off for the $500k payout.',
     icon: Bell,
     accent: 'red',
-    preview: { src: '/cases/IP26-5546200?guide=task-pushed', ...FULL_APP, overlay: 'mouseReqTask' },
+    preview: { src: '/cases/CD44-6679812?guide=task-pushed', ...FULL_APP, overlay: 'mouseReqTask' },
   },
   {
     id: 'accept-meeting',
@@ -220,7 +220,7 @@ const STEPS: GuideStep[] = [
     icon: CalendarCheck,
     accent: 'blue',
     preview: {
-      src: '/cases/IP26-5546200?guide=accept-meeting#tab=tasks',
+      src: '/cases/CD44-6679812?guide=accept-meeting#tab=tasks',
       x: 0,
       y: 0,
       w: 1440,
@@ -237,7 +237,7 @@ const STEPS: GuideStep[] = [
     icon: TrendingUp,
     accent: 'amber',
     preview: {
-      src: '/cases/IP26-5546200?guide=benefit-bump',
+      src: '/cases/CD44-6679812?guide=benefit-bump',
       x: 240,
       y: 40,
       w: 1200,
@@ -259,7 +259,7 @@ const STEPS: GuideStep[] = [
     icon: CheckCircle2,
     accent: 'green',
     preview: {
-      src: '/cases/IP26-5546200?guide=confirm-plan',
+      src: '/cases/CD44-6679812?guide=confirm-plan',
       ...FULL_APP,
       overlay: 'mouseConfirm',
     },
@@ -339,7 +339,7 @@ function CursorIcon() {
 }
 
 const POST_APPROVAL_AI_STEPS = [
-  { id: 'create-case', label: 'Creating post-approval case IP26-5546200', status: 'pending' as const },
+  { id: 'create-case', label: 'Creating post-approval case CD44-6679812', status: 'pending' as const },
   { id: 'nc-restore', label: 'Building restoration plan & generating requirements', status: 'pending' as const },
   { id: 'nc-task', label: 'Pushing follow-up task to your queue', status: 'pending' as const },
 ];
@@ -550,7 +550,7 @@ function AiFeedZoomPreview() {
         <div className="pg-shimmer absolute inset-0" />
       </div>
       <iframe
-        src="/cases/IP26-5546112"
+        src="/cases/CD26-5546112"
         title="Platform preview"
         tabIndex={-1}
         aria-hidden

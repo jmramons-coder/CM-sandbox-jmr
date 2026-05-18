@@ -14,9 +14,10 @@ export function findDatasetAssistantResponse(dataset: SystemDataset, prompt: str
   const needle = normalize(prompt);
   const scored = dataset.assistantResponses
     .map((response) => {
-      const promptText = normalize(response.prompt);
+      const promptText = normalize(response.prompt ?? '');
       const contextScore = contextMatches(contextId, response.linkedObjects) ? 4 : 0;
-      const promptScore = promptText === needle ? 4 : promptText.includes(needle) || needle.includes(promptText) ? 2 : 0;
+      const promptScore =
+        promptText === needle ? 4 : promptText.includes(needle) || needle.includes(promptText) ? 2 : 0;
       return { response, score: contextScore + promptScore };
     })
     .filter((item) => item.score > 0)
@@ -27,8 +28,13 @@ export function findDatasetAssistantResponse(dataset: SystemDataset, prompt: str
 export function buildDatasetAssistantReply(dataset: SystemDataset, prompt: string, contextId?: string) {
   const match = findDatasetAssistantResponse(dataset, prompt, contextId);
   if (!match) return null;
+  const followUps = [
+    'Give a concise case summary for handoff.',
+    'Why does the AI recommend this outcome?',
+    'What are the main risk drivers in the factor table?',
+  ].filter((p) => normalize(p) !== normalize(prompt));
   return {
     text: match.response,
-    followUps: match.linkedObjects.map((ref) => `${ref.kind}: ${ref.label ?? ref.id}`).slice(0, 3),
+    followUps: followUps.slice(0, 3),
   };
 }

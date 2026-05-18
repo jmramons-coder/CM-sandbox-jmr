@@ -38,7 +38,10 @@ type CopilotContextValue = {
   registerContextSource: (source: ContextSource | null) => void;
 };
 
-export type ReplyHandler = (text: string) => {
+export type ReplyHandler = (
+  text: string,
+  context?: LiveContext,
+) => {
   text: string;
   artifact?: ChatArtifact;
   followUps?: string[];
@@ -62,8 +65,19 @@ const SEED_SESSIONS: CopilotSession[] = [
     id: 'seed-1',
     title: 'Case priorities for this week',
     messages: [
-      { id: 'seed-1-u1', role: 'user', text: 'Which of my cases need attention this week?', at: Date.now() - 86400000 * 2 },
-      { id: 'seed-1-a1', role: 'assistant', text: 'Based on your current caseload, Sarah Dupont (IP44-6679812) needs immediate attention due to overdue documents, followed by Billy Bud\'s pending decision.', at: Date.now() - 86400000 * 2 + 1000 },
+      {
+        id: 'seed-1-u1',
+        role: 'user',
+        text: 'Which of my cases need attention this week, and what should I do first on each?',
+        at: Date.now() - 86400000 * 2,
+      },
+      {
+        id: 'seed-1-a1',
+        role: 'assistant',
+        text:
+          'Priority order: **CD26-5546112 · Billy Bud** (WOP decision, SLA breached), then **CD44-6679812 · Marie Dupont** (death benefit sign-off), then **NB66-7622343 · Marc Tremblay** (APS outstanding), then **NB98-9989870 · Elena Rossi** (tele-interview).',
+        at: Date.now() - 86400000 * 2 + 1000,
+      },
     ],
     createdAt: Date.now() - 86400000 * 2,
     updatedAt: Date.now() - 86400000 * 2,
@@ -71,20 +85,42 @@ const SEED_SESSIONS: CopilotSession[] = [
   },
   {
     id: 'seed-2',
-    title: 'Draft escalation for provider',
+    title: 'Dupont contestability sign-off',
     messages: [
-      { id: 'seed-2-u1', role: 'user', text: 'Help me draft an escalation email for the overdue surgical report', at: Date.now() - 86400000 },
-      { id: 'seed-2-a1', role: 'assistant', text: 'Here\'s a professional escalation email for Dr. Moreau regarding the outstanding surgical report and APS for Sarah Dupont\'s claim.', at: Date.now() - 86400000 + 1000 },
+      {
+        id: 'seed-2-u1',
+        role: 'user',
+        text: 'Explain the contestability review for this case.',
+        at: Date.now() - 86400000,
+      },
+      {
+        id: 'seed-2-a1',
+        role: 'assistant',
+        text:
+          'MIB vs application comparison for **CD44-6679812** shows no material misrepresentation. APS and toxicology support cause of death — recommend $500,000 ACH to Marie Dupont after human sign-off.',
+        at: Date.now() - 86400000 + 1000,
+      },
     ],
     createdAt: Date.now() - 86400000,
     updatedAt: Date.now() - 86400000,
   },
   {
     id: 'seed-3',
-    title: 'Marc Tremblay rehab timeline',
+    title: 'Marc Tremblay underwriting timeline',
     messages: [
-      { id: 'seed-3-u1', role: 'user', text: 'Show me Marc Tremblay\'s rehabilitation timeline', at: Date.now() - 3600000 * 5 },
-      { id: 'seed-3-a1', role: 'assistant', text: 'Marc Tremblay\'s rehabilitation is progressing well. He\'s completed 3 of his scheduled PT sessions with good ROM improvement.', at: Date.now() - 3600000 * 5 + 1000 },
+      {
+        id: 'seed-3-u1',
+        role: 'user',
+        text: "Show me Marc Tremblay's rehabilitation timeline",
+        at: Date.now() - 3600000 * 5,
+      },
+      {
+        id: 'seed-3-a1',
+        role: 'assistant',
+        text:
+          'Marc Tremblay (**NB66-7622343**) is on a new-business underwriting track: MIB prior decline blocks accelerated UW; paramedical exam May 19; APS still outstanding before rated offer.',
+        at: Date.now() - 3600000 * 5 + 1000,
+      },
     ],
     createdAt: Date.now() - 3600000 * 5,
     updatedAt: Date.now() - 3600000 * 5,
@@ -127,7 +163,7 @@ export function CopilotProvider({ children }: React.PropsWithChildren) {
       const ctx = contextSourceRef.current?.() ?? undefined;
       const userTurn: ChatTurn = { id: `u-${uid()}`, role: 'user', text, at: now, context: ctx ?? undefined };
 
-      const mock = replyHandler?.(text);
+      const mock = replyHandler?.(text, ctx ?? undefined);
       const assistantTurn: ChatTurn = mock
         ? {
             id: `a-${uid()}`,

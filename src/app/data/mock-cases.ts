@@ -1,3 +1,9 @@
+/**
+ * @deprecated Legacy UK Income Protection overlay fixtures (IP26-*).
+ * Canonical demo cases live in sbli-dataset.ts. Used only when legacyMockOverlayEnabled is true
+ * or as fallback in getCaseOverview when a case id is missing from the active dataset.
+ * See docs/LEGACY_MOCK_INVENTORY.md.
+ */
 import type { CaseNavItem, CaseOverview, CasePhase, CaseSummary } from '../types';
 import { MULTI_CASE_DEMO_DATASET, type SystemDataset } from './multi-case-dataset';
 import { getWorkflowDefinition } from '../domain/workflows';
