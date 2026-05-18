@@ -24,8 +24,10 @@ export function useTableHorizontalScroll(scrollEl: HTMLElement | null): TableHor
       setState({ showLeftStickyEdge: false, showRightStickyEdge: false, hasHorizontalOverflow: false });
       return;
     }
-    const { scrollLeft, scrollWidth, clientWidth } = scrollEl;
-    const maxScroll = Math.max(0, scrollWidth - clientWidth);
+    const tableEl = scrollEl.querySelector('table');
+    const { scrollLeft, clientWidth } = scrollEl;
+    const contentScrollWidth = Math.max(scrollEl.scrollWidth, tableEl?.scrollWidth ?? 0, tableEl?.offsetWidth ?? 0);
+    const maxScroll = Math.max(0, contentScrollWidth - clientWidth);
     const epsilon = MODULE_TABLE_SCROLL_EPSILON;
     const hasHorizontalOverflow = maxScroll > epsilon;
     setState({
@@ -38,14 +40,19 @@ export function useTableHorizontalScroll(scrollEl: HTMLElement | null): TableHor
   useEffect(() => {
     if (!scrollEl) return;
     update();
+    const raf = requestAnimationFrame(update);
     scrollEl.addEventListener('scroll', update, { passive: true });
     const ro = new ResizeObserver(update);
     ro.observe(scrollEl);
-    if (scrollEl.firstElementChild) {
+    const tableEl = scrollEl.querySelector('table');
+    if (tableEl) {
+      ro.observe(tableEl);
+    } else if (scrollEl.firstElementChild) {
       ro.observe(scrollEl.firstElementChild);
     }
     window.addEventListener('resize', update);
     return () => {
+      cancelAnimationFrame(raf);
       scrollEl.removeEventListener('scroll', update);
       ro.disconnect();
       window.removeEventListener('resize', update);

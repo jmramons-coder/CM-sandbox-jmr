@@ -7,7 +7,7 @@ import { SearchBar } from './ds';
 import { ModuleTabsBar } from './ModuleTabsBar';
 import { Checkbox } from './ui/checkbox';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
-import { moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import { MODULE_TABLE_LAYOUT_CLASS, moduleTableScrollContainerClass } from '../utils/module-table-scroll';
 import { filterDatasetBySettings, getSystemDataset, listDocuments } from '../data/objectRepository';
 import { UI_CLASS } from '../constants/design-tokens';
 import { getStatusLozengeType } from '../utils/status-display';
@@ -46,6 +46,17 @@ const DOC_TABLE_ACTIONS_CELL_CLASS = 'pl-2 pr-5';
 /** Extra gap between sticky Document column and Summary. */
 const DOC_TABLE_DOCUMENT_COL_CLASS = 'pl-1 pr-4';
 const DOC_TABLE_SUMMARY_COL_CLASS = 'pl-5 pr-2';
+
+/** Minimum table width so horizontal scroll + sticky packs engage on typical viewports. */
+const DOC_TABLE_MIN_WIDTH =
+  DOC_TABLE_CHECKBOX_COL_WIDTH +
+  DOC_TABLE_NAME_COL_WIDTH +
+  320 +
+  150 +
+  120 +
+  120 +
+  DOC_TABLE_STATUS_COL_WIDTH +
+  DOC_TABLE_ACTIONS_COL_WIDTH;
 
 function docTableRowSurface(selected: boolean) {
   return selected
@@ -370,9 +381,16 @@ export function DocumentModule() {
                   Column order matches Case documents tab: left stickies, scrollable middle,
                   then Status + Actions stickied on the right (must be last in DOM order).
                 */}
-                <table className="w-full table-fixed border-separate border-spacing-0">
+                <table className={MODULE_TABLE_LAYOUT_CLASS} style={{ minWidth: DOC_TABLE_MIN_WIDTH }}>
                   <colgroup>
                     <col style={{ width: DOC_TABLE_CHECKBOX_COL_WIDTH }} />
+                    <col style={{ width: DOC_TABLE_NAME_COL_WIDTH }} />
+                    <col style={{ width: 320 }} />
+                    <col style={{ width: 150 }} />
+                    <col style={{ width: 120 }} />
+                    <col style={{ width: 120 }} />
+                    <col style={{ width: DOC_TABLE_STATUS_COL_WIDTH }} />
+                    <col style={{ width: DOC_TABLE_ACTIONS_COL_WIDTH }} />
                   </colgroup>
                   <thead className="sticky top-0 z-[30] bg-surface-primary">
                     <tr>
@@ -380,7 +398,7 @@ export function DocumentModule() {
                         <Checkbox className="size-4 rounded-[4px]" />
                       </ModuleTableCheckboxColumnCell>
                       <th
-                        className={`relative sticky z-[35] border-b border-border-default bg-surface-primary ${DOC_TABLE_DOCUMENT_COL_CLASS} py-3 text-left align-middle text-sm font-normal text-text-secondary ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                        className={`relative sticky top-0 z-[35] border-b border-border-default bg-surface-primary ${DOC_TABLE_DOCUMENT_COL_CLASS} py-3 text-left align-middle text-sm font-normal text-text-secondary ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                         style={{
                           left: DOC_TABLE_CHECKBOX_COL_WIDTH,
                           width: DOC_TABLE_NAME_COL_WIDTH,
@@ -399,26 +417,26 @@ export function DocumentModule() {
                       <th className={`min-w-[320px] border-b border-border-default bg-surface-primary ${DOC_TABLE_SUMMARY_COL_CLASS} py-3 text-left align-middle text-sm font-normal text-text-secondary`}>
                         <SummaryTableColumnHeader className="text-sm font-normal leading-[20px] text-text-secondary" />
                       </th>
-                      <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle text-sm font-normal text-text-secondary">
+                      <th className="sticky top-0 min-w-[150px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle text-sm font-normal text-text-secondary">
                         <button type="button" onClick={() => handleSort('caseId')} className="group flex items-center gap-1 hover:text-brand-blue">
                           Case
                           <ReorderIcon isActive={sortColumn === 'caseId'} />
                         </button>
                       </th>
-                      <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle text-sm font-normal text-text-secondary">
+                      <th className="sticky top-0 min-w-[120px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle text-sm font-normal text-text-secondary">
                         <button type="button" onClick={() => handleSort('uploaded')} className="group flex items-center gap-1 hover:text-brand-blue">
                           Uploaded
                           <ReorderIcon isActive={sortColumn === 'uploaded'} />
                         </button>
                       </th>
-                      <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle text-sm font-normal text-text-secondary">
+                      <th className="sticky top-0 min-w-[120px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle text-sm font-normal text-text-secondary">
                         <button type="button" onClick={() => handleSort('source')} className="group flex items-center gap-1 hover:text-brand-blue">
                           Source
                           <ReorderIcon isActive={sortColumn === 'source'} />
                         </button>
                       </th>
                       <th
-                        className={`relative sticky z-[34] border-b border-border-default bg-surface-primary py-3 pl-2 pr-1 text-left align-middle text-sm font-normal text-text-secondary ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                        className={`relative sticky top-0 z-[34] border-b border-border-default bg-surface-primary py-3 pl-2 pr-1 text-left align-middle text-sm font-normal text-text-secondary ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                         style={{
                           right: DOC_TABLE_ACTIONS_COL_WIDTH,
                           width: DOC_TABLE_STATUS_COL_WIDTH,
@@ -435,7 +453,7 @@ export function DocumentModule() {
                         </button>
                       </th>
                       <th
-                        className={`relative sticky right-0 z-[34] h-12 min-h-12 border-b border-border-default bg-surface-primary py-0 align-middle ${DOC_TABLE_ACTIONS_CELL_CLASS}`}
+                        className={`relative sticky top-0 right-0 z-[34] h-12 min-h-12 border-b border-border-default bg-surface-primary py-0 align-middle ${DOC_TABLE_ACTIONS_CELL_CLASS}`}
                         style={{ width: DOC_TABLE_ACTIONS_COL_WIDTH, minWidth: DOC_TABLE_ACTIONS_COL_WIDTH, maxWidth: DOC_TABLE_ACTIONS_COL_WIDTH }}
                       >
                         <span

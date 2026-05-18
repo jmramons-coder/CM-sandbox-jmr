@@ -36,6 +36,7 @@ export function ModuleTableCheckboxColumnCell({
     <Tag
       className={cn(
         'sticky left-0 box-border border-b border-border-default p-0 align-middle',
+        as === 'th' ? 'top-0 bg-surface-primary' : '',
         surfaceClassName,
         className,
       )}

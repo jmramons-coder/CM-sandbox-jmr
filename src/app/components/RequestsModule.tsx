@@ -66,22 +66,40 @@ import {
   SummaryTableColumnHeader,
   TABLE_CELL_ALIGN_CLASS,
   TABLE_LINK_CLASS,
+  TABLE_LINK_TRUNCATE_CLASS,
   TABLE_SUBTEXT_CLASS,
   TABLE_TEXT_CLASS,
   TwoLineSummaryCell,
 } from './ModuleCellHelpers';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
-import { moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import { MODULE_TABLE_LAYOUT_CLASS, moduleTableScrollContainerClass } from '../utils/module-table-scroll';
 
-/** Sticky pack after checkbox: request id → case (case is 3rd column). */
-const REQUEST_TABLE_STICKY_COL = {
-  checkboxWidth: MODULE_TABLE_CHECKBOX_COL_WIDTH,
-  requestId: { width: 168, left: MODULE_TABLE_CHECKBOX_COL_WIDTH },
-  case: { width: 148, left: MODULE_TABLE_CHECKBOX_COL_WIDTH + 168 },
+/** Request ID + case share one sticky cell so the left pack scrolls as a unit. */
+const REQUEST_TABLE_REQUEST_COL_WIDTH = 168;
+const REQUEST_TABLE_CASE_COL_WIDTH = 132;
+const REQUEST_TABLE_LEFT_PACK_WIDTH = REQUEST_TABLE_REQUEST_COL_WIDTH + REQUEST_TABLE_CASE_COL_WIDTH;
+const REQUEST_TABLE_LEFT_PACK_GRID_STYLE = {
+  gridTemplateColumns: `${REQUEST_TABLE_REQUEST_COL_WIDTH}px ${REQUEST_TABLE_CASE_COL_WIDTH}px`,
 } as const;
 
+const REQUEST_TABLE_STICKY_COL = {
+  checkboxWidth: MODULE_TABLE_CHECKBOX_COL_WIDTH,
+  packLeft: MODULE_TABLE_CHECKBOX_COL_WIDTH,
+  packWidth: REQUEST_TABLE_LEFT_PACK_WIDTH,
+} as const;
+
+const REQUEST_SUMMARY_COL_WIDTH = 400;
+const REQUEST_SCROLL_COL_MIN = 112;
+const REQUEST_REQUESTER_COL_WIDTH = 140;
 const REQUEST_STATUS_ACTIONS_WIDTH = 190;
 const REQUEST_SUMMARY_COL_CLASS = 'min-w-[400px] w-[400px] max-w-[400px]';
+const REQUEST_TABLE_MIN_WIDTH =
+  REQUEST_TABLE_STICKY_COL.checkboxWidth +
+  REQUEST_TABLE_STICKY_COL.packWidth +
+  REQUEST_SUMMARY_COL_WIDTH +
+  REQUEST_SCROLL_COL_MIN * 2 +
+  REQUEST_REQUESTER_COL_WIDTH +
+  REQUEST_STATUS_ACTIONS_WIDTH;
 
 function sortRequests(rows: ServiceRequest[], column: RequestSortableColumn | null, direction: SortDirection) {
   if (!column) return rows;
@@ -383,14 +401,20 @@ export function RequestsModule() {
               </div>
             </div>
           ) : (
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <div
                 ref={setRequestsTableScrollEl}
                 className={moduleTableScrollContainerClass(hasHorizontalOverflow, 'flex-1 bg-white')}
               >
-                <table className="w-full table-fixed border-separate border-spacing-0">
+                <table className={MODULE_TABLE_LAYOUT_CLASS} style={{ minWidth: REQUEST_TABLE_MIN_WIDTH }}>
                   <colgroup>
                     <col style={{ width: REQUEST_TABLE_STICKY_COL.checkboxWidth }} />
+                    <col style={{ width: REQUEST_TABLE_STICKY_COL.packWidth }} />
+                    <col style={{ width: REQUEST_SUMMARY_COL_WIDTH }} />
+                    <col style={{ width: REQUEST_SCROLL_COL_MIN }} />
+                    <col style={{ width: REQUEST_SCROLL_COL_MIN }} />
+                    <col style={{ width: REQUEST_REQUESTER_COL_WIDTH }} />
+                    <col style={{ width: REQUEST_STATUS_ACTIONS_WIDTH }} />
                   </colgroup>
                   <thead className="sticky top-0 z-[30] bg-surface-primary">
                     <tr>
@@ -398,35 +422,33 @@ export function RequestsModule() {
                         <Checkbox className="size-4 rounded-[4px]" />
                       </ModuleTableCheckboxColumnCell>
                       <th
-                        className={`relative sticky z-[35] border-b border-border-default bg-surface-primary ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} py-3 text-left align-middle`}
+                        className={`relative sticky top-0 z-[35] overflow-hidden border-b border-border-default bg-surface-primary py-3 text-left align-middle ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} pr-2 ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                         style={{
-                          left: REQUEST_TABLE_STICKY_COL.requestId.left,
-                          minWidth: REQUEST_TABLE_STICKY_COL.requestId.width,
-                          width: REQUEST_TABLE_STICKY_COL.requestId.width,
-                        }}
-                      >
-                        <button type="button" onClick={() => handleSort('id')} className="group flex items-center gap-1 text-sm font-medium text-text-secondary hover:text-brand-blue">
-                          Request ID
-                          <ReorderIcon isActive={sortColumn === 'id'} />
-                        </button>
-                      </th>
-                      <th
-                        className={`relative sticky z-[36] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
-                        style={{
-                          left: REQUEST_TABLE_STICKY_COL.case.left,
-                          minWidth: REQUEST_TABLE_STICKY_COL.case.width,
-                          width: REQUEST_TABLE_STICKY_COL.case.width,
+                          left: REQUEST_TABLE_STICKY_COL.packLeft,
+                          width: REQUEST_TABLE_STICKY_COL.packWidth,
+                          minWidth: REQUEST_TABLE_STICKY_COL.packWidth,
+                          maxWidth: REQUEST_TABLE_STICKY_COL.packWidth,
                         }}
                       >
                         {showLeftStickyEdge ? (
                           <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                         ) : null}
-                        <button type="button" onClick={() => handleSort('caseId')} className="group flex items-center gap-1 text-sm font-medium text-text-secondary hover:text-brand-blue">
-                          Case
-                          <ReorderIcon isActive={sortColumn === 'caseId'} />
-                        </button>
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] bg-surface-primary"
+                        />
+                        <div className="relative z-[1] grid min-w-0" style={REQUEST_TABLE_LEFT_PACK_GRID_STYLE}>
+                          <button type="button" onClick={() => handleSort('id')} className="group flex min-w-0 items-center gap-1 text-sm font-medium text-text-secondary hover:text-brand-blue">
+                            Request ID
+                            <ReorderIcon isActive={sortColumn === 'id'} />
+                          </button>
+                          <button type="button" onClick={() => handleSort('caseId')} className="group flex min-w-0 items-center gap-1 px-2 text-sm font-medium text-text-secondary hover:text-brand-blue">
+                            Case
+                            <ReorderIcon isActive={sortColumn === 'caseId'} />
+                          </button>
+                        </div>
                       </th>
-                      <th className={`border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${REQUEST_SUMMARY_COL_CLASS}`}>
+                      <th className={`sticky top-0 border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${REQUEST_SUMMARY_COL_CLASS}`}>
                         <button type="button" onClick={() => handleSort('title')} className="group flex items-center gap-1 hover:text-brand-blue">
                           <SummaryTableColumnHeader className="text-sm font-medium text-text-secondary" />
                           <ReorderIcon isActive={sortColumn === 'title'} />
@@ -434,12 +456,16 @@ export function RequestsModule() {
                       </th>
                       {(
                         [
-                          ['priority', 'Priority'],
-                          ['received', 'Received'],
-                          ['requester', 'Requester'],
+                          ['priority', 'Priority', REQUEST_SCROLL_COL_MIN],
+                          ['received', 'Received', REQUEST_SCROLL_COL_MIN],
+                          ['requester', 'Requester', REQUEST_REQUESTER_COL_WIDTH],
                         ] as const
-                      ).map(([column, label]) => (
-                        <th key={column} className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                      ).map(([column, label, colWidth]) => (
+                        <th
+                          key={column}
+                          className="sticky top-0 border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle"
+                          style={{ minWidth: colWidth, width: colWidth }}
+                        >
                           <button type="button" onClick={() => handleSort(column)} className="group flex items-center gap-1 text-sm font-medium text-text-secondary hover:text-brand-blue">
                             {label}
                             <ReorderIcon isActive={sortColumn === column} />
@@ -447,15 +473,23 @@ export function RequestsModule() {
                         </th>
                       ))}
                       <th
-                        className={`sticky right-0 z-[34] relative border-b border-border-default bg-surface-primary px-3 py-3 text-left align-middle ${
+                        className={`relative sticky top-0 right-0 z-[34] border-b border-border-default bg-surface-primary px-3 py-3 text-left align-middle ${
                           showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.12)]' : ''
                         }`}
-                        style={{ width: REQUEST_STATUS_ACTIONS_WIDTH, minWidth: REQUEST_STATUS_ACTIONS_WIDTH }}
+                        style={{
+                          width: REQUEST_STATUS_ACTIONS_WIDTH,
+                          minWidth: REQUEST_STATUS_ACTIONS_WIDTH,
+                          maxWidth: REQUEST_STATUS_ACTIONS_WIDTH,
+                        }}
                       >
                         {showRightStickyEdge ? (
-                          <span className="pointer-events-none absolute left-0 top-0 z-[8] h-full w-px bg-[#dbdee1]/80" />
+                          <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/80" />
                         ) : null}
-                        <button type="button" onClick={() => handleSort('status')} className="group flex items-center gap-1 text-sm font-medium text-text-secondary hover:text-brand-blue">
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] bg-surface-primary"
+                        />
+                        <button type="button" onClick={() => handleSort('status')} className="group relative z-[1] flex items-center gap-1 text-sm font-medium text-text-secondary hover:text-brand-blue">
                           Status
                           <ReorderIcon isActive={sortColumn === 'status'} />
                         </button>
@@ -485,54 +519,54 @@ export function RequestsModule() {
                             <Checkbox className="size-4 rounded-[4px]" />
                           </ModuleTableCheckboxColumnCell>
                           <td
-                            className={`relative sticky z-[15] border-b border-border-default ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface}`}
+                            className={`relative sticky z-[15] overflow-hidden border-b border-border-default py-3 ${TABLE_CELL_ALIGN_CLASS} ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} pr-2 ${stickyRowSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                             style={{
-                              left: REQUEST_TABLE_STICKY_COL.requestId.left,
-                              minWidth: REQUEST_TABLE_STICKY_COL.requestId.width,
-                              width: REQUEST_TABLE_STICKY_COL.requestId.width,
-                            }}
-                          >
-                            <div className="min-w-0">
-                              <LozengeTag label={request.category} type={requestCategoryType(request.category)} subtle className="mb-1.5" />
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  selectRequest(request);
-                                }}
-                                className={`block max-w-full truncate ${TABLE_LINK_CLASS}`}
-                                title={request.id}
-                              >
-                                {request.id}
-                              </button>
-                            </div>
-                          </td>
-                          <td
-                            className={`relative sticky z-[16] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
-                            style={{
-                              left: REQUEST_TABLE_STICKY_COL.case.left,
-                              minWidth: REQUEST_TABLE_STICKY_COL.case.width,
-                              width: REQUEST_TABLE_STICKY_COL.case.width,
+                              left: REQUEST_TABLE_STICKY_COL.packLeft,
+                              width: REQUEST_TABLE_STICKY_COL.packWidth,
+                              minWidth: REQUEST_TABLE_STICKY_COL.packWidth,
+                              maxWidth: REQUEST_TABLE_STICKY_COL.packWidth,
                             }}
                           >
                             {showLeftStickyEdge ? (
                               <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                             ) : null}
-                            {request.caseId ? (
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  navigate(`/cases/${request.caseId}`);
-                                }}
-                                className={`block whitespace-nowrap ${TABLE_LINK_CLASS}`}
-                                title={request.caseId}
-                              >
-                                {request.caseId}
-                              </button>
-                            ) : (
-                              <span className={TABLE_SUBTEXT_CLASS}>—</span>
-                            )}
+                            <span
+                              aria-hidden
+                              className={`pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] ${stickyRowSurface}`}
+                            />
+                            <div className="relative z-[1] grid min-w-0" style={REQUEST_TABLE_LEFT_PACK_GRID_STYLE}>
+                              <div className="min-w-0 pr-1">
+                                <LozengeTag label={request.category} type={requestCategoryType(request.category)} subtle className="mb-1.5" />
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    selectRequest(request);
+                                  }}
+                                  className={TABLE_LINK_TRUNCATE_CLASS}
+                                  title={request.id}
+                                >
+                                  {request.id}
+                                </button>
+                              </div>
+                              <div className="min-w-0 px-2">
+                                {request.caseId ? (
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      navigate(`/cases/${request.caseId}`);
+                                    }}
+                                    className={TABLE_LINK_TRUNCATE_CLASS}
+                                    title={request.caseId}
+                                  >
+                                    {request.caseId}
+                                  </button>
+                                ) : (
+                                  <span className={TABLE_SUBTEXT_CLASS}>—</span>
+                                )}
+                              </div>
+                            </div>
                           </td>
                           <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${REQUEST_SUMMARY_COL_CLASS}`}>
                             <TwoLineSummaryCell
@@ -542,13 +576,22 @@ export function RequestsModule() {
                               className="max-w-none"
                             />
                           </td>
-                          <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface}`}>
+                          <td
+                            className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface}`}
+                            style={{ minWidth: REQUEST_SCROLL_COL_MIN, width: REQUEST_SCROLL_COL_MIN }}
+                          >
                             <PriorityChip priority={request.priority} />
                           </td>
-                          <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${TABLE_TEXT_CLASS}`}>
+                          <td
+                            className={`border-b border-border-default px-2 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${TABLE_TEXT_CLASS}`}
+                            style={{ minWidth: REQUEST_SCROLL_COL_MIN, width: REQUEST_SCROLL_COL_MIN }}
+                          >
                             {request.received}
                           </td>
-                          <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface}`}>
+                          <td
+                            className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface}`}
+                            style={{ minWidth: REQUEST_REQUESTER_COL_WIDTH, width: REQUEST_REQUESTER_COL_WIDTH }}
+                          >
                             <span className="flex items-center gap-2">
                               <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-selected text-[10px] font-semibold text-brand-blue">
                                 {requestInitials(request)}
@@ -560,16 +603,24 @@ export function RequestsModule() {
                             </span>
                           </td>
                           <td
-                            className={`sticky right-0 z-[14] relative border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${
+                            className={`relative sticky right-0 z-[14] border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${
                               showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.12)]' : ''
                             }`}
-                            style={{ width: REQUEST_STATUS_ACTIONS_WIDTH, minWidth: REQUEST_STATUS_ACTIONS_WIDTH }}
+                            style={{
+                              width: REQUEST_STATUS_ACTIONS_WIDTH,
+                              minWidth: REQUEST_STATUS_ACTIONS_WIDTH,
+                              maxWidth: REQUEST_STATUS_ACTIONS_WIDTH,
+                            }}
                             onClick={(event) => event.stopPropagation()}
                           >
                             {showRightStickyEdge ? (
-                              <span className="pointer-events-none absolute left-0 top-0 z-[8] h-full w-px bg-[#dbdee1]/80" />
+                              <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/80" />
                             ) : null}
-                            <div className="flex items-center justify-between gap-2">
+                            <span
+                              aria-hidden
+                              className={`pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] ${stickyRowSurface}`}
+                            />
+                            <div className="relative z-[1] flex items-center justify-between gap-2">
                               <LozengeTag label={request.status} type={requestStatusType(request.status)} subtle />
                               <button
                                 type="button"

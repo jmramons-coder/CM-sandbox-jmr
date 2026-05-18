@@ -15,7 +15,7 @@ import { TEAMS, CURRENT_USER } from '../data/mock-tasks';
 import { filterDatasetBySettings, getSystemDataset, listTasks } from '../data/objectRepository';
 import { updateTaskStatus } from '../data/datasetMutations';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
-import { moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import { MODULE_TABLE_LAYOUT_CLASS, moduleTableScrollContainerClass } from '../utils/module-table-scroll';
 import { UI_CLASS } from '../constants/design-tokens';
 import { getStatusLozengeType, sortTasks } from '../utils';
 import { filterTasks } from '../utils/task-filters';
@@ -30,6 +30,7 @@ import {
   SummaryTableColumnHeader,
   TABLE_CELL_ALIGN_CLASS,
   TABLE_LINK_CLASS,
+  TABLE_LINK_TRUNCATE_CLASS,
   TABLE_SUBTEXT_CLASS,
   TABLE_TEXT_CLASS,
   TaskSourceTag,
@@ -37,15 +38,31 @@ import {
   TwoLineSummaryCell,
 } from './ModuleCellHelpers';
 
-/** Sticky pack after checkbox: task id → case (matches Requests / Documents left pack). */
+/** Task + case share one sticky cell so the left pack scrolls as a unit (no per-column sticky gaps). */
+const TASK_TABLE_TASK_COL_WIDTH = 152;
+const TASK_TABLE_CASE_COL_WIDTH = 132;
+const TASK_TABLE_LEFT_PACK_WIDTH = TASK_TABLE_TASK_COL_WIDTH + TASK_TABLE_CASE_COL_WIDTH;
+const TASK_TABLE_LEFT_PACK_GRID_STYLE = {
+  gridTemplateColumns: `${TASK_TABLE_TASK_COL_WIDTH}px ${TASK_TABLE_CASE_COL_WIDTH}px`,
+} as const;
+
 const TASK_TABLE_STICKY_COL = {
   checkboxWidth: MODULE_TABLE_CHECKBOX_COL_WIDTH,
-  task: { width: 200, left: MODULE_TABLE_CHECKBOX_COL_WIDTH },
-  case: { width: 168, left: MODULE_TABLE_CHECKBOX_COL_WIDTH + 200 },
+  packLeft: MODULE_TABLE_CHECKBOX_COL_WIDTH,
+  packWidth: TASK_TABLE_LEFT_PACK_WIDTH,
 } as const;
 
 const TASK_TABLE_STATUS_WIDTH = 124;
 const TASK_TABLE_ACTIONS_WIDTH = 48;
+const TASK_TABLE_SCROLL_COL_MIN = 112;
+const TASK_TABLE_MIN_WIDTH =
+  TASK_TABLE_STICKY_COL.checkboxWidth +
+  TASK_TABLE_STICKY_COL.packWidth +
+  320 +
+  TASK_TABLE_SCROLL_COL_MIN * 3 +
+  TASK_TABLE_STATUS_WIDTH +
+  TASK_TABLE_ACTIONS_WIDTH;
+const TASK_TABLE_MIN_WIDTH_TEAM = TASK_TABLE_MIN_WIDTH + TASK_TABLE_SCROLL_COL_MIN;
 export function TaskModule() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -462,9 +479,20 @@ export function TaskModule() {
                 ref={setTaskTableScrollEl}
                 className={moduleTableScrollContainerClass(hasHorizontalOverflow, 'flex-1 bg-white')}
               >
-                <table className="w-full table-fixed border-separate border-spacing-0">
+                <table
+                  className={MODULE_TABLE_LAYOUT_CLASS}
+                  style={{ minWidth: isOnTeamTasks ? TASK_TABLE_MIN_WIDTH_TEAM : TASK_TABLE_MIN_WIDTH }}
+                >
                   <colgroup>
                     <col style={{ width: TASK_TABLE_STICKY_COL.checkboxWidth }} />
+                    <col style={{ width: TASK_TABLE_STICKY_COL.packWidth }} />
+                    <col style={{ width: 320 }} />
+                    <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} />
+                    <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} />
+                    {isOnTeamTasks ? <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} /> : null}
+                    <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} />
+                    <col style={{ width: TASK_TABLE_STATUS_WIDTH }} />
+                    <col style={{ width: TASK_TABLE_ACTIONS_WIDTH }} />
                   </colgroup>
                   <thead className="sticky top-0 z-[30] bg-surface-primary">
                     <tr>
@@ -472,27 +500,33 @@ export function TaskModule() {
                         <Checkbox className="size-4 rounded-[4px]" />
                       </ModuleTableCheckboxColumnCell>
                       <th
-                        className={`relative sticky z-[35] border-b border-border-default bg-surface-primary ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} py-3 text-left align-middle`}
-                        style={{ left: TASK_TABLE_STICKY_COL.task.left, minWidth: TASK_TABLE_STICKY_COL.task.width, width: TASK_TABLE_STICKY_COL.task.width }}
-                      >
-                        <button onClick={() => handleSort('taskType')} className="group flex items-center gap-1 hover:text-brand-blue">
-                          <div className={thStyle} style={fontVar}><p className="leading-[20px]">Task</p></div>
-                          <ReorderIcon isActive={sortColumn === 'taskType'} />
-                        </button>
-                      </th>
-                      <th
-                        className={`relative sticky z-[36] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
-                        style={{ left: TASK_TABLE_STICKY_COL.case.left, minWidth: TASK_TABLE_STICKY_COL.case.width, width: TASK_TABLE_STICKY_COL.case.width }}
+                        className={`relative sticky top-0 z-[35] overflow-hidden border-b border-border-default bg-surface-primary py-3 text-left align-middle ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} pr-2 ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                        style={{
+                          left: TASK_TABLE_STICKY_COL.packLeft,
+                          width: TASK_TABLE_STICKY_COL.packWidth,
+                          minWidth: TASK_TABLE_STICKY_COL.packWidth,
+                          maxWidth: TASK_TABLE_STICKY_COL.packWidth,
+                        }}
                       >
                         {showLeftStickyEdge ? (
                           <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                         ) : null}
-                        <button onClick={() => handleSort('caseId')} className="group flex items-center gap-1 hover:text-brand-blue">
-                          <div className={thStyle} style={fontVar}><p className="leading-[20px]">Case</p></div>
-                          <ReorderIcon isActive={sortColumn === 'caseId'} />
-                        </button>
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] bg-surface-primary"
+                        />
+                        <div className="relative z-[1] grid min-w-0" style={TASK_TABLE_LEFT_PACK_GRID_STYLE}>
+                          <button type="button" onClick={() => handleSort('taskType')} className="group flex min-w-0 items-center gap-1 hover:text-brand-blue">
+                            <div className={thStyle} style={fontVar}><p className="leading-[20px]">Task</p></div>
+                            <ReorderIcon isActive={sortColumn === 'taskType'} />
+                          </button>
+                          <button type="button" onClick={() => handleSort('caseId')} className="group flex min-w-0 items-center gap-1 px-2 hover:text-brand-blue">
+                            <div className={thStyle} style={fontVar}><p className="leading-[20px]">Case</p></div>
+                            <ReorderIcon isActive={sortColumn === 'caseId'} />
+                          </button>
+                        </div>
                       </th>
-                      <th className="min-w-[320px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                      <th className="sticky top-0 min-w-[320px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
                         <button onClick={() => handleSort('taskType')} className="group flex items-center gap-1 hover:text-brand-blue">
                           <div className={thStyle} style={fontVar}>
                             <SummaryTableColumnHeader className="leading-[20px] text-text-primary" style={fontVar} />
@@ -500,26 +534,26 @@ export function TaskModule() {
                           <ReorderIcon isActive={sortColumn === 'taskType'} />
                         </button>
                       </th>
-                      <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                      <th className="sticky top-0 min-w-[112px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
                         <button onClick={() => handleSort('priority')} className="group flex items-center gap-1 hover:text-brand-blue">
                           <div className={thStyle} style={fontVar}><p className="leading-[20px]">Priority</p></div>
                           <ReorderIcon isActive={sortColumn === 'priority'} />
                         </button>
                       </th>
-                      <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                      <th className="sticky top-0 min-w-[112px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
                         <button onClick={() => handleSort('product')} className="group flex items-center gap-1 hover:text-brand-blue">
                           <div className={thStyle} style={fontVar}><p className="leading-[20px]">Product</p></div>
                           <ReorderIcon isActive={sortColumn === 'product'} />
                         </button>
                       </th>
                       {isOnTeamTasks && (
-                        <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                        <th className="sticky top-0 min-w-[112px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
                           <div className={thStyle} style={fontVar}>
                             <p className="leading-[20px]">Picked Up By</p>
                           </div>
                         </th>
                       )}
-                      <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                      <th className="sticky top-0 min-w-[112px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
                         <button onClick={() => handleSort('origin')} className="group flex items-center gap-1 hover:text-brand-blue">
                           <div className={thStyle} style={fontVar}><p className="leading-[20px]">Source</p></div>
                           <ReorderIcon isActive={sortColumn === 'origin'} />
@@ -527,7 +561,7 @@ export function TaskModule() {
                       </th>
                       <th
                         className={`relative border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${
-                          taskTableRightSticky ? `sticky z-[34] ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}` : ''
+                          taskTableRightSticky ? `sticky top-0 z-[34] ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}` : ''
                         }`}
                         style={{
                           width: TASK_TABLE_STATUS_WIDTH,
@@ -545,7 +579,7 @@ export function TaskModule() {
                       </th>
                       <th
                         className={`relative h-12 min-h-12 border-b border-border-default bg-surface-primary p-0 align-middle ${
-                          taskTableRightSticky ? 'sticky right-0 z-[34] w-[48px] min-w-[48px] max-w-[48px]' : 'w-12 min-w-12 max-w-12'
+                          taskTableRightSticky ? 'sticky top-0 right-0 z-[34] w-[48px] min-w-[48px] max-w-[48px]' : 'w-12 min-w-12 max-w-12'
                         }`}
                       >
                         {taskTableRightSticky ? (
@@ -589,43 +623,60 @@ export function TaskModule() {
                             <Checkbox className="size-4 rounded-[4px]" onClick={(e) => e.stopPropagation()} />
                           </ModuleTableCheckboxColumnCell>
                           <td
-                            className={`relative sticky z-[15] border-b border-border-default ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface}`}
-                            style={{ left: TASK_TABLE_STICKY_COL.task.left, minWidth: TASK_TABLE_STICKY_COL.task.width, width: TASK_TABLE_STICKY_COL.task.width }}
-                          >
-                            <TaskTableFirstColumnCell
-                              taskId={task.taskId ?? task.id}
-                              taskName={task.taskType}
-                              aiSourced={isTaskAiSourced(task)}
-                            />
-                          </td>
-                          <td
-                            className={`relative sticky z-[16] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
-                            style={{ left: TASK_TABLE_STICKY_COL.case.left, minWidth: TASK_TABLE_STICKY_COL.case.width, width: TASK_TABLE_STICKY_COL.case.width }}
+                            className={`relative sticky z-[15] overflow-hidden border-b border-border-default py-3 ${TABLE_CELL_ALIGN_CLASS} ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} pr-2 ${stickyRowSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                            style={{
+                              left: TASK_TABLE_STICKY_COL.packLeft,
+                              width: TASK_TABLE_STICKY_COL.packWidth,
+                              minWidth: TASK_TABLE_STICKY_COL.packWidth,
+                              maxWidth: TASK_TABLE_STICKY_COL.packWidth,
+                            }}
                           >
                             {showLeftStickyEdge ? (
                               <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                             ) : null}
-                            {task.caseId ? (
-                              <div className="min-w-[150px]">
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.stopPropagation(); navigate(`/cases/${task.caseId}`); }}
-                                  className={`block whitespace-nowrap ${TABLE_LINK_CLASS}`}
-                                >
-                                  {task.caseId}
-                                </button>
-                                <span className={`mt-0.5 block truncate ${TABLE_SUBTEXT_CLASS}`}>
-                                  {task.primaryPartyName ?? task.claimantName}
-                                </span>
+                            <span
+                              aria-hidden
+                              className={`pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] ${stickyRowSurface}`}
+                            />
+                            <div className="relative z-[1] grid min-w-0" style={TASK_TABLE_LEFT_PACK_GRID_STYLE}>
+                              <div className="min-w-0 pr-1">
+                                <TaskTableFirstColumnCell
+                                  taskId={task.taskId ?? task.id}
+                                  taskName={task.taskType}
+                                  aiSourced={isTaskAiSourced(task)}
+                                />
                               </div>
-                            ) : (
-                              <div className="min-w-[150px]">
-                                <span className={TABLE_SUBTEXT_CLASS}>—</span>
-                                <span className={`mt-0.5 block truncate ${TABLE_SUBTEXT_CLASS}`}>
-                                  {task.primaryPartyName ?? task.claimantName}
-                                </span>
+                              <div className="min-w-0 px-2">
+                                {task.caseId ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); navigate(`/cases/${task.caseId}`); }}
+                                      className={TABLE_LINK_TRUNCATE_CLASS}
+                                      title={task.caseId}
+                                    >
+                                      {task.caseId}
+                                    </button>
+                                    <span
+                                      className={`mt-0.5 block truncate ${TABLE_SUBTEXT_CLASS}`}
+                                      title={task.primaryPartyName ?? task.claimantName}
+                                    >
+                                      {task.primaryPartyName ?? task.claimantName}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className={TABLE_SUBTEXT_CLASS}>—</span>
+                                    <span
+                                      className={`mt-0.5 block truncate ${TABLE_SUBTEXT_CLASS}`}
+                                      title={task.primaryPartyName ?? task.claimantName}
+                                    >
+                                      {task.primaryPartyName ?? task.claimantName}
+                                    </span>
+                                  </>
+                                )}
                               </div>
-                            )}
+                            </div>
                           </td>
                           <td className={`min-w-[320px] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                             <TwoLineSummaryCell
@@ -634,14 +685,14 @@ export function TaskModule() {
                               titleWeight="normal"
                             />
                           </td>
-                          <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
+                          <td className={`min-w-[112px] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                             <PriorityChip priority={task.priority} />
                           </td>
-                          <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${cellSurface} ${TABLE_TEXT_CLASS}`}>
+                          <td className={`min-w-[112px] border-b border-border-default px-2 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${cellSurface} ${TABLE_TEXT_CLASS}`}>
                             {task.product}
                           </td>
                           {isOnTeamTasks && (
-                            <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
+                            <td className={`min-w-[112px] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                               {task.pickedUpBy ? (
                                 <span className={`whitespace-nowrap ${TABLE_SUBTEXT_CLASS}`}>{task.pickedUpBy}</span>
                               ) : (
@@ -649,7 +700,7 @@ export function TaskModule() {
                               )}
                             </td>
                           )}
-                          <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
+                          <td className={`min-w-[112px] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                             <TaskSourceTag task={task} />
                           </td>
                           <td
