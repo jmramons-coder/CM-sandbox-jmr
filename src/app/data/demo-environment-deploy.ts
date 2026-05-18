@@ -22,6 +22,7 @@ export type DeployableDemoPresetFile = {
     activeCaseTypeId: string | null;
     preferences: DemoConfigurationSnapshot['preferences'];
     modules: DemoConfigurationSnapshot['modules'];
+    dataSource?: Pick<DemoConfigurationSnapshot['dataSource'], 'displayCurrency'>;
   };
 };
 
@@ -39,6 +40,7 @@ export function buildDemoSnapshotFromBranding(branding: Branding): DemoConfigura
     dataSource: {
       ...DEFAULT_DATA_SOURCE_SETTINGS,
       activeDatasetId: SHARED_DEMO_DATASET_ID,
+      displayCurrency: 'USD',
       legacyMockOverlayEnabled: false,
     },
     anatomy: {
@@ -88,6 +90,13 @@ export function hydrateDeployablePreset(file: DeployableDemoPresetFile): SavedDe
       language: file.settings.language,
       preferences: { ...file.settings.preferences },
       modules: { ...file.settings.modules },
+      dataSource: {
+        ...base.dataSource,
+        ...(file.settings.dataSource ?? {}),
+        activeDatasetId: SHARED_DEMO_DATASET_ID,
+        displayCurrency: file.settings.dataSource?.displayCurrency ?? 'USD',
+        legacyMockOverlayEnabled: false,
+      },
     },
   };
 }
@@ -108,6 +117,9 @@ export function snapshotToDeployablePreset(
       activeCaseTypeId: config.settings.activeCaseTypeId,
       preferences: config.settings.preferences,
       modules: config.settings.modules,
+      dataSource: config.settings.dataSource?.displayCurrency
+        ? { displayCurrency: config.settings.dataSource.displayCurrency }
+        : undefined,
     },
   };
 }

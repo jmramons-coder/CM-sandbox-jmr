@@ -394,26 +394,9 @@ function DecisionOutcomeView({ caseData }: { caseData: CaseOverview }) {
   const outcome = decision?.decisionOutcome;
   if (!decision || !outcome) return <DecisionEmptyState caseData={caseData} onOpen={() => undefined} />;
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
-        <section className="rounded-lg border border-border-soft bg-white p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Recorded outcome</p>
-          <div className="mt-3 flex items-start gap-3">
-            <div className={`flex size-12 shrink-0 items-center justify-center rounded-full ${outcomeToneClass(outcome)}`}>
-              <OutcomeIcon outcome={outcome} />
-            </div>
-            <div>
-              <h3 className="text-[18px] font-semibold text-text-heading">{outcome.title}</h3>
-              <p className="mt-1 text-[12px] leading-relaxed text-text-secondary">{outcome.subtitle}</p>
-            </div>
-          </div>
-          {caseData.assessmentLabel ? (
-            <p className="mt-4 text-[11px] text-text-muted">{caseData.assessmentLabel}</p>
-          ) : null}
-        </section>
-        <DecisionAiSummaryPanel caseData={caseData} />
-      </div>
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
       <FinalDecisionSection caseData={caseData} decision={decision} outcome={outcome} />
+      <DecisionAiSummaryPanel caseData={caseData} />
     </div>
   );
 }

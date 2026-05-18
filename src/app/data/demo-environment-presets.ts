@@ -65,6 +65,7 @@ export function applyActiveDemoEnvironment(
       ...DEFAULT_DATA_SOURCE_SETTINGS,
       ...(target.settings.dataSource ?? {}),
       activeDatasetId: SHARED_DEMO_DATASET_ID,
+      displayCurrency: 'USD',
       legacyMockOverlayEnabled: false,
     },
   };

@@ -242,7 +242,7 @@ export const SBLI_DATASET: SystemDataset = {
   "generationProfileId": "sbli-case-only-seed",
   "targetRecordCount": 111,
   "documentMode": "metadata_only",
-  "displayCurrency": "GBP",
+  "displayCurrency": "USD",
   "description": "Shared demo dataset for Equisoft and SBLI branded environments. Four cases with full task, requirement, document, and evidence coverage.",
   "objectDomains": [
     "case",

@@ -1,24 +1,13 @@
 import { useState } from 'react';
-import { BookOpen, FileText } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { PlatformGuideModal } from './PlatformGuideModal';
 import { APPS, getActiveApp, type AppDef } from '../domain/apps';
 import { useThemeMode } from '../contexts/PlatformSettingsContext';
 
 export function AppSwitcher() {
   const { t } = useTranslation('nav');
-  /**
-   * Platform-guide hook. When the app is embedded in the Platform Guide iframe
-   * with `?guide=app-switcher`, auto-open the popover on first render so the
-   * guide can showcase the 9-dot trigger and its products/resources listbox.
-   */
-  const initiallyOpen =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('guide') === 'app-switcher';
-  const [open, setOpen] = useState(initiallyOpen);
-  const [guideOpen, setGuideOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const activeApp = getActiveApp(location.pathname);
@@ -29,16 +18,6 @@ export function AppSwitcher() {
     if (app.id !== activeApp.id) {
       navigate(app.defaultPath);
     }
-  };
-
-  const openGuide = () => {
-    setOpen(false);
-    setGuideOpen(true);
-  };
-
-  const openDocumentation = () => {
-    setOpen(false);
-    navigate('/documentation');
   };
 
   return (
@@ -72,11 +51,10 @@ export function AppSwitcher() {
         sideOffset={12}
         className="w-[240px] p-0"
       >
-        {/* Products */}
         <div className="px-4 pt-3 pb-1">
           <p className="text-[12px] font-semibold text-text-primary">{t('appSwitcher.products')}</p>
         </div>
-        <div className="flex flex-col px-2 pb-2">
+        <div className="flex flex-col px-2 pb-3">
           {APPS.map((app) => {
             const isActive = app.id === activeApp.id;
             return (
@@ -106,34 +84,7 @@ export function AppSwitcher() {
             );
           })}
         </div>
-
-        {/* Divider */}
-        <div className="border-t border-border-soft" />
-
-        {/* Resources */}
-        <div className="px-4 pt-2 pb-1">
-          <p className="text-[12px] font-semibold text-text-primary">{t('appSwitcher.resources')}</p>
-        </div>
-        <div className="flex flex-col px-2 pb-3">
-          <button
-            type="button"
-            onClick={openGuide}
-            className="flex items-center gap-3 rounded-md px-2 py-2 text-left text-[13px] font-medium text-text-primary transition-colors hover:bg-surface-muted"
-          >
-            <BookOpen className="size-3.5 text-text-muted" />
-            {t('appSwitcher.platformGuide')}
-          </button>
-          <button
-            type="button"
-            onClick={openDocumentation}
-            className="flex items-center gap-3 rounded-md px-2 py-2 text-left text-[13px] font-medium text-text-primary transition-colors hover:bg-surface-muted"
-          >
-            <FileText className="size-3.5 text-text-muted" />
-            {t('appSwitcher.documentationSpec')}
-          </button>
-        </div>
       </PopoverContent>
-      <PlatformGuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
     </Popover>
   );
 }

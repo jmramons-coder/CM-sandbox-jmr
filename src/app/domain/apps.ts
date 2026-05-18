@@ -1,4 +1,4 @@
-export type AppId = 'cm' | 'eapp' | 'docs';
+export type AppId = 'cm' | 'eapp';
 
 export interface AppDef {
   id: AppId;
@@ -26,18 +26,9 @@ export const APPS: AppDef[] = [
     basePath: '/eapp',
     defaultPath: '/eapp',
   },
-  {
-    id: 'docs',
-    name: 'Documentation & Spec',
-    subtitle: 'docs',
-    description: 'Product and implementation specifications.',
-    basePath: '/documentation',
-    defaultPath: '/documentation',
-  },
 ];
 
 export function getActiveApp(pathname: string): AppDef {
-  if (pathname.startsWith('/documentation')) return APPS[2];
   if (pathname.startsWith('/eapp')) return APPS[1];
   return APPS[0];
 }

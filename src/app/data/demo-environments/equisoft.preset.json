@@ -35,6 +35,9 @@
       "insights": false,
       "reports": false,
       "copilot": true
+    },
+    "dataSource": {
+      "displayCurrency": "USD"
     }
   }
 }
