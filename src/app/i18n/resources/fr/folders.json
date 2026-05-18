@@ -1,0 +1,489 @@
+{
+  "module": {
+    "title": "Tous les dossiers",
+    "count_one": "{{count}} dossier",
+    "count_other": "{{count}} dossiers",
+    "createFolder": "CRÉER UN DOSSIER",
+    "searchPlaceholder": "Rechercher par nom, n° de dossier ou produit…",
+    "filters": {
+      "all": "Tous",
+      "type": "Type",
+      "status": "Statut"
+    },
+    "viewToggle": {
+      "table": "Vue tableau",
+      "list": "Vue liste"
+    },
+    "columns": {
+      "id": "N° de dossier",
+      "idTooltip": "Référence unique du dossier.",
+      "type": "Type",
+      "claimant": "Demandeur",
+      "status": "Statut",
+      "statusTooltip": "Statut courant du cycle de vie du dossier.",
+      "product": "Produit",
+      "benefit": "Prestation",
+      "created": "Créé le",
+      "createdTooltip": "Date de création du dossier.",
+      "subCases": "Sous-dossiers"
+    },
+    "phasesCount_one": "{{count}} phase",
+    "phasesCount_other": "{{count}} phases",
+    "fallbackStatus": "Actif",
+    "folderTypes": {
+      "case": "Dossier",
+      "policy": "Police",
+      "application": "Demande",
+      "lead": "Prospect",
+      "client": "Client",
+      "agent": "Agent",
+      "contributor": "Contributeur",
+      "carrier": "Assureur",
+      "commission": "Commission"
+    }
+  },
+  "pagination": {
+    "rowPerPage": "Lignes par page",
+    "results": "{{rangeStart}}-{{rangeEnd}} de {{total}} résultats"
+  },
+  "workspace": {
+    "heading": "Dossiers",
+    "allFolders": "Tous les dossiers",
+    "casesSection": "Dossiers",
+    "policiesSection": "Polices",
+    "agentsSection": "Agents",
+    "clientsSection": "Clients",
+    "casesMenuAria": "Menu de la section Dossiers",
+    "policiesMenuAria": "Menu de la section Polices",
+    "agentsMenuAria": "Menu de la section Agents",
+    "clientsMenuAria": "Menu de la section Clients",
+    "menu": {
+      "collapseAll": "Tout réduire",
+      "removeAll": "Tout retirer",
+      "hideSection": "Masquer la section"
+    },
+    "empty": {
+      "noCases": "Aucun dossier ouvert.",
+      "noPolicies": "Aucune police ouverte.",
+      "noAgents": "Aucun agent ouvert.",
+      "noClients": "Aucun client ouvert.",
+      "allHidden": "Tous masqués. Ouvrez-en un depuis la liste.",
+      "allSectionsHidden": "Toutes les sections sont masquées. Ouvrez un dossier depuis",
+      "allSectionsHiddenSuffix": "pour faire réapparaître la section."
+    },
+    "removeAria": "Retirer {{label}} de la barre latérale",
+    "removeTitle": "Retirer de la barre latérale",
+    "panel": {
+      "close": "Fermer le panneau Dossiers",
+      "open": "Ouvrir le panneau Dossiers"
+    }
+  },
+  "entity": {
+    "copy": {
+      "policy": { "singular": "Police", "plural": "Polices" },
+      "client": { "singular": "Client", "plural": "Clients" },
+      "agent": { "singular": "Agent", "plural": "Agents" },
+      "coverage": { "singular": "Couverture", "plural": "Couvertures" },
+      "participant": { "singular": "Participant", "plural": "Participants" }
+    },
+    "subFolderList": {
+      "search": "Rechercher",
+      "selectAll": "Tout sélectionner",
+      "selectRow": "Sélectionner {{id}}",
+      "addButton": {
+        "policy": "CRÉER UNE POLICE",
+        "agent": "AJOUTER UN AGENT",
+        "coverage": "CRÉER UNE COUVERTURE",
+        "participant": "AJOUTER UN PARTICIPANT"
+      },
+      "descriptions": {
+        "agent": "Liste des agents associés à la police. Vous pouvez les ouvrir dans l'arborescence en cliquant sur le nom ou via une action de masse.",
+        "coverage": "Liste de toutes les couvertures de la police. Vous pouvez les ouvrir dans l'arborescence en cliquant sur le nom ou via une action de masse.",
+        "participant": "Liste des participants à la police. Vous pouvez les ouvrir dans l'arborescence en cliquant sur le nom ou via une action de masse."
+      },
+      "notRecognized": "Type de sous-dossier non reconnu.",
+      "emptyDash": "—",
+      "emptyCell": "-",
+      "columns": {
+        "agent": {
+          "name": "Nom de l'agent",
+          "roles": "Rôles",
+          "phone": "Téléphone",
+          "email": "Courriel"
+        },
+        "coverage": {
+          "name": "Nom",
+          "type": "Type",
+          "level": "Niveau",
+          "parent": "Lien parent",
+          "amount": "Montant",
+          "annualPremium": "Prime annuelle"
+        },
+        "participant": {
+          "name": "Nom du participant",
+          "roles": "Rôles",
+          "phone": "Téléphone",
+          "email": "Courriel"
+        }
+      }
+    },
+    "overview": {
+      "notImplemented": "« {{tab}} » n'est pas encore disponible.",
+      "placeholderTitle": "{{folderId}}",
+      "placeholderBody": "Aperçu non encore créé pour cette entrée.",
+      "backToFolder": "← Retour au dossier",
+      "breadcrumbAria": "Fil d'Ariane",
+      "breadcrumbRoot": "Dossiers"
+    },
+    "relationship": {
+      "search": "Rechercher",
+      "add": "AJOUTER DES RELATIONS",
+      "addInline": "NOUVELLE RELATION",
+      "title": "Ajouter des relations",
+      "client": "Client {{name}}",
+      "description": "Gérer la relation entre {{name}} et d'autres entités.",
+      "configure": "Configurer cette relation...",
+      "sentence": "{{folderName}} est {{relationship}} de {{entityName}}",
+      "emptyTitle": "Aucune relation",
+      "emptyDescription": "Les relations aident à suivre comment les enregistrements sont connectés.",
+      "save": "ENREGISTRER",
+      "cancel": "ANNULER",
+      "selectOption": "Sélectionner une option",
+      "columns": {
+        "folderName": "Nom du dossier",
+        "folderType": "Type de dossier",
+        "relationship": "Relation",
+        "effectiveDate": "Date d'effet",
+        "expirationDate": "Date d'expiration",
+        "status": "Statut"
+      },
+      "fields": {
+        "folderType": "Type de dossier",
+        "folderName": "Nom du dossier",
+        "relationship": "Relation",
+        "effectiveDate": "Date d'effet",
+        "expirationDate": "Date d'expiration"
+      },
+      "folderTypes": {
+        "Agent": "Agent",
+        "Coverage": "Garantie",
+        "Participant": "Participant"
+      }
+    },
+    "config": {
+      "menu": {
+        "configure": "Configurer",
+        "delete": "Supprimer"
+      },
+      "title": "Configurer la vue de la police",
+      "description": "Choisissez les sections d'information à afficher et ajoutez des sections ou champs personnalisés pour cette police.",
+      "sections": "Sections d'information",
+      "sectionsHelp": "Sélectionnez une section pour la modifier. Activez l'affichage ou déplacez les sections avant d'enregistrer.",
+      "fields": "Champs personnalisés",
+      "fieldsHelp": "Affichez, masquez, ajoutez, réordonnez et modifiez les colonnes de cette section en grille.",
+      "newSectionName": "Nom de la section",
+      "newSectionDefault": "Nouveau",
+      "sectionName": "Nom de la section",
+      "addSection": "Ajouter une section",
+      "targetSection": "Section",
+      "selectSection": "Sélectionner une section",
+      "visible": "Visible",
+      "moveUp": "Déplacer vers le haut",
+      "moveDown": "Déplacer vers le bas",
+      "fieldType": "Type de champ",
+      "fieldLabel": "Libellé du champ",
+      "columnLabel": "Libellé de la colonne",
+      "newFieldLabel": "Nouveau champ",
+      "fieldValue": "Valeur",
+      "listValues": "Valeurs de la liste",
+      "listPlaceholder": "Séparer les valeurs par des virgules",
+      "addField": "Ajouter un champ",
+      "addColumn": "Ajouter une colonne",
+      "showColumn": "Afficher",
+      "removeField": "Supprimer le champ",
+      "emptyFields": "Aucun champ dans cette section. Ajoutez un champ pour commencer à la configurer.",
+      "nonFieldGrid": "Ce type de section peut être affiché, masqué, renommé ou réordonné. La modification des champs est disponible pour les sections de type grille d'information.",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "sectionKinds": {
+        "fieldGrid": "Grille de champs",
+        "tableSection": "Tableau",
+        "contact": "Contact"
+      },
+      "fieldTypes": {
+        "text": "Texte",
+        "number": "Nombre",
+        "date": "Date",
+        "list": "Sélection / liste"
+      }
+    },
+    "addParticipant": {
+      "searchPlaceholder": "Rechercher par nom, courriel, téléphone, date de naissance, adresse…",
+      "clearClient": "Effacer le client sélectionné",
+      "title": "Ajouter un participant",
+      "detailsTitle": "Détails du participant",
+      "clientFolder": "Dossier client",
+      "or": "Ou",
+      "newParticipant": "NOUVEAU PARTICIPANT",
+      "rolesTitle": "Rôles du participant",
+      "ageYears": "{{age}} ans",
+      "recentSearches": "Recherches récentes",
+      "searchResults": "Résultats de recherche",
+      "selectedClientTitle": "Client sélectionné",
+      "entry": {
+        "advancedSearch": "Recherche avancée de client",
+        "advancedSearchDescription": "Rechercher les dossiers clients existants avant d'attribuer les rôles.",
+        "quickParticipant": "Création rapide de participant",
+        "quickParticipantDescription": "Créer rapidement un participant et compléter les détails plus tard."
+      }
+    },
+    "advancedClientSearch": {
+      "title": "Recherche avancée de client",
+      "description": "Recherchez et filtrez les dossiers clients, puis sélectionnez le client à ajouter comme participant à la police.",
+      "searchLabel": "Dossiers clients",
+      "searchPlaceholder": "Rechercher par nom, courriel, téléphone, date de naissance, adresse…",
+      "clientCount": "{{count}} clients",
+      "filterPlaceholder": "Sélectionner un filtre",
+      "clearFilters": "Effacer les filtres",
+      "clearAll": "Tout effacer",
+      "selectFilters": "Sélectionner les filtres",
+      "applyFilters": "Appliquer les filtres",
+      "filters": {
+        "withEmail": "Courriel",
+        "withPhone": "Téléphone",
+        "withAddress": "Adresse",
+        "withDob": "Date de naissance",
+        "status": {
+          "label": "Statut",
+          "active": "Actif",
+          "inactive": "Inactif"
+        },
+        "birthYear": {
+          "label": "Année de naissance",
+          "before1970": "Avant 1970",
+          "1970-1989": "1970-1989",
+          "1990plus": "1990 et après"
+        },
+        "category": {
+          "label": "Catégorie",
+          "policyholder": "Titulaire",
+          "dependent": "Personne à charge",
+          "relatedParty": "Partie liée"
+        }
+      },
+      "columns": {
+        "displayName": "Nom d'affichage",
+        "category": "Catégorie",
+        "status": "Statut",
+        "email": "Courriel",
+        "phone": "N° de téléphone",
+        "dob": "Date de naissance",
+        "address": "Adresse"
+      },
+      "emptyTitle": "Aucun client trouvé",
+      "emptyDescription": "Essayez d'ajuster votre recherche ou vos filtres.",
+      "selectClient": "Sélectionner {{name}}",
+      "selectedPrefix": "Sélectionné :",
+      "selectPrompt": "Sélectionnez un client pour continuer",
+      "cancel": "Annuler",
+      "confirm": "Utiliser le client sélectionné"
+    },
+    "form": {
+      "actions": {
+        "create": "CRÉER",
+        "cancel": "ANNULER"
+      },
+      "roles": {
+        "newRole": "Nouveau",
+        "removeRole": "Supprimer le rôle",
+        "add": "AJOUTER"
+      },
+      "requiredNotePrefix": "Les champs obligatoires sont marqués d'un",
+      "requiredNoteSuffix": ".",
+      "requiredSr": "obligatoire",
+      "roleDetail": {
+        "title": "Rôle",
+        "linkedTo": "Lié à",
+        "selectOption": "Sélectionner une option",
+        "role": "Rôle",
+        "roleMandatory": "Rôle",
+        "selectRole": "Sélectionner un rôle",
+        "empty": "Sélectionnez un rôle pour afficher les détails",
+        "relatedDetails": "Détails associés"
+      }
+    },
+    "table": {
+      "empty": "Aucune entrée.",
+      "rowActions": "Actions de ligne",
+      "rowsPerPage": "Lignes par page",
+      "results": "1-{{end}} sur {{total}} résultats",
+      "firstPage": "Première page",
+      "previousPage": "Page précédente",
+      "nextPage": "Page suivante",
+      "lastPage": "Dernière page"
+    },
+    "duplicateClient": {
+      "title": "Client existant possible",
+      "description": "Vérifiez ces correspondances avant de créer un nouveau client. Carbon ne peut pas s'appuyer sur un seul identifiant unique dans ce marché; les correspondances utilisent donc plusieurs signaux faibles.",
+      "identityTitle": "Vérification d'identité du nouveau client",
+      "identityDescription": "Saisissez les renseignements disponibles. Les correspondances possibles apparaissent dès qu'il y a assez de signaux.",
+      "useExisting": "Utiliser le client existant",
+      "reviewDetails": "Vérifier les détails",
+      "createAnyway": "Créer quand même",
+      "createAnywayTitle": "Besoin de créer un client distinct?",
+      "createAnywayDescription": "Vous pouvez continuer, mais indiquez pourquoi il ne s'agit pas de la même entité.",
+      "overrideReason": "Raison de création d'un nouveau client",
+      "selectReason": "Sélectionner une raison",
+      "overrideRequired": "Sélectionnez Créer quand même et choisissez une raison avant de créer ce client.",
+      "confidence": {
+        "high": "Correspondance élevée",
+        "possible": "Correspondance possible",
+        "low": "Correspondance faible"
+      },
+      "fields": {
+        "legalName": "Nom légal",
+        "dob": "Date de naissance",
+        "phone": "Numéro de téléphone",
+        "email": "Courriel",
+        "address": "Adresse physique",
+        "parish": "Paroisse",
+        "gender": "Genre",
+        "taxId": "Identifiant fiscal, si disponible"
+      },
+      "reasons": {
+        "differentPerson": "Personne différente",
+        "outdatedData": "Données existantes obsolètes",
+        "insufficientMatch": "Correspondance insuffisante"
+      }
+    },
+    "quickCreate": {
+      "participantType": "Type de participant",
+      "types": {
+        "individual": "Individu",
+        "organization": "Organisation"
+      },
+      "close": "Fermer la création rapide",
+      "informative": "Informatif",
+      "infoText": "La création d'un nouveau participant le liera également à la police. Il s'agit d'un processus de création rapide. Des détails supplémentaires devront être saisis plus tard pour compléter le profil client.",
+      "individual": {
+        "title": "Nouveau participant - Individu (création rapide)"
+      },
+      "organization": {
+        "title": "Nouveau participant - Organisation (création rapide)"
+      },
+      "fields": {
+        "suffix": "Suffixe",
+        "title": "Titre",
+        "firstName": "Prénom",
+        "middleName": "Deuxième prénom",
+        "lastName": "Nom de famille",
+        "displayName": "Nom affiché dans l'application",
+        "displayNameDefault": "Nom affiché - par défaut",
+        "gender": "Genre",
+        "language": "Langue",
+        "dob": "Date de naissance",
+        "companyName": "Nom de l'entreprise - par défaut",
+        "establishmentDate": "Date d'établissement"
+      },
+      "placeholders": {
+        "suffix": "Sélectionner un suffixe",
+        "title": "Sélectionner un titre",
+        "gender": "Sélectionner un genre",
+        "language": "Sélectionner une langue"
+      }
+    },
+    "header": {
+      "createAria": "Créer",
+      "messagesAria": "Messages",
+      "relatedItemsAria": "{{count}} éléments liés",
+      "moreActionsAria": "Autres actions",
+      "fallbackInitial": "?"
+    },
+    "section": {
+      "moreActions": "Autres actions"
+    },
+    "contact": {
+      "emails": "Courriels",
+      "phones": "Téléphones",
+      "addresses": "Adresses",
+      "kinds": {
+        "Business": "Travail",
+        "Personal": "Personnel",
+        "Mobile": "Cellulaire",
+        "Residence": "Résidence"
+      }
+    },
+    "timeline": {
+      "title": "Chronologie"
+    },
+    "banner": {
+      "statusRole": "statut"
+    }
+  },
+  "folderView": {
+    "notFound": "Dossier introuvable.",
+    "breadcrumbRoot": "Dossiers",
+    "folderBadge": "Dossier",
+    "applicant": "Demandeur",
+    "plan": "Régime",
+    "monthlyBenefit": "Prestation mensuelle",
+    "sla": "Engagement de service",
+    "casesInFolder": "Dossiers dans ce regroupement",
+    "recentActivity": "Activité récente",
+    "stages": {
+      "completed": "Toutes les étapes sont terminées",
+      "notStarted": "Pas encore commencé",
+      "stepN": "Étape {{current}} sur {{total}}"
+    },
+    "preStages": {
+      "fnol": "Avis de sinistre reçu",
+      "triage": "Triage initial",
+      "requirements": "Collecte des exigences",
+      "review": "Revue médicale",
+      "decision": "Décision"
+    },
+    "postStages": {
+      "restoration": "Plan de rétablissement",
+      "recovery": "Rétablissement en cours",
+      "monitoring": "Suivi",
+      "rtw": "Planification du retour au travail",
+      "closure": "Fermeture du dossier"
+    },
+    "rag": {
+      "Green": "VERT",
+      "Amber": "AMBRE",
+      "Red": "ROUGE"
+    }
+  },
+  "folderCaseView": {
+    "notFound": "Sous-dossier introuvable.",
+    "breadcrumbRoot": "Dossiers"
+  },
+  "eappAiAssist": {
+    "header": "Assistant IA",
+    "title": "Informations pertinentes",
+    "panelHint": "Cliquez sur une information ou son repere dans la page pour voir des conseils concis et actionnables.",
+    "viewInsight_one": "Voir 1 information IA",
+    "viewInsight_other": "Voir {{count}} informations IA",
+    "filters": {
+      "all": "Tous",
+      "opportunity": "Occasions",
+      "underwriting": "Tarification",
+      "compliance": "Conformite",
+      "dataQuality": "Qualite des donnees"
+    },
+    "empty": {
+      "title": "Aucune suggestion IA pour cette etape.",
+      "description": "Nous afficherons les conseils ici pendant la saisie des details.",
+      "filterTitle": "Aucune information ne correspond a ce filtre.",
+      "filterDescription": "Essayez un autre type d'information."
+    },
+    "sections": {
+      "bestNextAction": "Meilleure prochaine action",
+      "whyItHelps": "Pourquoi c'est utile",
+      "doThisNext": "A faire ensuite",
+      "questionsToAsk": "Questions a poser"
+    },
+    "jumpToField": "Aller au champ"
+  }
+}

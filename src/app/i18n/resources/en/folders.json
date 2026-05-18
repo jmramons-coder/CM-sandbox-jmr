@@ -1,0 +1,489 @@
+{
+  "module": {
+    "title": "All folders",
+    "count_one": "{{count}} folder",
+    "count_other": "{{count}} folders",
+    "createFolder": "CREATE FOLDER",
+    "searchPlaceholder": "Search by name, folder #, or product...",
+    "filters": {
+      "all": "All",
+      "type": "Type",
+      "status": "Status"
+    },
+    "viewToggle": {
+      "table": "Table view",
+      "list": "List view"
+    },
+    "columns": {
+      "id": "Folder ID",
+      "idTooltip": "Unique folder reference number.",
+      "type": "Type",
+      "claimant": "Claimant",
+      "status": "Status",
+      "statusTooltip": "Current lifecycle status of the folder.",
+      "product": "Product",
+      "benefit": "Benefit",
+      "created": "Created",
+      "createdTooltip": "Folder creation date.",
+      "subCases": "Sub-cases"
+    },
+    "phasesCount_one": "{{count}} phase",
+    "phasesCount_other": "{{count}} phases",
+    "fallbackStatus": "Active",
+    "folderTypes": {
+      "case": "Case",
+      "policy": "Policy",
+      "application": "Application",
+      "lead": "Lead",
+      "client": "Client",
+      "agent": "Agent",
+      "contributor": "Contributor",
+      "carrier": "Carrier",
+      "commission": "Commission"
+    }
+  },
+  "pagination": {
+    "rowPerPage": "Row per page",
+    "results": "{{rangeStart}}-{{rangeEnd}} of {{total}} results"
+  },
+  "workspace": {
+    "heading": "Folders",
+    "allFolders": "All folders",
+    "casesSection": "Cases",
+    "policiesSection": "Policies",
+    "agentsSection": "Agents",
+    "clientsSection": "Clients",
+    "casesMenuAria": "Cases section menu",
+    "policiesMenuAria": "Policies section menu",
+    "agentsMenuAria": "Agents section menu",
+    "clientsMenuAria": "Clients section menu",
+    "menu": {
+      "collapseAll": "Collapse all",
+      "removeAll": "Remove all",
+      "hideSection": "Hide section"
+    },
+    "empty": {
+      "noCases": "No cases opened.",
+      "noPolicies": "No policies opened.",
+      "noAgents": "No agents opened.",
+      "noClients": "No clients opened.",
+      "allHidden": "All hidden. Open one from the list.",
+      "allSectionsHidden": "All sections hidden. Open a folder from",
+      "allSectionsHiddenSuffix": "to bring its section back."
+    },
+    "removeAria": "Remove {{label}} from sidebar",
+    "removeTitle": "Remove from sidebar",
+    "panel": {
+      "close": "Close folders panel",
+      "open": "Open folders panel"
+    }
+  },
+  "entity": {
+    "copy": {
+      "policy": { "singular": "Policy", "plural": "Policies" },
+      "client": { "singular": "Client", "plural": "Clients" },
+      "agent": { "singular": "Agent", "plural": "Agents" },
+      "coverage": { "singular": "Coverage", "plural": "Coverages" },
+      "participant": { "singular": "Participant", "plural": "Participants" }
+    },
+    "subFolderList": {
+      "search": "Search",
+      "selectAll": "Select all",
+      "selectRow": "Select {{id}}",
+      "addButton": {
+        "policy": "CREATE POLICY",
+        "agent": "ADD AGENT",
+        "coverage": "CREATE COVERAGE",
+        "participant": "ADD PARTICIPANT"
+      },
+      "descriptions": {
+        "agent": "These are lists of agents assigned on the policy, they can be opened in the tree view either by selecting the name link or through the mass action function.",
+        "coverage": "This is a list of all coverages on the policy, they can be opened in the tree view either by selecting the name link or through the mass action function.",
+        "participant": "This is a list of participants on the policy, they can be opened in the tree view either by selecting the name link or through the mass action function."
+      },
+      "notRecognized": "Sub-folder type not recognized.",
+      "emptyDash": "—",
+      "emptyCell": "-",
+      "columns": {
+        "agent": {
+          "name": "Agent name",
+          "roles": "Roles",
+          "phone": "Phone number",
+          "email": "Email"
+        },
+        "coverage": {
+          "name": "Name",
+          "type": "Type",
+          "level": "Level",
+          "parent": "Parent link",
+          "amount": "Amount",
+          "annualPremium": "Annual premium"
+        },
+        "participant": {
+          "name": "Participant name",
+          "roles": "Roles",
+          "phone": "Phone number",
+          "email": "Email"
+        }
+      }
+    },
+    "overview": {
+      "notImplemented": "\"{{tab}}\" is not implemented yet.",
+      "placeholderTitle": "{{folderId}}",
+      "placeholderBody": "Overview not yet built for this entry.",
+      "backToFolder": "← Back to folder",
+      "breadcrumbAria": "Breadcrumb",
+      "breadcrumbRoot": "Folders"
+    },
+    "relationship": {
+      "search": "Search",
+      "add": "ADD RELATIONSHIPS",
+      "addInline": "NEW RELATIONSHIP",
+      "title": "Add relationships",
+      "client": "Client {{name}}",
+      "description": "Manage relationship between {{name}} and other entities.",
+      "configure": "Configure this relationship...",
+      "sentence": "{{folderName}} is {{relationship}} of {{entityName}}",
+      "emptyTitle": "No relationships",
+      "emptyDescription": "Relationships help track how records are connected.",
+      "save": "SAVE",
+      "cancel": "CANCEL",
+      "selectOption": "Select an option",
+      "columns": {
+        "folderName": "Folder Name",
+        "folderType": "Folder Type",
+        "relationship": "Relationship",
+        "effectiveDate": "Effectived Date",
+        "expirationDate": "Expiration Date",
+        "status": "Status"
+      },
+      "fields": {
+        "folderType": "Folder type",
+        "folderName": "Folder name",
+        "relationship": "Relationship",
+        "effectiveDate": "Effective date",
+        "expirationDate": "Expiration date"
+      },
+      "folderTypes": {
+        "Agent": "Agent",
+        "Coverage": "Coverage",
+        "Participant": "Participant"
+      }
+    },
+    "config": {
+      "menu": {
+        "configure": "Configure",
+        "delete": "Delete"
+      },
+      "title": "Configure policy view",
+      "description": "Choose which information sections to display and add custom sections or fields for this policy.",
+      "sections": "Information sections",
+      "sectionsHelp": "Select a section to edit it. Toggle visibility or move sections before saving.",
+      "fields": "Custom fields",
+      "fieldsHelp": "Show, hide, add, reorder, and edit columns for this grid section.",
+      "newSectionName": "Section name",
+      "newSectionDefault": "New",
+      "sectionName": "Section name",
+      "addSection": "Add section",
+      "targetSection": "Section",
+      "selectSection": "Select a section",
+      "visible": "Visible",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "fieldType": "Field type",
+      "fieldLabel": "Field label",
+      "columnLabel": "Column label",
+      "newFieldLabel": "New field",
+      "fieldValue": "Value",
+      "listValues": "List values",
+      "listPlaceholder": "Separate values with commas",
+      "addField": "Add field",
+      "addColumn": "Add column",
+      "showColumn": "Show",
+      "removeField": "Remove field",
+      "emptyFields": "No fields in this section yet. Add a field to start configuring it.",
+      "nonFieldGrid": "This section type can be shown, hidden, renamed, or reordered. Field editing is available for information field-grid sections.",
+      "cancel": "Cancel",
+      "save": "Save",
+      "sectionKinds": {
+        "fieldGrid": "Field grid",
+        "tableSection": "Table",
+        "contact": "Contact"
+      },
+      "fieldTypes": {
+        "text": "Text",
+        "number": "Number",
+        "date": "Date",
+        "list": "Select / list"
+      }
+    },
+    "addParticipant": {
+      "searchPlaceholder": "Search by name, email, phone, date of birth, address...",
+      "clearClient": "Clear selected client",
+      "title": "Add participant",
+      "detailsTitle": "Participant details",
+      "clientFolder": "Client folder",
+      "or": "Or",
+      "newParticipant": "NEW PARTICIPANT",
+      "rolesTitle": "Participant roles",
+      "ageYears": "{{age}} years old",
+      "recentSearches": "Recent searches",
+      "searchResults": "Search results",
+      "selectedClientTitle": "Selected client",
+      "entry": {
+        "advancedSearch": "Advanced client search",
+        "advancedSearchDescription": "Search existing client folders before assigning roles.",
+        "quickParticipant": "Quick participant creation",
+        "quickParticipantDescription": "Create a participant quickly and complete details later."
+      }
+    },
+    "advancedClientSearch": {
+      "title": "Advanced client search",
+      "description": "Search and filter client folders, then select the client to add as a policy participant.",
+      "searchLabel": "Client folders",
+      "searchPlaceholder": "Search by name, email, phone, date of birth, address...",
+      "clientCount": "{{count}} clients",
+      "filterPlaceholder": "Select filter",
+      "clearFilters": "Clear filters",
+      "clearAll": "Clear all",
+      "selectFilters": "Select filters",
+      "applyFilters": "Apply filters",
+      "filters": {
+        "withEmail": "Email",
+        "withPhone": "Phone",
+        "withAddress": "Address",
+        "withDob": "Date of birth",
+        "status": {
+          "label": "Status",
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "birthYear": {
+          "label": "Year of birth",
+          "before1970": "Before 1970",
+          "1970-1989": "1970-1989",
+          "1990plus": "1990 and after"
+        },
+        "category": {
+          "label": "Category",
+          "policyholder": "Policyholder",
+          "dependent": "Dependent",
+          "relatedParty": "Related party"
+        }
+      },
+      "columns": {
+        "displayName": "Display name",
+        "category": "Category",
+        "status": "Status",
+        "email": "Email",
+        "phone": "Phone no.",
+        "dob": "Date of birth",
+        "address": "Address"
+      },
+      "emptyTitle": "No clients found",
+      "emptyDescription": "Try adjusting your search or filters.",
+      "selectClient": "Select {{name}}",
+      "selectedPrefix": "Selected:",
+      "selectPrompt": "Select a client to continue",
+      "cancel": "Cancel",
+      "confirm": "Use selected client"
+    },
+    "form": {
+      "actions": {
+        "create": "CREATE",
+        "cancel": "CANCEL"
+      },
+      "roles": {
+        "newRole": "New",
+        "removeRole": "Remove role",
+        "add": "ADD"
+      },
+      "requiredNotePrefix": "Required fields are marked with an",
+      "requiredNoteSuffix": ".",
+      "requiredSr": "required",
+      "roleDetail": {
+        "title": "Role",
+        "linkedTo": "Linked To",
+        "selectOption": "Select an option",
+        "role": "Role",
+        "roleMandatory": "Role",
+        "selectRole": "Select a role",
+        "empty": "Select a role to display details",
+        "relatedDetails": "Related details"
+      }
+    },
+    "table": {
+      "empty": "No entries.",
+      "rowActions": "Row actions",
+      "rowsPerPage": "Rows per page",
+      "results": "1-{{end}} of {{total}} results",
+      "firstPage": "First page",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "lastPage": "Last page"
+    },
+    "duplicateClient": {
+      "title": "Possible existing client",
+      "description": "Review these matches before creating a new client. Carbon cannot rely on one unique identifier in this market, so matches are based on several weak signals.",
+      "identityTitle": "New client identity check",
+      "identityDescription": "Enter the identity information available. Possible matches appear as soon as there is enough signal.",
+      "useExisting": "Use existing client",
+      "reviewDetails": "Review details",
+      "createAnyway": "Create new anyway",
+      "createAnywayTitle": "Need to create a separate client?",
+      "createAnywayDescription": "You can proceed, but record why this is not the same entity.",
+      "overrideReason": "Reason for creating a new client",
+      "selectReason": "Select a reason",
+      "overrideRequired": "Select Create new anyway and choose a reason before creating this client.",
+      "confidence": {
+        "high": "High match",
+        "possible": "Possible match",
+        "low": "Low match"
+      },
+      "fields": {
+        "legalName": "Legal name",
+        "dob": "Date of birth",
+        "phone": "Phone number",
+        "email": "Email",
+        "address": "Physical address",
+        "parish": "Parish",
+        "gender": "Gender",
+        "taxId": "Tax ID, if available"
+      },
+      "reasons": {
+        "differentPerson": "Different person",
+        "outdatedData": "Existing data is outdated",
+        "insufficientMatch": "Insufficient match"
+      }
+    },
+    "quickCreate": {
+      "participantType": "Participant Type",
+      "types": {
+        "individual": "Individual",
+        "organization": "Organization"
+      },
+      "close": "Close quick create",
+      "informative": "Informative",
+      "infoText": "Creating a new participant will also link it to the policy. This is a quick creation process. Additional details must be filled in later to complete the client profile.",
+      "individual": {
+        "title": "New participant - Individual (Quick create)"
+      },
+      "organization": {
+        "title": "New participant - Organization (Quick create)"
+      },
+      "fields": {
+        "suffix": "Suffix",
+        "title": "Title",
+        "firstName": "First name",
+        "middleName": "Middle name",
+        "lastName": "Last name",
+        "displayName": "Display name in the application",
+        "displayNameDefault": "Display name - default",
+        "gender": "Gender",
+        "language": "Language",
+        "dob": "Date of birth",
+        "companyName": "Company name - default",
+        "establishmentDate": "Establishment date"
+      },
+      "placeholders": {
+        "suffix": "Select a suffix",
+        "title": "Select a title",
+        "gender": "Select a gender",
+        "language": "Select a language"
+      }
+    },
+    "header": {
+      "createAria": "Create",
+      "messagesAria": "Messages",
+      "relatedItemsAria": "{{count}} related items",
+      "moreActionsAria": "More actions",
+      "fallbackInitial": "?"
+    },
+    "section": {
+      "moreActions": "More actions"
+    },
+    "contact": {
+      "emails": "Emails",
+      "phones": "Phones",
+      "addresses": "Addresses",
+      "kinds": {
+        "Business": "Business",
+        "Personal": "Personal",
+        "Mobile": "Mobile",
+        "Residence": "Residence"
+      }
+    },
+    "timeline": {
+      "title": "Timeline"
+    },
+    "banner": {
+      "statusRole": "status"
+    }
+  },
+  "folderView": {
+    "notFound": "Folder not found.",
+    "breadcrumbRoot": "Folders",
+    "folderBadge": "Folder",
+    "applicant": "Applicant",
+    "plan": "Plan",
+    "monthlyBenefit": "Monthly Benefit",
+    "sla": "SLA",
+    "casesInFolder": "Cases in this folder",
+    "recentActivity": "Recent activity",
+    "stages": {
+      "completed": "All steps completed",
+      "notStarted": "Not yet started",
+      "stepN": "Step {{current}} of {{total}}"
+    },
+    "preStages": {
+      "fnol": "FNOL Received",
+      "triage": "Initial Triage",
+      "requirements": "Requirement Gathering",
+      "review": "Medical Review",
+      "decision": "Decision"
+    },
+    "postStages": {
+      "restoration": "Restoration Plan",
+      "recovery": "Recovery Underway",
+      "monitoring": "Monitoring",
+      "rtw": "RTW Planning",
+      "closure": "Case Closure"
+    },
+    "rag": {
+      "Green": "GREEN",
+      "Amber": "AMBER",
+      "Red": "RED"
+    }
+  },
+  "folderCaseView": {
+    "notFound": "Sub-case not found.",
+    "breadcrumbRoot": "Folders"
+  },
+  "eappAiAssist": {
+    "header": "AI assist",
+    "title": "Relevant insights",
+    "panelHint": "Click an insight or its cue in the page to see concise, actionable guidance.",
+    "viewInsight_one": "View 1 AI insight",
+    "viewInsight_other": "View {{count}} AI insights",
+    "filters": {
+      "all": "All",
+      "opportunity": "Opportunities",
+      "underwriting": "Underwriting",
+      "compliance": "Compliance",
+      "dataQuality": "Data quality"
+    },
+    "empty": {
+      "title": "No AI suggestions for this step yet.",
+      "description": "We'll surface guidance here as you fill in details.",
+      "filterTitle": "No insights match this filter.",
+      "filterDescription": "Try a different insight type."
+    },
+    "sections": {
+      "bestNextAction": "Best next action",
+      "whyItHelps": "Why it helps",
+      "doThisNext": "Do this next",
+      "questionsToAsk": "Questions to ask"
+    },
+    "jumpToField": "Jump to field"
+  }
+}

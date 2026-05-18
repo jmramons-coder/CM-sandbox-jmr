@@ -1,0 +1,61 @@
+{
+  "modules": {
+    "home": "Inicio",
+    "cases": "Casos",
+    "folders": "Carpetas",
+    "finances": "Finanzas",
+    "tasks": "Tareas",
+    "requests": "Solicitudes",
+    "documents": "Documentos",
+    "aiActions": "Monitoreo inteligente",
+    "insights": "Insights",
+    "reports": "Informes",
+    "assistant": "Asistente"
+  },
+  "globalCreate": {
+    "title": "Crear",
+    "ariaLabel": "Crear un registro",
+    "case": "Caso",
+    "task": "Tarea",
+    "request": "Solicitud"
+  },
+  "activityFeed": {
+    "label": "Feed",
+    "ariaLabel": "Feed de actividad de IA",
+    "popoverTitle": "Feed de actividad de IA",
+    "popoverBody": "Actívelo para ver en tiempo real lo que el equipo de IA realiza: tareas procesadas, planes en curso y seguimiento de sus casos."
+  },
+  "header": {
+    "openAssistant": "Abrir el Asistente Amplify",
+    "resizeAiPanel": "Cambiar el tamaño del panel de IA",
+    "resizeChat": "Cambiar el tamaño del chat"
+  },
+  "aiPanel": {
+    "eyebrow": "Asistente Amplify",
+    "renameConversation": "Renombrar conversación",
+    "newConversation": "Nueva conversación",
+    "newChat": "Nuevo chat",
+    "openFullPage": "Abrir a pantalla completa",
+    "closeAssistant": "Cerrar el asistente"
+  },
+  "sidePanel": {
+    "close": "Cerrar el panel lateral",
+    "open": "Abrir el panel lateral",
+    "resize": "Cambiar el tamaño del panel lateral"
+  },
+  "userMenu": {
+    "openMenu": "Abrir el menú de usuario",
+    "profile": "Perfil",
+    "soonBadge": "Próximo",
+    "platformSettings": "Configuración de la plataforma",
+    "signOut": "Cerrar sesión"
+  },
+  "appSwitcher": {
+    "switchApplication": "Cambiar de aplicación",
+    "products": "Productos",
+    "resources": "Recursos",
+    "platformGuide": "Guía de la plataforma",
+    "documentationSpec": "Documentación y especificación",
+    "advisorsLink": "Equisoft para asesores"
+  }
+}

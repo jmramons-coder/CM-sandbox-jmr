@@ -1,0 +1,787 @@
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Plus, X, Clock, ChevronDown, Kanban, List, MoreVertical, Users, Lock, Check, ArrowLeftRight, ClipboardList } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router';
+import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
+import { FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
+import { TaskKanbanBoard } from './tasks/TaskKanbanBoard';
+import { PriorityChip, SearchBar } from './ds';
+import { TaskDetailEmbeddedView, type TaskPanelNavigationPayload } from './TaskDetailSidePanel';
+import { pushWorkspacePanelContext, taskPanelContextId } from '../utils/workspacePanelContextUtils';
+import { CreateTaskModal } from './CreateTaskModal';
+import { ModuleTabsBar } from './ModuleTabsBar';
+import { Checkbox } from './ui/checkbox';
+import { WorkspaceObjectSidePanel, type WorkspacePanelContext } from './WorkspaceObjectSidePanel';
+import { TEAMS, CURRENT_USER } from '../data/mock-tasks';
+import { filterDatasetBySettings, getSystemDataset, listTasks } from '../data/objectRepository';
+import { updateTaskStatus } from '../data/datasetMutations';
+import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
+import { moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import { UI_CLASS } from '../constants/design-tokens';
+import { getStatusLozengeType, sortTasks } from '../utils';
+import { filterTasks } from '../utils/task-filters';
+import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
+import type { Task, TaskViewMode, TaskTabType, SortableColumn, SortDirection } from '../types';
+import { getDefaultSidePanelWidth } from '../utils/sidepanel-width';
+import { ModuleTableCheckboxColumnCell } from './ModuleTableCheckboxColumn';
+import {
+  isTaskAiSourced,
+  MODULE_TABLE_CHECKBOX_COL_WIDTH,
+  MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS,
+  SummaryTableColumnHeader,
+  TABLE_CELL_ALIGN_CLASS,
+  TABLE_LINK_CLASS,
+  TABLE_SUBTEXT_CLASS,
+  TABLE_TEXT_CLASS,
+  TaskSourceTag,
+  TaskTableFirstColumnCell,
+  TwoLineSummaryCell,
+} from './ModuleCellHelpers';
+
+/** Sticky pack after checkbox: task id → case (matches Requests / Documents left pack). */
+const TASK_TABLE_STICKY_COL = {
+  checkboxWidth: MODULE_TABLE_CHECKBOX_COL_WIDTH,
+  task: { width: 200, left: MODULE_TABLE_CHECKBOX_COL_WIDTH },
+  case: { width: 168, left: MODULE_TABLE_CHECKBOX_COL_WIDTH + 200 },
+} as const;
+
+const TASK_TABLE_STATUS_WIDTH = 124;
+const TASK_TABLE_ACTIONS_WIDTH = 48;
+export function TaskModule() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dataSource = useDataSourceSettings();
+  const { updateDataSource } = usePlatformSettings();
+  const repositoryTasks = useMemo(
+    () => listTasks(filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource)),
+    [dataSource],
+  );
+  const repositoryMyTasks = useMemo(() => repositoryTasks.filter((task) => task.queue !== 'team_tasks'), [repositoryTasks]);
+  const repositoryTeamTasks = useMemo(() => repositoryTasks.filter((task) => task.queue === 'team_tasks'), [repositoryTasks]);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [taskPanelContexts, setTaskPanelContexts] = useState<WorkspacePanelContext[]>([]);
+  const [activePanelContextId, setActivePanelContextId] = useState('');
+  const [viewMode, setViewMode] = useState<TaskViewMode>('table');
+  const setTaskViewMode = useCallback((mode: TaskViewMode) => {
+    setViewMode(mode);
+  }, []);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortColumn, setSortColumn] = useState<SortableColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [activeTab, setActiveTab] = useState<TaskTabType>('all_tasks');
+
+  const [priorityFilter, setPriorityFilter] = useState('All');
+  const [dueDateFilter, setDueDateFilter] = useState('All');
+  const [slaStatusFilter, setSlaStatusFilter] = useState('All');
+
+  const [panelWidth, setPanelWidth] = useState(() => getDefaultSidePanelWidth({ min: 400 }));
+  const [isResizing, setIsResizing] = useState(false);
+  const [taskTableScrollEl, setTaskTableScrollEl] = useState<HTMLDivElement | null>(null);
+  const { showLeftStickyEdge, showRightStickyEdge, hasHorizontalOverflow } =
+    useTableHorizontalScroll(taskTableScrollEl);
+  const taskTableRightSticky = !selectedTask;
+
+  const [myTasks, setMyTasks] = useState<Task[]>(repositoryMyTasks);
+  const [teamTasks, setTeamTasks] = useState<Task[]>(repositoryTeamTasks);
+  const [selectedTeamId, setSelectedTeamId] = useState(TEAMS[0].id);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
+  const [teamSelectorOpen, setTeamSelectorOpen] = useState(false);
+  const teamSelectorRef = useRef<HTMLDivElement | null>(null);
+  const [billyPostApprovalFirst, setBillyPostApprovalFirst] = useState(false);
+
+  const selectedTeam = TEAMS.find((t) => t.id === selectedTeamId) ?? TEAMS[0];
+  const openTaskPanel = useCallback((task: Task | null) => {
+    setSelectedTask(task);
+    if (!task) {
+      setActivePanelContextId('');
+      return;
+    }
+    const contextId = taskPanelContextId(task.id);
+    const context: WorkspacePanelContext = {
+      id: contextId,
+      label: task.taskId ?? task.id,
+      icon: ClipboardList,
+      clearable: true,
+    };
+    setActivePanelContextId(contextId);
+    setTaskPanelContexts((current) => pushWorkspacePanelContext(current, context));
+  }, []);
+  const handleTaskPanelContextChange = useCallback((contextId: string) => {
+    setActivePanelContextId(contextId);
+    if (contextId.startsWith('document:') || contextId.startsWith('requirement:')) return;
+    const id = contextId.startsWith('task:') ? contextId.slice('task:'.length) : contextId;
+    const found = [...myTasks, ...teamTasks, ...repositoryTasks].find((task) => task.id === id || task.taskId === id);
+    if (found) setSelectedTask(found);
+  }, [myTasks, repositoryTasks, teamTasks]);
+  const handleTaskPanelNavigationChange = useCallback((payload: TaskPanelNavigationPayload) => {
+    setTaskPanelContexts(payload.contexts);
+    setActivePanelContextId(payload.activeContextId);
+  }, []);
+  const clearTaskPanelContext = useCallback((contextId: string) => {
+    let nextTaskId: string | undefined;
+    setTaskPanelContexts((current) => {
+      const index = current.findIndex((context) => context.id === contextId);
+      const next = index >= 0 ? current[index + 1] ?? current[index - 1] : undefined;
+      nextTaskId = next?.id;
+      return current.filter((context) => context.id !== contextId);
+    });
+    if (nextTaskId) {
+      setActivePanelContextId(nextTaskId);
+      queueMicrotask(() => handleTaskPanelContextChange(nextTaskId!));
+    } else {
+      setSelectedTask(null);
+      setActivePanelContextId('');
+    }
+  }, [handleTaskPanelContextChange]);
+  useEffect(() => {
+    setMyTasks(repositoryMyTasks);
+    setTeamTasks(repositoryTeamTasks);
+    setSelectedTask((current) =>
+      current && repositoryTasks.some((task) => task.id === current.id) ? current : null,
+    );
+  }, [repositoryMyTasks, repositoryTasks, repositoryTeamTasks]);
+
+  const isOnMyTasks = activeTab === 'my_tasks';
+  const isOnTeamTasks = activeTab === 'team_tasks';
+
+  // Live context overlay for the open task detail panel.
+  const taskOverlay = useMemo(
+    () =>
+      selectedTask
+        ? {
+            id: `tasks:open:${selectedTask.id}`,
+            kind: 'taskDetail' as const,
+            icon: ClipboardList,
+            crumbs: ['Tasks', selectedTask.id],
+            label: `Task ${selectedTask.id}`,
+            href: `/tasks#task=${selectedTask.id}`,
+          }
+        : null,
+    [selectedTask],
+  );
+  useLiveContextOverlay(taskOverlay);
+
+  // Restore selected task from URL hash when navigating back from the AI context history.
+  useEffect(() => {
+    const hash = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash;
+    const query = location.search.startsWith('?') ? location.search.slice(1) : location.search;
+    if (!hash && !query) return;
+    const params = new URLSearchParams(hash || query);
+    const taskId = params.get('task');
+    if (!taskId) return;
+    const found = [...myTasks, ...teamTasks].find(
+      (t) => t.id === taskId || t.taskId === taskId,
+    );
+    if (found) {
+      setActiveTab('all_tasks');
+      openTaskPanel(found);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.hash, location.search]);
+
+  useEffect(() => {
+    const sync = () => {
+      try {
+        setBillyPostApprovalFirst(sessionStorage.getItem('amplify-billy-post-approval') === '1');
+      } catch {
+        setBillyPostApprovalFirst(false);
+      }
+    };
+    window.addEventListener('amplify-billy-flow', sync);
+    window.addEventListener('focus', sync);
+    return () => {
+      window.removeEventListener('amplify-billy-flow', sync);
+      window.removeEventListener('focus', sync);
+    };
+  }, []);
+
+  const displayedTasks = useMemo(() => {
+    if (activeTab === 'all_tasks') return repositoryTasks;
+    if (isOnTeamTasks) return teamTasks;
+    const base = myTasks;
+    if (!billyPostApprovalFirst) return base;
+    const t5197 = base.find((t) => t.id === 'IT-5197');
+    const rest = base.filter((t) => t.id !== 'IT-5197');
+    return [...(t5197 ? [t5197] : []), ...rest];
+  }, [activeTab, isOnTeamTasks, myTasks, repositoryTasks, teamTasks, billyPostApprovalFirst]);
+
+  const filteredTasks = useMemo(
+    () =>
+      filterTasks(displayedTasks, {
+        searchQuery,
+        priorityFilter,
+        dueDateFilter,
+        slaStatusFilter,
+      }),
+    [displayedTasks, searchQuery, priorityFilter, dueDateFilter, slaStatusFilter],
+  );
+
+  const sortedTasks = useMemo(
+    () => sortTasks(filteredTasks, sortColumn, sortDirection),
+    [filteredTasks, sortColumn, sortDirection],
+  );
+
+  const allTaskCount = repositoryTasks.length;
+  const myOpenCount = myTasks.filter((t) => t.status !== 'Complete' && t.status !== 'Completed' && t.status !== 'Cancelled').length;
+  const myDueTodayCount = myTasks.filter((t) => t.slaStatus === 'danger' || t.slaStatus === 'warning').length;
+  const teamAvailableCount = teamTasks.filter((t) => !t.pickedUpBy).length;
+  const teamInProgressCount = teamTasks.filter((t) => !!t.pickedUpBy).length;
+  const teamOverdueCount = teamTasks.filter((t) => t.slaStatus === 'danger').length;
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = window.innerWidth - e.clientX;
+      const maxWidth = Math.round(window.innerWidth * 0.75);
+      if (newWidth >= 400 && newWidth <= maxWidth) setPanelWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    if (isResizing) {
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => setToastMessage(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (teamSelectorRef.current && !teamSelectorRef.current.contains(e.target as Node)) {
+        setTeamSelectorOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSort = (column: SortableColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const handlePickUp = useCallback((task: Task, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const updated: Task = { ...task, queue: 'my_tasks', teamOrigin: selectedTeam.name, pickedUpBy: CURRENT_USER.name, pickedUpAt: 'Just now', assignedTo: CURRENT_USER.name };
+    setTeamTasks((prev) => prev.filter((t) => t.id !== task.id));
+    setMyTasks((prev) => [updated, ...prev]);
+    setActiveTab('my_tasks');
+    openTaskPanel(updated);
+    setToastMessage(`Task ${task.id} picked up — now in My Tasks`);
+  }, [selectedTeam.name]);
+
+  const handleRelease = useCallback((task: Task, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!task.teamOrigin) return;
+    const updated: Task = { ...task, queue: 'team_tasks', pickedUpBy: undefined, pickedUpAt: undefined, assignedTo: '' };
+    setMyTasks((prev) => prev.filter((t) => t.id !== task.id));
+    setTeamTasks((prev) => [updated, ...prev]);
+    openTaskPanel(null);
+    setToastMessage(`Task ${task.id} released to ${task.teamOrigin}`);
+  }, []);
+
+  const handleManagerRelease = useCallback((task: Task, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const updated: Task = { ...task, pickedUpBy: undefined, pickedUpAt: undefined, assignedTo: '', status: 'Open' };
+    setTeamTasks((prev) => prev.map((t) => t.id === task.id ? updated : t));
+    openTaskPanel(updated);
+    setToastMessage(`Task ${task.id} released back to queue`);
+  }, []);
+
+  const handleCompleteTask = useCallback((task: Task) => {
+    const result = updateTaskStatus(dataSource.activeDatasetId, task.id, 'Completed');
+    updateDataSource({ activeDatasetId: result.datasetId });
+    openTaskPanel(null);
+    setToastMessage(`Task ${task.id} completed`);
+  }, [dataSource.activeDatasetId, updateDataSource]);
+
+  const isRestricted = (task: Task) => task.requiredAuthorityLevel > CURRENT_USER.authorityLevel;
+
+  const thStyle = "flex flex-col font-['Open_Sans:SemiBold',sans-serif] font-medium justify-center leading-[0] text-text-primary text-[14px] whitespace-nowrap";
+  const fontVar: React.CSSProperties = { fontVariationSettings: "'wdth' 100" };
+
+  return (
+    <div className={`flex h-full flex-col ${UI_CLASS.workspaceTopLeftRadius} overflow-hidden`}>
+      {/* Header */}
+      <div className="relative z-10 border-b border-border-default bg-surface-primary px-6 pb-0 pt-4">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="pl-[14px]">
+            <h1 className="text-2xl font-semibold text-text-primary">Tasks</h1>
+            <p className="mt-0.5 text-xs text-text-muted">
+              {activeTab === 'all_tasks'
+                ? `${allTaskCount} total tasks`
+                : isOnMyTasks
+                ? `${myOpenCount} open · ${myDueTodayCount} due today`
+                : `${teamAvailableCount} available · ${teamInProgressCount} in progress`}
+            </p>
+          </div>
+          <button onClick={() => setCreateTaskOpen(true)} className={`flex items-center justify-center gap-2 rounded-full bg-brand-blue px-4 py-2 text-xs font-bold uppercase leading-none tracking-[0.4px] text-white ${UI_CLASS.primaryActionShadow} transition-colors hover:bg-brand-blue-hover`} style={fontVar}>
+            <Plus className="h-4 w-4" />
+            CREATE TASK
+          </button>
+        </div>
+
+        <ModuleTabsBar
+          tabs={[
+            { id: 'all_tasks', label: 'All Tasks', count: allTaskCount },
+            { id: 'my_tasks', label: 'My Tasks', count: myOpenCount },
+            { id: 'team_tasks', label: 'Team Tasks', count: teamAvailableCount },
+          ]}
+          activeId={activeTab}
+          onChange={(id) => {
+            setActiveTab(id);
+            openTaskPanel(null);
+          }}
+        />
+
+        {/* Team Selector + Manager Metrics (Team Tasks only) */}
+        {isOnTeamTasks && (
+          <div className="flex items-center gap-4 pt-3">
+            <div ref={teamSelectorRef} className="relative">
+              <button
+                onClick={() => setTeamSelectorOpen((p) => !p)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border-default bg-white px-3 py-1.5 text-xs font-semibold leading-none text-text-secondary transition-colors hover:bg-surface-muted"
+              >
+                <Users className="h-3.5 w-3.5 text-text-secondary" />
+                {selectedTeam.name}
+                <ChevronDown className={`h-3.5 w-3.5 text-text-secondary transition-transform ${teamSelectorOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {teamSelectorOpen && (
+                <div className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[220px] overflow-hidden rounded-lg border border-border-default bg-white shadow-[0_8px_24px_rgba(27,28,30,0.12)]">
+                  {TEAMS.map((team) => (
+                    <button
+                      key={team.id}
+                      onClick={() => { setSelectedTeamId(team.id); setTeamSelectorOpen(false); }}
+                      className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors hover:bg-surface-primary ${team.id === selectedTeamId ? 'bg-surface-selected-alt font-semibold text-text-heading' : 'text-text-secondary'}`}
+                    >
+                      <Users className="h-3.5 w-3.5 text-text-secondary" />
+                      {team.name}
+                      <span className="ml-auto text-xs text-text-muted">{team.members.length} members</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {CURRENT_USER.isManager && (
+              <div className="flex items-center gap-3 rounded-lg border border-[#e8eaed] bg-white px-3 py-1.5 text-xs">
+                <span className="text-text-muted">Total: <span className="font-semibold text-text-primary">{teamTasks.length}</span></span>
+                <span className="h-3 w-px bg-[#dbdee1]" />
+                <span className="text-text-muted">Available: <span className="font-semibold text-brand-green">{teamAvailableCount}</span></span>
+                <span className="h-3 w-px bg-[#dbdee1]" />
+                <span className="text-text-muted">In Progress: <span className="font-semibold text-text-primary">{teamInProgressCount}</span></span>
+                <span className="h-3 w-px bg-[#dbdee1]" />
+                <span className="text-text-muted">Overdue: <span className={`font-semibold ${teamOverdueCount > 0 ? 'text-brand-red' : 'text-text-primary'}`}>{teamOverdueCount}</span></span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Search, Filters, View Toggle */}
+        <div className="flex w-full flex-wrap items-center gap-3 pb-4 pt-4 xl:flex-nowrap">
+          <SearchBar
+            containerClassName="order-1"
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+
+          <div className="order-3 flex w-full flex-wrap items-center gap-3 xl:order-2 xl:w-auto xl:flex-none">
+            <FilterDropdown label="Priority" options={['All', 'Urgent', 'High', 'Normal']} value={priorityFilter} onChange={setPriorityFilter} />
+            <FilterDropdown label="Due date" options={['All', 'Today', 'This week', 'This month', 'Overdue']} value={dueDateFilter} onChange={setDueDateFilter} />
+            <FilterDropdown label="SLA Status" options={['All', 'At risk', 'On track', 'Breached']} value={slaStatusFilter} onChange={setSlaStatusFilter} />
+          </div>
+
+          <div
+            className="order-2 ml-auto flex shrink-0 overflow-hidden rounded-md border border-border-default xl:order-3"
+            role="group"
+            aria-label="Task view"
+          >
+            <button
+              type="button"
+              onClick={() => setTaskViewMode('kanban')}
+              className={`flex items-center gap-1.5 px-2.5 py-2 text-[11px] font-semibold transition-colors ${viewMode === 'kanban' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
+              title="Board view"
+              aria-pressed={viewMode === 'kanban'}
+            >
+              <Kanban className="h-4 w-4 shrink-0" />
+              Board
+            </button>
+            <button
+              type="button"
+              onClick={() => setTaskViewMode('table')}
+              className={`flex items-center gap-1.5 border-l border-border-default px-2.5 py-2 text-[11px] font-semibold transition-colors ${viewMode === 'table' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
+              title="Table view"
+              aria-pressed={viewMode === 'table'}
+            >
+              <List className="h-4 w-4 shrink-0" />
+              Table
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* List + Side Panel */}
+      <div className="relative z-0 flex min-h-0 flex-1 overflow-hidden">
+        <div
+          key={viewMode}
+          className={`relative z-0 flex min-h-0 min-w-0 flex-1 flex-col transition-all ${viewMode === 'kanban' ? 'bg-[#f4f5f7]' : 'bg-white'}`}
+        >
+          {viewMode === 'kanban' ? (
+            <TaskKanbanBoard
+              tasks={sortedTasks}
+              selectedTaskId={selectedTask?.id}
+              activeTab={activeTab}
+              isOnTeamTasks={isOnTeamTasks}
+              isOnMyTasks={isOnMyTasks}
+              onSelectTask={openTaskPanel}
+              onPickUp={handlePickUp}
+              onRelease={handleRelease}
+              isRestricted={isRestricted}
+            />
+          ) : (
+            /* Table View */
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <div
+                ref={setTaskTableScrollEl}
+                className={moduleTableScrollContainerClass(hasHorizontalOverflow, 'flex-1 bg-white')}
+              >
+                <table className="w-full table-fixed border-separate border-spacing-0">
+                  <colgroup>
+                    <col style={{ width: TASK_TABLE_STICKY_COL.checkboxWidth }} />
+                  </colgroup>
+                  <thead className="sticky top-0 z-[30] bg-surface-primary">
+                    <tr>
+                      <ModuleTableCheckboxColumnCell as="th" className="z-[34] bg-surface-primary">
+                        <Checkbox className="size-4 rounded-[4px]" />
+                      </ModuleTableCheckboxColumnCell>
+                      <th
+                        className={`relative sticky z-[35] border-b border-border-default bg-surface-primary ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} py-3 text-left align-middle`}
+                        style={{ left: TASK_TABLE_STICKY_COL.task.left, minWidth: TASK_TABLE_STICKY_COL.task.width, width: TASK_TABLE_STICKY_COL.task.width }}
+                      >
+                        <button onClick={() => handleSort('taskType')} className="group flex items-center gap-1 hover:text-brand-blue">
+                          <div className={thStyle} style={fontVar}><p className="leading-[20px]">Task</p></div>
+                          <ReorderIcon isActive={sortColumn === 'taskType'} />
+                        </button>
+                      </th>
+                      <th
+                        className={`relative sticky z-[36] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                        style={{ left: TASK_TABLE_STICKY_COL.case.left, minWidth: TASK_TABLE_STICKY_COL.case.width, width: TASK_TABLE_STICKY_COL.case.width }}
+                      >
+                        {showLeftStickyEdge ? (
+                          <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
+                        ) : null}
+                        <button onClick={() => handleSort('caseId')} className="group flex items-center gap-1 hover:text-brand-blue">
+                          <div className={thStyle} style={fontVar}><p className="leading-[20px]">Case</p></div>
+                          <ReorderIcon isActive={sortColumn === 'caseId'} />
+                        </button>
+                      </th>
+                      <th className="min-w-[320px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                        <button onClick={() => handleSort('taskType')} className="group flex items-center gap-1 hover:text-brand-blue">
+                          <div className={thStyle} style={fontVar}>
+                            <SummaryTableColumnHeader className="leading-[20px] text-text-primary" style={fontVar} />
+                          </div>
+                          <ReorderIcon isActive={sortColumn === 'taskType'} />
+                        </button>
+                      </th>
+                      <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                        <button onClick={() => handleSort('priority')} className="group flex items-center gap-1 hover:text-brand-blue">
+                          <div className={thStyle} style={fontVar}><p className="leading-[20px]">Priority</p></div>
+                          <ReorderIcon isActive={sortColumn === 'priority'} />
+                        </button>
+                      </th>
+                      <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                        <button onClick={() => handleSort('product')} className="group flex items-center gap-1 hover:text-brand-blue">
+                          <div className={thStyle} style={fontVar}><p className="leading-[20px]">Product</p></div>
+                          <ReorderIcon isActive={sortColumn === 'product'} />
+                        </button>
+                      </th>
+                      {isOnTeamTasks && (
+                        <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                          <div className={thStyle} style={fontVar}>
+                            <p className="leading-[20px]">Picked Up By</p>
+                          </div>
+                        </th>
+                      )}
+                      <th className="border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                        <button onClick={() => handleSort('origin')} className="group flex items-center gap-1 hover:text-brand-blue">
+                          <div className={thStyle} style={fontVar}><p className="leading-[20px]">Source</p></div>
+                          <ReorderIcon isActive={sortColumn === 'origin'} />
+                        </button>
+                      </th>
+                      <th
+                        className={`relative border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${
+                          taskTableRightSticky ? `sticky z-[34] ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}` : ''
+                        }`}
+                        style={{
+                          width: TASK_TABLE_STATUS_WIDTH,
+                          minWidth: TASK_TABLE_STATUS_WIDTH,
+                          ...(taskTableRightSticky ? { right: TASK_TABLE_ACTIONS_WIDTH } : {}),
+                        }}
+                      >
+                        {taskTableRightSticky && showRightStickyEdge ? (
+                          <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
+                        ) : null}
+                        <button onClick={() => handleSort('status')} className="group flex items-center gap-1 hover:text-brand-blue">
+                          <div className={thStyle} style={fontVar}><p className="leading-[20px]">Status</p></div>
+                          <ReorderIcon isActive={sortColumn === 'status'} />
+                        </button>
+                      </th>
+                      <th
+                        className={`relative h-12 min-h-12 border-b border-border-default bg-surface-primary p-0 align-middle ${
+                          taskTableRightSticky ? 'sticky right-0 z-[34] w-[48px] min-w-[48px] max-w-[48px]' : 'w-12 min-w-12 max-w-12'
+                        }`}
+                      >
+                        {taskTableRightSticky ? (
+                          <>
+                            <span
+                              aria-hidden
+                              className="pointer-events-none absolute inset-y-0 left-0 z-[9] h-full min-h-12 w-[calc(100%+3px)] bg-surface-primary"
+                            />
+                            <span className="sr-only">Actions</span>
+                          </>
+                        ) : null}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedTasks.map((task) => {
+                      const locked = isOnTeamTasks && !!task.pickedUpBy;
+                      const restricted = isOnTeamTasks && !task.pickedUpBy && isRestricted(task);
+                      const stickyRowSurface =
+                        locked
+                          ? 'bg-surface-hover group-hover:bg-surface-hover'
+                          : restricted
+                            ? 'bg-surface-primary group-hover:bg-surface-primary'
+                            : selectedTask?.id === task.id
+                              ? 'bg-surface-selected-alt group-hover:bg-surface-selected-alt'
+                              : 'bg-white group-hover:bg-surface-hover';
+                      const cellSurface = stickyRowSurface;
+
+                      return (
+                        <tr
+                          key={task.id}
+                          data-keep-sidepanel="row"
+                          onClick={() => { if (!restricted) openTaskPanel(task); }}
+                          className={`group ${restricted ? 'cursor-not-allowed opacity-50' : 'cursor-pointer active:scale-[0.995]'}`}
+                        >
+                          <ModuleTableCheckboxColumnCell
+                            as="td"
+                            className={`z-[14] ${TABLE_CELL_ALIGN_CLASS}`}
+                            surfaceClassName={stickyRowSurface}
+                          >
+                            <Checkbox className="size-4 rounded-[4px]" onClick={(e) => e.stopPropagation()} />
+                          </ModuleTableCheckboxColumnCell>
+                          <td
+                            className={`relative sticky z-[15] border-b border-border-default ${MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS} py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface}`}
+                            style={{ left: TASK_TABLE_STICKY_COL.task.left, minWidth: TASK_TABLE_STICKY_COL.task.width, width: TASK_TABLE_STICKY_COL.task.width }}
+                          >
+                            <TaskTableFirstColumnCell
+                              taskId={task.taskId ?? task.id}
+                              taskName={task.taskType}
+                              aiSourced={isTaskAiSourced(task)}
+                            />
+                          </td>
+                          <td
+                            className={`relative sticky z-[16] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                            style={{ left: TASK_TABLE_STICKY_COL.case.left, minWidth: TASK_TABLE_STICKY_COL.case.width, width: TASK_TABLE_STICKY_COL.case.width }}
+                          >
+                            {showLeftStickyEdge ? (
+                              <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
+                            ) : null}
+                            {task.caseId ? (
+                              <div className="min-w-[150px]">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/cases/${task.caseId}`); }}
+                                  className={`block whitespace-nowrap ${TABLE_LINK_CLASS}`}
+                                >
+                                  {task.caseId}
+                                </button>
+                                <span className={`mt-0.5 block truncate ${TABLE_SUBTEXT_CLASS}`}>
+                                  {task.primaryPartyName ?? task.claimantName}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="min-w-[150px]">
+                                <span className={TABLE_SUBTEXT_CLASS}>—</span>
+                                <span className={`mt-0.5 block truncate ${TABLE_SUBTEXT_CLASS}`}>
+                                  {task.primaryPartyName ?? task.claimantName}
+                                </span>
+                              </div>
+                            )}
+                          </td>
+                          <td className={`min-w-[320px] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
+                            <TwoLineSummaryCell
+                              title={task.aiSummary ?? task.description ?? '—'}
+                              titleMaxLines={2}
+                              titleWeight="normal"
+                            />
+                          </td>
+                          <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
+                            <PriorityChip priority={task.priority} />
+                          </td>
+                          <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${cellSurface} ${TABLE_TEXT_CLASS}`}>
+                            {task.product}
+                          </td>
+                          {isOnTeamTasks && (
+                            <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
+                              {task.pickedUpBy ? (
+                                <span className={`whitespace-nowrap ${TABLE_SUBTEXT_CLASS}`}>{task.pickedUpBy}</span>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full bg-[#e5f5ea] px-2 py-0.5 text-[11px] font-semibold text-brand-green">Available</span>
+                              )}
+                            </td>
+                          )}
+                          <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
+                            <TaskSourceTag task={task} />
+                          </td>
+                          <td
+                            className={`relative border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${
+                              taskTableRightSticky
+                                ? `sticky z-[14] ${stickyRowSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`
+                                : cellSurface
+                            }`}
+                            style={{
+                              width: TASK_TABLE_STATUS_WIDTH,
+                              minWidth: TASK_TABLE_STATUS_WIDTH,
+                              ...(taskTableRightSticky ? { right: TASK_TABLE_ACTIONS_WIDTH } : {}),
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {taskTableRightSticky && showRightStickyEdge ? (
+                              <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
+                            ) : null}
+                            <LozengeTag label={task.status} type={getStatusLozengeType(task.status, 'task')} subtle />
+                          </td>
+                          <td
+                            className={`relative box-border min-h-12 border-b border-border-default p-0 align-middle ${
+                              taskTableRightSticky
+                                ? `sticky right-0 z-[14] w-[48px] min-w-[48px] max-w-[48px] ${stickyRowSurface}`
+                                : `w-12 min-w-12 max-w-12 ${cellSurface}`
+                            }`}
+                          >
+                            {taskTableRightSticky ? (
+                              <span
+                                aria-hidden
+                                className={`pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] ${stickyRowSurface}`}
+                              />
+                            ) : null}
+                            <div className="relative z-10 flex h-full w-full items-center justify-center">
+                              {isOnTeamTasks && locked && CURRENT_USER.isManager ? (
+                                <button onClick={(e) => { e.stopPropagation(); handleManagerRelease(task, e); }} className="text-brand-blue hover:text-text-heading" title="Release">
+                                  <ArrowLeftRight className="h-4 w-4" />
+                                </button>
+                              ) : (
+                                <button onClick={(e) => e.stopPropagation()} className="text-text-secondary hover:text-text-primary">
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <ModuleTablePaginationFooter total={sortedTasks.length} labelStyle={fontVar} />
+            </div>
+          )}
+        </div>
+
+        {selectedTask && (
+          <WorkspaceObjectSidePanel
+            contexts={taskPanelContexts}
+            activeContextId={activePanelContextId || taskPanelContextId(selectedTask.id)}
+            onChangeContext={handleTaskPanelContextChange}
+            onClearContext={clearTaskPanelContext}
+            onClose={() => openTaskPanel(null)}
+            panelWidth={panelWidth}
+            onPanelWidthChange={setPanelWidth}
+            isResizing={isResizing}
+            onResizeStart={() => setIsResizing(true)}
+          >
+            <TaskDetailEmbeddedView
+              task={selectedTask}
+              panelWidth={panelWidth}
+              onPanelWidthChange={setPanelWidth}
+              onResizeStart={() => setIsResizing(true)}
+              onClose={() => openTaskPanel(null)}
+              navigate={navigate}
+              queueContext={selectedTask.queue === 'team_tasks' ? 'team_tasks' : 'my_tasks'}
+              panelContexts={taskPanelContexts}
+              activePanelContextId={activePanelContextId || taskPanelContextId(selectedTask.id)}
+              onPanelNavigationChange={handleTaskPanelNavigationChange}
+              onPickUp={handlePickUp}
+              onRelease={handleRelease}
+              onManagerRelease={handleManagerRelease}
+              currentUserIsManager={CURRENT_USER.isManager}
+              onCompleteTask={handleCompleteTask}
+            />
+          </WorkspaceObjectSidePanel>
+        )}
+      </div>
+
+      {/* Success toast — bottom-right, high-contrast green */}
+      {toastMessage && (
+        <div
+          className="fixed bottom-6 right-6 z-[200] max-w-[min(440px,calc(100vw-3rem))] animate-[fadeInUp_0.35s_ease-out]"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="flex items-start gap-3 rounded-lg border-2 border-white/30 bg-[#00a651] px-5 py-4 shadow-[0_12px_40px_rgba(0,133,65,0.5),0_4px_12px_rgba(0,0,0,0.15)]">
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/20">
+              <Check className="h-6 w-6 text-white" strokeWidth={2.5} aria-hidden />
+            </span>
+            <span className="min-w-0 pt-0.5 text-base font-semibold leading-snug text-white">{toastMessage}</span>
+          </div>
+        </div>
+      )}
+      <CreateTaskModal
+        open={createTaskOpen}
+        onOpenChange={setCreateTaskOpen}
+        dataSource={dataSource}
+        onCreated={({ datasetId, taskId }) => {
+          const nextDataSource = { ...dataSource, activeDatasetId: datasetId };
+          const createdTask = listTasks(filterDatasetBySettings(getSystemDataset(datasetId), nextDataSource)).find((task) => task.id === taskId);
+          updateDataSource({ activeDatasetId: datasetId });
+          setSearchQuery('');
+          setPriorityFilter('All');
+          setDueDateFilter('All');
+          setSlaStatusFilter('All');
+          setSortColumn(null);
+          if (createdTask) {
+            if (createdTask.queue === 'team_tasks') {
+              setTeamTasks((current) => [createdTask, ...current.filter((task) => task.id !== createdTask.id)]);
+              setActiveTab('team_tasks');
+            } else {
+              setMyTasks((current) => [createdTask, ...current.filter((task) => task.id !== createdTask.id)]);
+              setActiveTab('my_tasks');
+            }
+            openTaskPanel(createdTask);
+            navigate(`/tasks#task=${encodeURIComponent(taskId)}`, { replace: true });
+          }
+          setToastMessage(`Task ${taskId} created`);
+        }}
+      />
+    </div>
+  );
+}

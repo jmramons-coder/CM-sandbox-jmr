@@ -1,0 +1,331 @@
+{
+  "modal": {
+    "title": "Configuración de la plataforma — {{tab}}",
+    "sectionsLabel": "Secciones de la configuración de la plataforma",
+    "sidebarHeading": "Configuración"
+  },
+  "tabs": {
+    "branding": {
+      "label": "Identidad de marca",
+      "description": "Personalice el nombre del producto, el logotipo y los colores del tema visibles en toda la aplicación."
+    },
+    "modules": {
+      "label": "Módulos",
+      "description": "Active o desactive los módulos. Los módulos desactivados se ocultan en la navegación."
+    },
+    "data": {
+      "label": "Datos",
+      "description": "Comprenda la arquitectura de entidades, las relaciones de esquema de base de datos, los conjuntos de datos y la preparación para importar."
+    },
+    "intelligence": {
+      "label": "Inteligencia",
+      "description": "Controle la capa de IA: el asistente, el panel lateral y el feed de actividad."
+    },
+    "language": {
+      "label": "Idioma",
+      "description": "Elija el idioma utilizado en todo el espacio de trabajo. El cambio es instantáneo: no se requiere recargar la página."
+    },
+    "roles": {
+      "label": "Roles y acceso",
+      "description": "Aquí estarán los permisos por rol. Próximamente."
+    },
+    "demo": {
+      "label": "Entorno de demo",
+      "description": "Guarde, revise y active instantáneas de entornos de demo."
+    }
+  },
+  "sidebarFooter": {
+    "save": "Guardar",
+    "resetAll": "Restablecer todo",
+    "confirmReset": "¿Restablecer toda la configuración?",
+    "confirmCta": "Restablecer"
+  },
+  "saveDialog": {
+    "title": "Guardar entorno de demo",
+    "description": "Capture la configuración actual de la plataforma como una instantánea reutilizable.",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Demo ejecutiva",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Qué debe mostrar este entorno...",
+    "saveCta": "Guardar entorno",
+    "localOnlyNote": "Solo se guarda en este navegador. Para compartir tras el despliegue, use Exportar para despliegue en un entorno integrado (Equisoft o SBLI)."
+  },
+  "demo": {
+    "intro": "Los entornos de demo guardados capturan identidad de marca, módulos, tipos de caso, visibilidad de IA, idioma y apariencia en el momento de guardar.",
+    "emptyTitle": "Aún no hay entornos de demo guardados",
+    "emptyDescription": "Use Guardar en el pie de configuración para capturar la configuración actual.",
+    "savedAt": "Guardado el {{date}}",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "activeToggleAria": "Activar entorno de demo {{name}}",
+    "builtIn": "Integrado · incluido en la aplicación",
+    "deleteAria": "Eliminar entorno de demo {{name}}",
+    "sharedDatasetNote": "Ambos entornos integrados comparten el dataset SBLI. Active para cambiar la marca. Icono de descarga: exportar para despliegue git.",
+    "exportDeployAria": "Exportar {{name}} para despliegue",
+    "exportDeployDone": "Descargado {{filename}}. Reemplace {{path}} en el repositorio, haga commit y despliegue.",
+    "summary": {
+      "branding": "Identidad",
+      "modules": "Módulos",
+      "modulesValue": "{{enabled}} de {{total}} activos",
+      "caseTypes": "Tipos de caso",
+      "intelligence": "Inteligencia",
+      "intelligenceValue": "{{enabled}} de {{total}} visibles"
+    }
+  },
+  "branding": {
+    "productNameTitle": "Nombre del producto",
+    "productNameShowInHeader": "Mostrar en el encabezado",
+    "productNamePlaceholder": "Amplify Case Management",
+    "productNameFallback": "Nombre del producto",
+    "logoTitle": "Logotipo",
+    "logoMode": {
+      "default": "Predeterminado",
+      "custom": "Personalizado"
+    },
+    "surfaces": {
+      "darkMode": "Modo oscuro",
+      "lightMode": "Modo claro",
+      "previewAria": "Logotipo predeterminado sobre fondo {{surface}}",
+      "uploadAria": "Cargar el logotipo {{surface}}",
+      "replaceAria": "Reemplazar el logotipo {{surface}}",
+      "logoAlt": "Logotipo {{surface}}"
+    },
+    "dropzone": {
+      "errors": {
+        "fileType": "Solo se admiten archivos PNG, SVG, JPEG o WEBP.",
+        "fileSize": "El logotipo no debe superar los 500 KB."
+      },
+      "click": "Haga clic",
+      "orDropToReplace": " o arrástrelo para reemplazar.",
+      "dropOr": "Arrastre un logotipo o ",
+      "upload": "cárguelo",
+      "specs": "PNG, SVG, JPEG, WEBP · ≤ 500 KB"
+    },
+    "colors": {
+      "title": "Colores",
+      "header": "Encabezado",
+      "primary": "Principal",
+      "accent": "Acento (IA)",
+      "fieldAria": "Color {{label}} — haga clic para elegir",
+      "copyAria": "Copiar color {{label}}",
+      "copied": "¡Copiado!",
+      "copyHex": "Copiar valor hex"
+    },
+    "preview": {
+      "title": "Vista previa en vivo",
+      "primaryChip": "Principal",
+      "aiChip": "IA",
+      "customLogoAlt": "Logotipo personalizado"
+    },
+    "appearance": {
+      "title": "Apariencia",
+      "light": "Claro",
+      "dark": "Oscuro"
+    },
+    "resetBranding": "Restablecer la marca",
+    "colorPicker": {
+      "saturationAria": "Saturación y brillo",
+      "saturationValueText": "S {{s}}, V {{v}}",
+      "hueAria": "Tono"
+    }
+  },
+  "modules": {
+    "intro": "Active o desactive los módulos para controlar lo que aparece en la navegación. Al menos un módulo debe permanecer activo.",
+    "lastEnabledTitle": "Al menos un módulo debe permanecer activo",
+    "toggleAria": "Activar o desactivar el módulo {{label}}",
+    "definitions": {
+      "home": {
+        "label": "Inicio",
+        "description": "Tablero con métricas clave, resumen de cargas y widgets de acceso rápido."
+      },
+      "cases": {
+        "label": "Casos",
+        "description": "Espacio completo de gestión de casos: explorar, filtrar y trabajar de principio a fin."
+      },
+      "folders": {
+        "label": "Carpetas",
+        "description": "Vista por carpeta que agrupa los subcasos relacionados de un mismo solicitante."
+      },
+      "finances": {
+        "label": "Finanzas",
+        "description": "Operaciones financieras, señales de facturación y pagos. Próximamente."
+      },
+      "tasks": {
+        "label": "Tareas",
+        "description": "Lista unificada de tareas de todos los casos, con prioridad, vencimientos y estado."
+      },
+      "requests": {
+        "label": "Solicitudes",
+        "description": "Solicitudes centralizadas de servicio e ingreso. Próximamente."
+      },
+      "documents": {
+        "label": "Documentos",
+        "description": "Repositorio para cargar, revisar y validar los documentos de los casos."
+      },
+      "aiActions": {
+        "label": "Monitoreo inteligente",
+        "description": "Feed global de auditoría y control de acciones de IA y del sistema."
+      },
+      "insights": {
+        "label": "Insights",
+        "description": "Vistas de análisis e inteligencia operativa. Próximamente."
+      },
+      "reports": {
+        "label": "Informes",
+        "description": "Tableros de informes y exportaciones. Próximamente."
+      },
+      "copilot": {
+        "label": "Asistente IA",
+        "description": "Amplify Copilot: un asistente de IA que ayuda a gestionar la carga de trabajo y a redactar comunicaciones."
+      }
+    },
+    "cases": {
+      "modeSummary": {
+        "single": "Modo de caso único",
+        "multi": "Modo multicaso",
+        "noActiveType": "Sin tipo activo",
+        "enabledTypes": "{{enabled}} de {{total}} tipos activos"
+      },
+      "configToggle": {
+        "show": "Configurar tipos de casos",
+        "hide": "Mostrar menos"
+      },
+      "config": {
+        "modeTitle": "Modo de tipo de caso",
+        "modeDescription": "El modo único muestra un solo tipo de caso en todo. El modo multi permite trabajar con varios tipos.",
+        "modeOptions": {
+          "single": "Único",
+          "multi": "Multi"
+        },
+        "listTitle": {
+          "single": "Tipo de caso activo",
+          "multi": "Tipos de caso activos"
+        },
+        "selectAria": "Seleccionar {{label}}",
+        "toggleAria": "Activar o desactivar {{label}}",
+        "badge": {
+          "builtIn": "Integrado",
+          "custom": "Personalizado"
+        }
+      }
+    }
+  },
+  "data": {
+    "intro": "Comprenda la arquitectura de entidades de la plataforma, controle qué entidades y líneas de negocio están activas y prepare datos de demo para futuras importaciones o fuentes con base de datos.",
+    "currency": {
+      "label": "Moneda de visualización",
+      "hint": "Se aplica a este contexto de datos cuando está activo en el espacio de trabajo.",
+      "gbp": "GBP (£)",
+      "usd": "USD ($)"
+    },
+    "source": {
+      "eyebrow": "Fuente de datos",
+      "objects": "entidades",
+      "mode": "Modo",
+      "connector": "Conector",
+      "dataset": "Conjunto",
+      "reset": "Restablecer",
+      "activeDataset": "Conjunto activo",
+      "resetBehavior": "Comportamiento de reinicio",
+      "resetOptions": {
+        "uiOnly": "Solo configuración de UI",
+        "dataset": "Conjunto de datos",
+        "all": "Toda la configuración y datos"
+      }
+    },
+    "objects": {
+      "title": "Entidades",
+      "description": "Active los tipos de entidades disponibles en este entorno de demo. Los conteos provienen del conjunto activo.",
+      "toggleAria": "Activar entidad {{label}}"
+    },
+    "workflows": {
+      "title": "Líneas de negocio",
+      "description": "Active o desactive las líneas de negocio admitidas por este entorno. Estas controlan los tipos de caso visibles.",
+      "toggleAria": "Activar línea de negocio {{label}}"
+    },
+    "schema": {
+      "title": "Explorador de esquema de base de datos",
+      "description": "Expanda cada entidad para inspeccionar tablas, claves, campos y relaciones entrantes o salientes."
+    },
+    "dataset": {
+      "title": "Vista previa del conjunto",
+      "description": "Valide que los datos mock activos formen un grafo de entidades conectado.",
+      "records": "Registros",
+      "workflows": "Líneas de negocio",
+      "issues": "Problemas"
+    },
+    "import": {
+      "title": "Importar datos",
+      "description": "La importación queda preparada como flujo de arquitectura. Esta fase muestra mapeo y validación sin modificar datos.",
+      "dropTitle": "Paquete XML, JSON o CSV",
+      "dropDescription": "Las futuras importaciones mapearán paquetes por caso o entorno a esquemas de entidades, validarán relaciones y mostrarán errores antes de aceptar datos.",
+      "steps": {
+        "upload": "Cargar paquete de origen",
+        "map": "Mapear campos al esquema",
+        "validate": "Validar IDs y relaciones",
+        "preview": "Previsualizar registros y errores"
+      }
+    }
+  },
+  "intelligence": {
+    "intro": "Configure qué partes de la capa de IA están visibles para los usuarios en todo el espacio de trabajo.",
+    "rows": {
+      "assistant": {
+        "label": "Módulo Asistente IA",
+        "description": "Muestre la entrada Asistente en la barra de navegación. Al desactivarla también se oculta la versión a pantalla completa del Copilot."
+      },
+      "sidePanel": {
+        "label": "Panel lateral de IA",
+        "description": "Muestre la burbuja de chat en el encabezado, que abre el panel de IA junto a cualquier pantalla."
+      },
+      "caseAssistant": {
+        "label": "Asistente IA de casos",
+        "description": "Muestre la tarjeta contextual del Asistente y el panel lateral en las páginas de caso."
+      },
+      "activityFeed": {
+        "label": "Feed de actividad de IA",
+        "description": "Muestre el widget del feed en la barra de navegación. Cuando está visible, se activa automáticamente."
+      }
+    }
+  },
+  "language": {
+    "intro": "Elija el idioma utilizado en todo el espacio de trabajo. El cambio es instantáneo: no se requiere recargar la página.",
+    "currentLabel": "Idioma actual",
+    "selectAria": "Seleccionar {{name}}",
+    "languages": {
+      "en": {
+        "nativeName": "English",
+        "englishName": "Inglés",
+        "region": "Estados Unidos",
+        "sample": "Welcome back — pick up where you left off."
+      },
+      "fr": {
+        "nativeName": "Français",
+        "englishName": "Francés",
+        "region": "Canadá",
+        "sample": "Bon retour — reprenez là où vous étiez."
+      },
+      "es": {
+        "nativeName": "Español",
+        "englishName": "Español",
+        "region": "Latinoamérica",
+        "sample": "Bienvenido de nuevo — continúe donde lo dejó."
+      }
+    }
+  },
+  "roles": {
+    "comingSoon": "Próximamente",
+    "intro": "Roles de Evaluador y Gerente con permisos y niveles de acceso diferenciados. Los ajustes se previsualizan aquí para que sepa dónde encontrarlos.",
+    "definitions": {
+      "assessor": {
+        "name": "Evaluador",
+        "description": "Revisa los casos, registra decisiones dentro de su autoridad y asigna requisitos."
+      },
+      "manager": {
+        "name": "Gerente",
+        "description": "Supervisa al equipo, reasigna la carga, aprueba escalamientos y administra los tipos de casos."
+      }
+    },
+    "rowAria": "Rol {{name}} (marcador de posición)"
+  }
+}

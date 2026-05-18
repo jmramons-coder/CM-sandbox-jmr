@@ -1,0 +1,375 @@
+{
+  "folders": {
+    "FLD-5546112": {
+      "claimant": "Billy Bud",
+      "product": "Guardian IP · 8 wk deferred",
+      "benefit": "£11,250/mo",
+      "status": "Active",
+      "subCases": {
+        "SC-PRE-5546112": {
+          "label": "Case 1: Pre-Approval",
+          "status": "Pending Decision",
+          "owner": "Victor Ramon"
+        },
+        "SC-POST-5546112": {
+          "label": "Case 2: Post-Approval",
+          "status": "Not Started",
+          "owner": "Unassigned"
+        }
+      }
+    },
+    "FLD-7622343": {
+      "claimant": "Marc Tremblay",
+      "product": "Guardian IP · 4 wk deferred",
+      "benefit": "£6,200/mo",
+      "status": "Active",
+      "subCases": {
+        "SC-PRE-7622343": {
+          "label": "Case 1: Pre-Approval",
+          "status": "Completed",
+          "owner": "Victor Ramon"
+        },
+        "SC-POST-7622343": {
+          "label": "Case 2: Post-Approval",
+          "status": "Recovery Underway",
+          "owner": "Victor Ramon"
+        }
+      }
+    },
+    "FLD-998987": {
+      "claimant": "Elena Rossi",
+      "product": "Guardian IP · 13 wk deferred",
+      "benefit": "£5,100/mo",
+      "status": "Active",
+      "subCases": {
+        "SC-PRE-998987": {
+          "label": "Case 1: Pre-Approval",
+          "status": "Completed",
+          "owner": "Sophie Laurent"
+        },
+        "SC-POST-998987": {
+          "label": "Case 2: Post-Approval",
+          "status": "RTW Planning",
+          "owner": "Sophie Laurent"
+        }
+      }
+    },
+    "POL-9847231": {
+      "claimant": "Tremblay, Marc",
+      "product": "Whole Life · Performax Gold",
+      "benefit": "—",
+      "status": "Active"
+    }
+  },
+  "entityFolders": {
+    "POL-9847231": {
+      "title": "POL-9847231",
+      "badges": {
+        "type": "Policy",
+        "status": "ACTIVE"
+      },
+      "tabs": {
+        "information": "Information",
+        "tasks": "Tasks",
+        "documents": "Documents",
+        "requirements": "Requirements",
+        "notes": "Notes",
+        "reconciliation": "Reconciliation",
+        "businessEvent": "Business Event",
+        "activityHistory": "Activity History",
+        "requests": "Requests",
+        "relationship": "Relationship"
+      },
+      "sections": {
+        "identification": {
+          "title": "IDENTIFICATION",
+          "fields": {
+            "carrier": "Carrier",
+            "lineOfBusiness": "Line of business",
+            "productType": "Product type",
+            "planName": "Plan name",
+            "jurisdiction": "Jurisdiction"
+          },
+          "values": {
+            "carrier": "Canada Life",
+            "lineOfBusiness": "Life Insurance",
+            "productType": "Whole Life",
+            "planName": "Accelerator",
+            "jurisdiction": "Jurisdiction of Quebec"
+          },
+          "timeline": {
+            "issueDate": "Issue Date",
+            "effectiveDate": "Effective Date",
+            "terminationDate": "Termination Date"
+          }
+        },
+        "policyDetails": {
+          "title": "POLICY DETAILS",
+          "fields": {
+            "policyYear": "Policy year",
+            "referralSource": "Referral Source"
+          },
+          "values": {
+            "referralSource": "Unknown"
+          }
+        },
+        "premiumPayment": {
+          "title": "PREMIUM PAYMENT",
+          "fields": {
+            "paidToDate": "Paid to date",
+            "billedToDate": "Billed to date",
+            "premiumPaidStatus": "Premium paid status",
+            "premiumPaymentEndDate": "Premium payment end date",
+            "nextBilledAmount": "Next billed amount",
+            "gracePeriodEndDate": "Grace period end date",
+            "graceAmount": "Grace amount"
+          }
+        },
+        "payment": {
+          "title": "PAYMENT",
+          "editAction": "EDIT",
+          "fields": {
+            "paymentMode": "Payment mode",
+            "paymentMethod": "Payment method",
+            "dayOfMonth": "Day of Month"
+          },
+          "values": {
+            "paymentMode": "Quarterly",
+            "paymentMethod": "Credit Card"
+          }
+        },
+        "coverageSummary": {
+          "title": "COVERAGE SUMMARY",
+          "addAction": "ADD",
+          "columns": {
+            "coverage": "Coverage",
+            "insured": "Insured",
+            "status": "Status",
+            "amount": "Amount",
+            "annualPremium": "Annual premium"
+          },
+          "rows": {
+            "placeholderCoverage": "()",
+            "inQueueStatus": "IN QUEUE"
+          }
+        },
+        "premiums": {
+          "title": "PREMIUMS",
+          "addAction": "ADD",
+          "columns": {
+            "type": "Type",
+            "effective": "Effective Date",
+            "expiry": "Expiry Date",
+            "amount": "Amount"
+          },
+          "rows": {
+            "totalAnnual": "Total annual premium",
+            "policyFee": "Policy fee",
+            "overExcess": "Over excess premium (exe)"
+          }
+        },
+        "additionalInfo": {
+          "title": "ADDITIONAL INFORMATION",
+          "addAction": "ADD",
+          "columns": {
+            "name": "Field name",
+            "value": "Field value"
+          },
+          "rows": {
+            "typeOfPolicy": "Type of Polcy",
+            "wholeLife": "Whole Life",
+            "yes": "Yes"
+          }
+        }
+      }
+    },
+    "AGT-BEAULIEU": {
+      "title": "Beaulieu, Nathalie",
+      "badges": { "role": "Policy Agent" },
+      "tabs": {
+        "information": "Information",
+        "tasks": "Tasks",
+        "documents": "Documents",
+        "notes": "Notes",
+        "relationship": "Relationship"
+      },
+      "sections": {
+        "identification": {
+          "title": "IDENTIFICATION",
+          "fields": {
+            "name": "Name",
+            "establishmentDate": "Establishment date",
+            "synchronizedWith": "Synchronized with",
+            "syncHint": "Agent",
+            "language": "Language",
+            "website": "Website"
+          },
+          "values": {
+            "name": "Beaulieu, Nathalie",
+            "syncedTo": "Beaulieu, Nathalie",
+            "language": "French"
+          }
+        },
+        "contact": {
+          "title": "CONTACT"
+        },
+        "rolesSummary": {
+          "title": "ROLES SUMMARY",
+          "addAction": "ADD",
+          "columns": {
+            "role": "Role",
+            "created": "Created on",
+            "contract": "Contract number",
+            "share": "Share (%)",
+            "status": "Status"
+          },
+          "rows": {
+            "primaryServicing": "Primary Servicing Agent",
+            "payer": "Payer",
+            "policyOwner": "Policy Owner",
+            "primaryInsured": "Primary Insured",
+            "active": "ACTIVE",
+            "inactive": "INACTIVE"
+          }
+        },
+        "additionalInfo": {
+          "title": "ADDITIONAL INFORMATION",
+          "addAction": "ADD",
+          "columns": {
+            "name": "Field name",
+            "value": "Field value"
+          },
+          "empty": "There is no additional information on this entity.\nOnce added additional information will be displayed here."
+        }
+      }
+    },
+    "COV-TERM10-GOLD": {
+      "title": "Term 10 - Gold",
+      "badges": { "role": "Coverage" },
+      "tabs": {
+        "information": "Information",
+        "tasks": "Tasks",
+        "documents": "Documents",
+        "notes": "Notes",
+        "relationship": "Relationship"
+      },
+      "sections": {
+        "identification": {
+          "title": "IDENTIFICATION",
+          "fields": {
+            "name": "Name",
+            "type": "Type",
+            "level": "Level",
+            "parent": "Parent link",
+            "insured": "Insured",
+            "status": "Status"
+          },
+          "values": {
+            "name": "Term 10 - Gold",
+            "type": "Term",
+            "level": "Base",
+            "parent": "—",
+            "insured": "Tremblay, Marc",
+            "status": "Active"
+          }
+        },
+        "financial": {
+          "title": "FINANCIAL",
+          "editAction": "EDIT",
+          "fields": {
+            "amount": "Coverage amount",
+            "premium": "Annual premium",
+            "frequency": "Premium frequency"
+          },
+          "values": {
+            "frequency": "Annual"
+          }
+        },
+        "additionalInfo": {
+          "title": "ADDITIONAL INFORMATION",
+          "addAction": "ADD",
+          "columns": {
+            "name": "Field name",
+            "value": "Field value"
+          },
+          "empty": "There is no additional information on this entity.\nOnce added additional information will be displayed here."
+        }
+      }
+    },
+    "PAR-TREMBLAY-MARC": {
+      "title": "Tremblay, Marc",
+      "badges": { "role": "Participant" },
+      "tabs": {
+        "information": "Information",
+        "tasks": "Tasks",
+        "documents": "Documents",
+        "notes": "Notes",
+        "relationship": "Relationship"
+      },
+      "sections": {
+        "identification": {
+          "title": "IDENTIFICATION",
+          "fields": {
+            "name": "Name",
+            "dob": "Date of birth",
+            "gender": "Gender",
+            "smoker": "Smoker",
+            "language": "Language"
+          },
+          "values": {
+            "name": "Tremblay, Marc",
+            "gender": "Male",
+            "smoker": "No",
+            "language": "French"
+          }
+        },
+        "contact": {
+          "title": "CONTACT"
+        },
+        "rolesSummary": {
+          "title": "ROLES SUMMARY",
+          "addAction": "ADD",
+          "columns": {
+            "role": "Role",
+            "created": "Created on",
+            "status": "Status"
+          },
+          "rows": {
+            "primaryInsured": "Primary Insured",
+            "policyOwner": "Policy Owner",
+            "active": "ACTIVE"
+          }
+        },
+        "additionalInfo": {
+          "title": "ADDITIONAL INFORMATION",
+          "addAction": "ADD",
+          "columns": {
+            "name": "Field name",
+            "value": "Field value"
+          },
+          "empty": "There is no additional information on this entity.\nOnce added additional information will be displayed here."
+        }
+      }
+    }
+  },
+  "subFolderRows": {
+    "agents": {
+      "AGT-BEAULIEU": { "name": "Beaulieu, Nathalie", "roles": "Primary Servicing Agent" },
+      "AGT-FOURNIER": { "name": "Fournier, Jean-Philippe", "roles": "Additional Servicing Agent" }
+    },
+    "coverages": {
+      "COV-TERM10-GOLD": { "name": "Term 10 - Gold", "type": "Term", "level": "Base" },
+      "COV-TERM20-SILVER": { "name": "Term 20 - Silver", "type": "Term", "level": "Base" },
+      "COV-WL-PERFORMAX": { "name": "Whole Life - Performax", "type": "Whole Life", "level": "Base" },
+      "COV-CI-BASIC": { "name": "Critical Illness - Basic", "type": "Critical Illness", "level": "Rider" }
+    },
+    "participants": {
+      "PAR-TREMBLAY-MARC": { "name": "Tremblay, Marc", "roles": "Primary Insured, Policy Owner, Payer" },
+      "PAR-TREMBLAY-SOPHIE": { "name": "Tremblay, Sophie", "roles": "Coverage Insured, Contingent Owner" },
+      "PAR-TREMBLAY-LUCAS": { "name": "Tremblay, Lucas", "roles": "Beneficiary Primary" },
+      "PAR-TREMBLAY-EMMA": { "name": "Tremblay, Emma", "roles": "Beneficiary Primary" },
+      "PAR-GAGNON-ROBERT": { "name": "Gagnon, Robert", "roles": "Contingent Beneficiary, Trustee" },
+      "PAR-GAGNON-MONIQUE": { "name": "Gagnon, Monique", "roles": "Contingent Beneficiary" }
+    }
+  }
+}

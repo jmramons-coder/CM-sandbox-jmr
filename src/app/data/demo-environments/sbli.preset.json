@@ -1,0 +1,42 @@
+{
+  "id": "demo-sbli",
+  "name": "SBLI",
+  "description": "SBLI carrier branding with the same four-case demo dataset (claims and new business).",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "settings": {
+    "branding": {
+      "productName": "SBLI Case Management",
+      "showProductName": true,
+      "logoMode": "custom",
+      "headerColor": "#005cff",
+      "primaryColor": "#005cff",
+      "accentColor": "#602fa0",
+      "onHeaderColor": "#ffffff",
+      "logoDarkDataUrl": "/documents/sbli/sbli_logo.svg",
+      "logoLightDataUrl": "/documents/sbli/SBLI_dark.webp"
+    },
+    "themeMode": "dark",
+    "language": "en",
+    "mode": "multi",
+    "activeCaseTypeId": "ct-ip",
+    "preferences": {
+      "aiActivityEnabled": true,
+      "aiSidePanelEnabled": true,
+      "casesAiAssistantEnabled": false,
+      "aiActivityVisible": false
+    },
+    "modules": {
+      "home": true,
+      "cases": true,
+      "folders": false,
+      "finances": false,
+      "tasks": true,
+      "requests": true,
+      "documents": true,
+      "aiActions": false,
+      "insights": false,
+      "reports": false,
+      "copilot": true
+    }
+  }
+}

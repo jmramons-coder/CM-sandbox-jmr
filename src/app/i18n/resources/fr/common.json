@@ -1,0 +1,38 @@
+{
+  "actions": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "remove": "Retirer",
+    "replace": "Remplacer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "create": "Créer",
+    "moreActions": "Autres actions",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "more": "Plus"
+  },
+  "carousel": {
+    "previousSlide": "Diapositive précédente",
+    "nextSlide": "Diapositive suivante",
+    "carousel": "carrousel",
+    "slide": "diapositive"
+  },
+  "command": {
+    "title": "Palette de commandes",
+    "description": "Rechercher une commande à exécuter…",
+    "placeholder": "Saisissez une commande ou une recherche…"
+  },
+  "pagination": {
+    "label": "pagination",
+    "previousPage": "Aller à la page précédente",
+    "nextPage": "Aller à la page suivante",
+    "morePages": "Autres pages"
+  },
+  "sidebar": {
+    "label": "Barre latérale",
+    "description": "Affiche la barre latérale mobile.",
+    "toggle": "Afficher/masquer la barre latérale"
+  }
+}

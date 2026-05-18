@@ -1,0 +1,61 @@
+{
+  "modules": {
+    "home": "Accueil",
+    "cases": "Dossiers",
+    "folders": "Dossiers groupés",
+    "finances": "Finances",
+    "tasks": "Tâches",
+    "requests": "Demandes",
+    "documents": "Documents",
+    "aiActions": "Veille intelligence",
+    "insights": "Perspectives",
+    "reports": "Rapports",
+    "assistant": "Assistant"
+  },
+  "globalCreate": {
+    "title": "Créer",
+    "ariaLabel": "Créer un enregistrement",
+    "case": "Dossier",
+    "task": "Tâche",
+    "request": "Demande"
+  },
+  "activityFeed": {
+    "label": "Fil",
+    "ariaLabel": "Fil d'activité IA",
+    "popoverTitle": "Fil d'activité IA",
+    "popoverBody": "Activez ce fil pour voir en temps réel ce que l'équipe IA accomplit : traitement des tâches, plans en cours et suivi de vos dossiers."
+  },
+  "header": {
+    "openAssistant": "Ouvrir l'Assistant Amplify",
+    "resizeAiPanel": "Redimensionner le panneau IA",
+    "resizeChat": "Redimensionner la fenêtre"
+  },
+  "aiPanel": {
+    "eyebrow": "Assistant Amplify",
+    "renameConversation": "Renommer la conversation",
+    "newConversation": "Nouvelle conversation",
+    "newChat": "Nouveau chat",
+    "openFullPage": "Ouvrir en plein écran",
+    "closeAssistant": "Fermer l'assistant"
+  },
+  "sidePanel": {
+    "close": "Fermer le panneau latéral",
+    "open": "Ouvrir le panneau latéral",
+    "resize": "Redimensionner le panneau latéral"
+  },
+  "userMenu": {
+    "openMenu": "Ouvrir le menu utilisateur",
+    "profile": "Profil",
+    "soonBadge": "Bientôt",
+    "platformSettings": "Paramètres de la plateforme",
+    "signOut": "Se déconnecter"
+  },
+  "appSwitcher": {
+    "switchApplication": "Changer d'application",
+    "products": "Produits",
+    "resources": "Ressources",
+    "platformGuide": "Guide de la plateforme",
+    "documentationSpec": "Documentation et spec",
+    "advisorsLink": "Equisoft pour les conseillers"
+  }
+}

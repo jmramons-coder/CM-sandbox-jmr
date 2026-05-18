@@ -1,0 +1,38 @@
+{
+  "actions": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "remove": "Remove",
+    "replace": "Replace",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "moreActions": "More actions",
+    "previous": "Previous",
+    "next": "Next",
+    "more": "More"
+  },
+  "carousel": {
+    "previousSlide": "Previous slide",
+    "nextSlide": "Next slide",
+    "carousel": "carousel",
+    "slide": "slide"
+  },
+  "command": {
+    "title": "Command Palette",
+    "description": "Search for a command to run...",
+    "placeholder": "Type a command or search..."
+  },
+  "pagination": {
+    "label": "pagination",
+    "previousPage": "Go to previous page",
+    "nextPage": "Go to next page",
+    "morePages": "More pages"
+  },
+  "sidebar": {
+    "label": "Sidebar",
+    "description": "Displays the mobile sidebar.",
+    "toggle": "Toggle Sidebar"
+  }
+}

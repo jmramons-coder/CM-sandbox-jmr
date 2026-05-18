@@ -1,0 +1,61 @@
+{
+  "modules": {
+    "home": "Home",
+    "cases": "Cases",
+    "folders": "Folders",
+    "finances": "Finances",
+    "tasks": "Tasks",
+    "requests": "Requests",
+    "documents": "Documents",
+    "aiActions": "Intelligence monitoring",
+    "insights": "Insights",
+    "reports": "Reports",
+    "assistant": "Assistant"
+  },
+  "globalCreate": {
+    "title": "Create",
+    "ariaLabel": "Create new record",
+    "case": "Case",
+    "task": "Task",
+    "request": "Request"
+  },
+  "activityFeed": {
+    "label": "Feed",
+    "ariaLabel": "AI activity feed",
+    "popoverTitle": "AI Activity Feed",
+    "popoverBody": "Activate to see real-time updates from the agentic crew as they process tasks, build plans, and manage your cases."
+  },
+  "header": {
+    "openAssistant": "Open Amplify Assistant",
+    "resizeAiPanel": "Resize AI panel",
+    "resizeChat": "Resize chat"
+  },
+  "aiPanel": {
+    "eyebrow": "Amplify Assistant",
+    "renameConversation": "Rename conversation",
+    "newConversation": "New conversation",
+    "newChat": "New chat",
+    "openFullPage": "Open full page",
+    "closeAssistant": "Close assistant"
+  },
+  "sidePanel": {
+    "close": "Close side panel",
+    "open": "Open side panel",
+    "resize": "Resize side panel"
+  },
+  "userMenu": {
+    "openMenu": "Open user menu",
+    "profile": "Profile",
+    "soonBadge": "Soon",
+    "platformSettings": "Platform settings",
+    "signOut": "Sign out"
+  },
+  "appSwitcher": {
+    "switchApplication": "Switch application",
+    "products": "Products",
+    "resources": "Resources",
+    "platformGuide": "Platform guide",
+    "documentationSpec": "Documentation & spec",
+    "advisorsLink": "Equisoft for advisors"
+  }
+}

@@ -1,0 +1,549 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: oklch(0.145 0 0);
+  --card: #ffffff;
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #030213;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+  --accent: #e9ebef;
+  --accent-foreground: #030213;
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #030213;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Brand tokens — white-label surface colors. Driven by PlatformSettingsContext. */
+  --brand-header: #003a5a;
+  --brand-primary: #006296;
+  --brand-accent: #602fa0;
+  --brand-on-header: #ffffff;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  /* ── Shadcn semantic tokens ── */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ── Amplify Design System: Brand ── */
+  --color-brand-navy: color-mix(in srgb, var(--brand-primary, #006296), black 35%);
+  --color-brand-blue: var(--brand-primary, #006296);
+  --color-brand-blue-hover: color-mix(in srgb, var(--brand-primary, #006296), black 20%);
+  --color-brand-blue-light: color-mix(in srgb, var(--brand-primary, #006296) 12%, white);
+  --color-brand-blue-ring: color-mix(in srgb, var(--brand-primary, #006296) 25%, transparent);
+  --color-brand-green: #008533;
+  --color-brand-red: #cd2c23;
+  --color-brand-purple: var(--brand-accent, #602fa0);
+  --color-brand-amber: #f5a200;
+  --color-brand-orange: #e07800;
+
+  /* AI accent — derived from --brand-accent, configurable in Platform Settings */
+  --color-brand-accent: var(--brand-accent, #602fa0);
+  --color-brand-accent-light: color-mix(in srgb, var(--brand-accent, #602fa0) 12%, white);
+  --color-brand-accent-muted: color-mix(in srgb, var(--brand-accent, #602fa0) 20%, white);
+  --color-brand-accent-hover: color-mix(in srgb, var(--brand-accent, #602fa0), black 20%);
+
+  /* ── Amplify Design System: Surfaces ── */
+  --color-surface-primary: #fafafa;
+  --color-surface-card: #ffffff;
+  --color-surface-hover: #f9fafb;
+  --color-surface-muted: #f1f2f2;
+  --color-surface-selected: color-mix(in srgb, var(--brand-primary, #006296) 10%, white);
+  --color-surface-selected-alt: color-mix(in srgb, var(--brand-primary, #006296) 5%, white);
+  --color-brand-blue-border: color-mix(in srgb, var(--brand-primary, #006296) 30%, white);
+
+  /* ── Amplify Design System: Borders ── */
+  --color-border-default: #dbdee1;
+  --color-border-soft: #e0e4e8;
+  --color-border-divider: #f1f2f2;
+
+  /* ── Amplify Design System: Text ── */
+  --color-text-heading: #003a5a;
+  --color-text-primary: #1b1c1e;
+  --color-text-secondary: #60666e;
+  --color-text-muted: #878f9a;
+  --color-text-placeholder: #b7bbc2;
+
+  /* ── Amplify Design System: Status surfaces ── */
+  --color-status-success-bg: #e8f5e9;
+  --color-status-warning-bg: #fff3e0;
+  --color-status-danger-bg: #fde5e4;
+  --color-status-info-bg: #e0f0f9;
+  --color-status-discovery-bg: #f3edf8;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    background: var(--brand-header);
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    @apply text-foreground;
+  }
+
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
+  html {
+    height: 100%;
+    font-size: var(--font-size);
+    /* Avoid layout shift when scrollbars show/hide (e.g. AI panel toggling overflow). */
+    scrollbar-gutter: stable;
+    overflow-x: clip;
+    overflow-y: hidden;
+    overscroll-behavior: none;
+    background: var(--brand-header);
+  }
+
+  #root {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--brand-header);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  label {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="option"],
+  [role="checkbox"],
+  [role="radio"],
+  [role="switch"],
+  a[href],
+  select,
+  summary,
+  label[for],
+  [onclick],
+  [tabindex]:not([tabindex="-1"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.5;
+  }
+}
+
+@layer components {
+  .app-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cfd4da transparent;
+  }
+
+  .app-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cfd4da;
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-clip: content-box;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #bfc6ce;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .app-scrollbar-thumb-left-4::-webkit-scrollbar-thumb {
+    border-left-width: 0;
+    border-right-width: 6px;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes aiActivityFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes aiActivityPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes aiActivitySlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/** One-shot rotation for AI sparkle cue (hover / group-hover). */
+@keyframes aiCueSparkleSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/** Soft section-level AI cue pulse. */
+@keyframes aiCuePingSoft {
+  0%, 100% {
+    opacity: 0.18;
+    transform: scale(0.82);
+  }
+  50% {
+    opacity: 0.05;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes dynamicDocPanelIn {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes dynamicDocPanelOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .doc-print-root,
+  .doc-print-root *,
+  .doc-print-content,
+  .doc-print-content * {
+    visibility: visible !important;
+  }
+
+  .doc-print-hide,
+  .doc-print-hide * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .doc-spec-page,
+  .doc-print-root {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .doc-print-content {
+    position: absolute !important;
+    top: 0 !important;
+    left: 50% !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 180mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: translateX(-50%) !important;
+    background: #ffffff !important;
+  }
+
+  .doc-print-content .grid {
+    display: grid !important;
+  }
+
+  .doc-print-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-bottom: 1px solid #e0e4e8 !important;
+    background: #ffffff !important;
+    margin-bottom: 12px !important;
+  }
+
+  .doc-print-section img {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    border: 1px solid #cfd4da !important;
+  }
+
+  .doc-print-section [class*="bg-surface-primary"],
+  .doc-print-section [class*="bg-surface-muted"] {
+    background: #f7f8f9 !important;
+  }
+
+  .doc-print-section [class*="border-border"],
+  .doc-print-section [class*="border-soft"],
+  .doc-print-section [class*="border-default"] {
+    border-color: #cfd4da !important;
+  }
+}

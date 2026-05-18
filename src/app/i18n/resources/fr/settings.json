@@ -1,0 +1,331 @@
+{
+  "modal": {
+    "title": "Paramètres de la plateforme — {{tab}}",
+    "sectionsLabel": "Sections des paramètres de la plateforme",
+    "sidebarHeading": "Paramètres"
+  },
+  "tabs": {
+    "branding": {
+      "label": "Image de marque",
+      "description": "Personnalisez le nom du produit, le logo et les couleurs du thème visibles dans toute l'application."
+    },
+    "modules": {
+      "label": "Modules",
+      "description": "Activez ou désactivez les modules. Les modules désactivés sont masqués dans la navigation."
+    },
+    "data": {
+      "label": "Données",
+      "description": "Comprendre l'architecture des entités, les relations de schéma de base de données, les jeux de données et la préparation à l'import."
+    },
+    "intelligence": {
+      "label": "Intelligence",
+      "description": "Contrôlez la couche IA — l'assistant, le panneau latéral et le fil d'activité."
+    },
+    "language": {
+      "label": "Langue",
+      "description": "Choisissez la langue utilisée dans tout l'environnement. Le changement est instantané — aucun rechargement requis."
+    },
+    "roles": {
+      "label": "Rôles et accès",
+      "description": "Les permissions par rôle se trouveront ici. À venir."
+    },
+    "demo": {
+      "label": "Environnement de démo",
+      "description": "Enregistrez, consultez et activez des instantanés d'environnements de démo."
+    }
+  },
+  "sidebarFooter": {
+    "save": "Enregistrer",
+    "resetAll": "Tout réinitialiser",
+    "confirmReset": "Réinitialiser tous les paramètres ?",
+    "confirmCta": "Réinitialiser"
+  },
+  "saveDialog": {
+    "title": "Enregistrer l'environnement de démo",
+    "description": "Capturez les paramètres actuels de la plateforme comme instantané réutilisable.",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Démo exécutive",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Ce que cet environnement est configuré pour montrer...",
+    "saveCta": "Enregistrer",
+    "localOnlyNote": "Enregistrement local au navigateur seulement. Pour partager après déploiement, utilisez Exporter pour déploiement sur un environnement intégré (Equisoft ou SBLI)."
+  },
+  "demo": {
+    "intro": "Les environnements de démo enregistrés capturent l'image de marque, les modules, les types de dossiers, la visibilité IA, la langue et l'apparence au moment de l'enregistrement.",
+    "emptyTitle": "Aucun environnement de démo enregistré",
+    "emptyDescription": "Utilisez Enregistrer dans le pied de page des paramètres pour capturer la configuration actuelle.",
+    "savedAt": "Enregistré le {{date}}",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "activeToggleAria": "Activer l'environnement de démo {{name}}",
+    "builtIn": "Intégré · fourni avec l'application",
+    "deleteAria": "Supprimer l'environnement de démo {{name}}",
+    "sharedDatasetNote": "Les deux environnements intégrés partagent le jeu de données SBLI. Activez pour changer l'image de marque. Icône téléchargement : exporter pour un déploiement git.",
+    "exportDeployAria": "Exporter {{name}} pour déploiement",
+    "exportDeployDone": "Fichier {{filename}} téléchargé. Remplacez {{path}} dans le dépôt, validez et déployez.",
+    "summary": {
+      "branding": "Image de marque",
+      "modules": "Modules",
+      "modulesValue": "{{enabled}} sur {{total}} actifs",
+      "caseTypes": "Types de dossiers",
+      "intelligence": "Intelligence",
+      "intelligenceValue": "{{enabled}} sur {{total}} visibles"
+    }
+  },
+  "branding": {
+    "productNameTitle": "Nom du produit",
+    "productNameShowInHeader": "Afficher dans l'en-tête",
+    "productNamePlaceholder": "Amplify Case Management",
+    "productNameFallback": "Nom du produit",
+    "logoTitle": "Logo",
+    "logoMode": {
+      "default": "Par défaut",
+      "custom": "Personnalisé"
+    },
+    "surfaces": {
+      "darkMode": "Mode sombre",
+      "lightMode": "Mode clair",
+      "previewAria": "Logo par défaut sur fond {{surface}}",
+      "uploadAria": "Téléverser le logo {{surface}}",
+      "replaceAria": "Remplacer le logo {{surface}}",
+      "logoAlt": "Logo {{surface}}"
+    },
+    "dropzone": {
+      "errors": {
+        "fileType": "Seuls les fichiers PNG, SVG, JPEG et WEBP sont acceptés.",
+        "fileSize": "Le logo ne doit pas dépasser 500 Ko."
+      },
+      "click": "Cliquez",
+      "orDropToReplace": " ou déposez un fichier pour remplacer.",
+      "dropOr": "Déposez un logo, ou ",
+      "upload": "téléversez",
+      "specs": "PNG, SVG, JPEG, WEBP · ≤ 500 Ko"
+    },
+    "colors": {
+      "title": "Couleurs",
+      "header": "En-tête",
+      "primary": "Principale",
+      "accent": "Accent (IA)",
+      "fieldAria": "Couleur {{label}} — cliquez pour choisir",
+      "copyAria": "Copier la couleur {{label}}",
+      "copied": "Copié !",
+      "copyHex": "Copier le code hex"
+    },
+    "preview": {
+      "title": "Aperçu en direct",
+      "primaryChip": "Principale",
+      "aiChip": "IA",
+      "customLogoAlt": "Logo personnalisé"
+    },
+    "appearance": {
+      "title": "Apparence",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
+    "resetBranding": "Réinitialiser l'image de marque",
+    "colorPicker": {
+      "saturationAria": "Saturation et luminosité",
+      "saturationValueText": "S {{s}}, V {{v}}",
+      "hueAria": "Teinte"
+    }
+  },
+  "modules": {
+    "intro": "Activez ou désactivez les modules pour contrôler ce qui apparaît dans la navigation. Au moins un module doit demeurer actif.",
+    "lastEnabledTitle": "Au moins un module doit demeurer actif",
+    "toggleAria": "Activer ou désactiver le module {{label}}",
+    "definitions": {
+      "home": {
+        "label": "Accueil",
+        "description": "Tableau de bord avec indicateurs clés, charge de travail et widgets d'accès rapide."
+      },
+      "cases": {
+        "label": "Dossiers",
+        "description": "Espace complet de gestion des dossiers — parcourir, filtrer et traiter de bout en bout."
+      },
+      "folders": {
+        "label": "Dossiers groupés",
+        "description": "Vue par dossier qui regroupe les sous-dossiers d'un même demandeur."
+      },
+      "finances": {
+        "label": "Finances",
+        "description": "Opérations financières, signaux de facturation et paiements. Bientôt disponible."
+      },
+      "tasks": {
+        "label": "Tâches",
+        "description": "Liste unifiée des tâches de tous les dossiers, avec priorité, échéances et statut."
+      },
+      "requests": {
+        "label": "Demandes",
+        "description": "Demandes de service et d'admission centralisées. Bientôt disponible."
+      },
+      "documents": {
+        "label": "Documents",
+        "description": "Référentiel pour téléverser, examiner et valider les documents des dossiers."
+      },
+      "aiActions": {
+        "label": "Veille intelligence",
+        "description": "Fil global d'audit et de contrôle des actions IA et système."
+      },
+      "insights": {
+        "label": "Perspectives",
+        "description": "Vues d'analyse et d'intelligence opérationnelle. Bientôt disponible."
+      },
+      "reports": {
+        "label": "Rapports",
+        "description": "Tableaux de bord de rapports et exports. Bientôt disponible."
+      },
+      "copilot": {
+        "label": "Assistant IA",
+        "description": "Amplify Copilot — un assistant IA qui aide à gérer la charge de travail et à rédiger les communications."
+      }
+    },
+    "cases": {
+      "modeSummary": {
+        "single": "Mode dossier unique",
+        "multi": "Mode multi-dossiers",
+        "noActiveType": "Aucun type actif",
+        "enabledTypes": "{{enabled}} types sur {{total}} actifs"
+      },
+      "configToggle": {
+        "show": "Configurer les types de dossiers",
+        "hide": "Réduire"
+      },
+      "config": {
+        "modeTitle": "Mode des types de dossiers",
+        "modeDescription": "Le mode unique affiche un seul type de dossier partout. Le mode multi permet de travailler sur plusieurs types.",
+        "modeOptions": {
+          "single": "Unique",
+          "multi": "Multi"
+        },
+        "listTitle": {
+          "single": "Type de dossier actif",
+          "multi": "Types de dossiers actifs"
+        },
+        "selectAria": "Sélectionner {{label}}",
+        "toggleAria": "Activer ou désactiver {{label}}",
+        "badge": {
+          "builtIn": "Intégré",
+          "custom": "Personnalisé"
+        }
+      }
+    }
+  },
+  "data": {
+    "intro": "Comprenez l'architecture des entités de la plateforme, contrôlez les entités et les lignes d'affaires actives, et préparez les données de démonstration pour de futurs imports ou sources de base de données.",
+    "currency": {
+      "label": "Devise d'affichage",
+      "hint": "S'applique à ce contexte de données lorsqu'il est actif dans l'espace de travail.",
+      "gbp": "GBP (£)",
+      "usd": "USD ($)"
+    },
+    "source": {
+      "eyebrow": "Source de données",
+      "objects": "entités",
+      "mode": "Mode",
+      "connector": "Connecteur",
+      "dataset": "Jeu de données",
+      "reset": "Réinitialisation",
+      "activeDataset": "Jeu de données actif",
+      "resetBehavior": "Comportement de réinitialisation",
+      "resetOptions": {
+        "uiOnly": "Paramètres UI seulement",
+        "dataset": "Jeu de données",
+        "all": "Tous les paramètres et données"
+      }
+    },
+    "objects": {
+      "title": "Entités",
+      "description": "Activez les types d'entités disponibles dans cet environnement de démonstration. Les totaux viennent du jeu de données actif.",
+      "toggleAria": "Activer ou désactiver l'entité {{label}}"
+    },
+    "workflows": {
+      "title": "Lignes d'affaires",
+      "description": "Activez ou désactivez les lignes d'affaires prises en charge par cet environnement. Elles pilotent les types de dossiers visibles.",
+      "toggleAria": "Activer ou désactiver la ligne d'affaires {{label}}"
+    },
+    "schema": {
+      "title": "Explorateur de schéma de base de données",
+      "description": "Développez chaque entité pour inspecter les tables, clés, champs et relations entrantes ou sortantes."
+    },
+    "dataset": {
+      "title": "Aperçu du jeu de données",
+      "description": "Validez que les données fictives actives forment un graphe d'entités connecté.",
+      "records": "Enregistrements",
+      "workflows": "Lignes d'affaires",
+      "issues": "Problèmes"
+    },
+    "import": {
+      "title": "Importer des données",
+      "description": "L'import est préparé comme un flux prêt pour l'architecture. Cette phase montre la cartographie et la validation sans modifier les données.",
+      "dropTitle": "Paquet XML, JSON ou CSV",
+      "dropDescription": "Les futurs imports mapperont les paquets par dossier ou environnement aux schémas d'entités, valideront les relations et afficheront les erreurs avant acceptation.",
+      "steps": {
+        "upload": "Téléverser un paquet source",
+        "map": "Mapper les champs au schéma",
+        "validate": "Valider les identifiants et relations",
+        "preview": "Prévisualiser les enregistrements et erreurs"
+      }
+    }
+  },
+  "intelligence": {
+    "intro": "Configurez les composantes de la couche IA visibles aux utilisateurs dans tout l'environnement.",
+    "rows": {
+      "assistant": {
+        "label": "Module Assistant IA",
+        "description": "Affichez l'entrée Assistant dans la barre de navigation. Désactiver masque aussi la version pleine page du Copilot."
+      },
+      "sidePanel": {
+        "label": "Panneau latéral IA",
+        "description": "Affichez la bulle de chat dans l'en-tête, qui ouvre le panneau IA en parallèle de l'écran courant."
+      },
+      "caseAssistant": {
+        "label": "Assistant IA des dossiers",
+        "description": "Affichez la bannière contextuelle Assistant et le panneau latéral dans les pages de dossier."
+      },
+      "activityFeed": {
+        "label": "Fil d'activité IA",
+        "description": "Affichez le widget du fil dans la barre de navigation. Lorsqu'il est affiché, il s'active automatiquement."
+      }
+    }
+  },
+  "language": {
+    "intro": "Choisissez la langue utilisée dans tout l'environnement. Le changement est instantané — aucun rechargement requis.",
+    "currentLabel": "Langue actuelle",
+    "selectAria": "Sélectionner {{name}}",
+    "languages": {
+      "en": {
+        "nativeName": "English",
+        "englishName": "Anglais",
+        "region": "États-Unis",
+        "sample": "Welcome back — pick up where you left off."
+      },
+      "fr": {
+        "nativeName": "Français",
+        "englishName": "Français",
+        "region": "Canada",
+        "sample": "Bon retour — reprenez là où vous étiez."
+      },
+      "es": {
+        "nativeName": "Español",
+        "englishName": "Espagnol",
+        "region": "Amérique latine",
+        "sample": "Bienvenido de nuevo — continúe donde lo dejó."
+      }
+    }
+  },
+  "roles": {
+    "comingSoon": "À venir",
+    "intro": "Les rôles Évaluateur et Gestionnaire avec permissions et niveaux d'accès distincts. Les paramètres sont prévisualisés ici afin que vous sachiez où ils se trouveront.",
+    "definitions": {
+      "assessor": {
+        "name": "Évaluateur",
+        "description": "Examine les dossiers, consigne les décisions selon ses pouvoirs et attribue les exigences."
+      },
+      "manager": {
+        "name": "Gestionnaire",
+        "description": "Supervise l'équipe, redistribue la charge de travail, approuve les escalades et gère les types de dossiers."
+      }
+    },
+    "rowAria": "Rôle {{name}} (espace réservé)"
+  }
+}

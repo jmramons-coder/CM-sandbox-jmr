@@ -1,0 +1,331 @@
+{
+  "modal": {
+    "title": "Platform settings — {{tab}}",
+    "sectionsLabel": "Platform settings sections",
+    "sidebarHeading": "Settings"
+  },
+  "tabs": {
+    "branding": {
+      "label": "Branding",
+      "description": "Customize the product name, logo, and theme colors users see across the app."
+    },
+    "modules": {
+      "label": "Modules",
+      "description": "Turn app modules on or off. Disabled modules are hidden from the navigation."
+    },
+    "data": {
+      "label": "Data",
+      "description": "Understand entity architecture, database schema relationships, datasets, and import readiness."
+    },
+    "intelligence": {
+      "label": "Intelligence",
+      "description": "Control the AI layer — the assistant, side panel, and activity feed."
+    },
+    "language": {
+      "label": "Language",
+      "description": "Choose the language used across the workspace. Switching is instant — no reload required."
+    },
+    "roles": {
+      "label": "Roles & access",
+      "description": "Role-based permissions will live here. Coming soon."
+    },
+    "demo": {
+      "label": "Demo environment",
+      "description": "Save, review, and activate demo environment snapshots."
+    }
+  },
+  "sidebarFooter": {
+    "save": "Save",
+    "resetAll": "Reset all",
+    "confirmReset": "Reset every setting?",
+    "confirmCta": "Reset"
+  },
+  "saveDialog": {
+    "title": "Save demo environment",
+    "description": "Capture the current platform settings as a reusable demo environment snapshot.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Executive demo setup",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What this environment is configured to show...",
+    "saveCta": "Save environment",
+    "localOnlyNote": "Saves to this browser only. To share with everyone after deploy, use Export for deploy on a built-in environment (Equisoft or SBLI)."
+  },
+  "demo": {
+    "intro": "Saved demo environments capture branding, module toggles, case type settings, AI visibility, language, and appearance from the moment you save.",
+    "emptyTitle": "No saved demo environments yet",
+    "emptyDescription": "Use Save in the lower-left settings footer to capture the current setup.",
+    "savedAt": "Saved {{date}}",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activeToggleAria": "Activate {{name}} demo environment",
+    "builtIn": "Built-in · included with the app",
+    "deleteAria": "Delete {{name}} demo environment",
+    "sharedDatasetNote": "Both built-in environments share the SBLI demo cases dataset. Toggle active to switch branding. Use the download icon to export changes for git deploy.",
+    "exportDeployAria": "Export {{name}} for deploy",
+    "exportDeployDone": "Downloaded {{filename}}. Replace {{path}} in the repo, commit, and deploy so everyone sees this configuration.",
+    "summary": {
+      "branding": "Branding",
+      "modules": "Modules",
+      "modulesValue": "{{enabled}} of {{total}} enabled",
+      "caseTypes": "Case types",
+      "intelligence": "Intelligence",
+      "intelligenceValue": "{{enabled}} of {{total}} visible"
+    }
+  },
+  "branding": {
+    "productNameTitle": "Product name",
+    "productNameShowInHeader": "Show in header",
+    "productNamePlaceholder": "Amplify Case Management",
+    "productNameFallback": "Product name",
+    "logoTitle": "Logo",
+    "logoMode": {
+      "default": "Default",
+      "custom": "Custom"
+    },
+    "surfaces": {
+      "darkMode": "Dark mode",
+      "lightMode": "Light mode",
+      "previewAria": "Default logo on {{surface}} background",
+      "uploadAria": "Upload {{surface}} logo",
+      "replaceAria": "Replace {{surface}} logo",
+      "logoAlt": "{{surface}} logo"
+    },
+    "dropzone": {
+      "errors": {
+        "fileType": "Only PNG, SVG, JPEG, or WEBP files are supported.",
+        "fileSize": "Logo must be 500 KB or smaller."
+      },
+      "click": "Click",
+      "orDropToReplace": " or drop to replace.",
+      "dropOr": "Drop logo, or ",
+      "upload": "upload",
+      "specs": "PNG, SVG, JPEG, WEBP · ≤ 500 KB"
+    },
+    "colors": {
+      "title": "Colors",
+      "header": "Header",
+      "primary": "Primary",
+      "accent": "Accent (AI)",
+      "fieldAria": "{{label}} color — click to pick",
+      "copyAria": "Copy {{label}} color",
+      "copied": "Copied!",
+      "copyHex": "Copy hex"
+    },
+    "preview": {
+      "title": "Live preview",
+      "primaryChip": "Primary",
+      "aiChip": "AI",
+      "customLogoAlt": "Custom logo"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "resetBranding": "Reset branding",
+    "colorPicker": {
+      "saturationAria": "Saturation and brightness",
+      "saturationValueText": "S {{s}}, V {{v}}",
+      "hueAria": "Hue"
+    }
+  },
+  "modules": {
+    "intro": "Toggle modules on or off to control what appears in the navigation. At least one module must remain enabled.",
+    "lastEnabledTitle": "At least one module must be enabled",
+    "toggleAria": "Toggle {{label}} module",
+    "definitions": {
+      "home": {
+        "label": "Home",
+        "description": "Dashboard with key metrics, workload summary, and quick-access widgets."
+      },
+      "cases": {
+        "label": "Cases",
+        "description": "Full case management workspace — browse, filter, and work cases end-to-end."
+      },
+      "folders": {
+        "label": "Folders",
+        "description": "Multi-case folder view that groups related sub-cases under a single applicant."
+      },
+      "finances": {
+        "label": "Finances",
+        "description": "Financial operations, billing signals, and payment workflows. Coming soon."
+      },
+      "tasks": {
+        "label": "Tasks",
+        "description": "Unified task list across all cases with priority, due dates, and status."
+      },
+      "requests": {
+        "label": "Requests",
+        "description": "Centralized intake and service requests across cases, clients, policies, and documents."
+      },
+      "documents": {
+        "label": "Documents",
+        "description": "Document repository for uploading, reviewing, and validating case documents."
+      },
+      "aiActions": {
+        "label": "Intelligence monitoring",
+        "description": "Global audit and control feed for AI/system actions across cases, tasks, documents, and requests."
+      },
+      "insights": {
+        "label": "Insights",
+        "description": "Operational insights and intelligence views. Coming soon."
+      },
+      "reports": {
+        "label": "Reports",
+        "description": "Reporting dashboards and exports. Coming soon."
+      },
+      "copilot": {
+        "label": "AI Assistant",
+        "description": "Amplify Copilot — an AI assistant that helps manage workload and draft communications."
+      }
+    },
+    "cases": {
+      "modeSummary": {
+        "single": "Single-case mode",
+        "multi": "Multi-case mode",
+        "noActiveType": "No active type",
+        "enabledTypes": "{{enabled}} of {{total}} types enabled"
+      },
+      "configToggle": {
+        "show": "Configure case types",
+        "hide": "Show less"
+      },
+      "config": {
+        "modeTitle": "Case type mode",
+        "modeDescription": "Single shows one case type everywhere. Multi lets users work across several types.",
+        "modeOptions": {
+          "single": "Single",
+          "multi": "Multi"
+        },
+        "listTitle": {
+          "single": "Active case type",
+          "multi": "Enabled case types"
+        },
+        "selectAria": "Select {{label}}",
+        "toggleAria": "Toggle {{label}}",
+        "badge": {
+          "builtIn": "Built-in",
+          "custom": "Custom"
+        }
+      }
+    }
+  },
+  "data": {
+    "intro": "Understand the entity architecture behind the platform, control which entities and business lines are active, and prepare demo data for future imports or database-backed sources.",
+    "currency": {
+      "label": "Display currency",
+      "hint": "Applies to this data context when it is active in the workspace.",
+      "gbp": "GBP (£)",
+      "usd": "USD ($)"
+    },
+    "source": {
+      "eyebrow": "Data source",
+      "objects": "entities",
+      "mode": "Mode",
+      "connector": "Connector",
+      "dataset": "Dataset",
+      "reset": "Reset",
+      "activeDataset": "Active dataset",
+      "resetBehavior": "Reset behavior",
+      "resetOptions": {
+        "uiOnly": "UI settings only",
+        "dataset": "Dataset",
+        "all": "All settings and data"
+      }
+    },
+    "objects": {
+      "title": "Entities",
+      "description": "Toggle the entity types that are active in this demo environment. Counts come from the active dataset.",
+      "toggleAria": "Toggle {{label}} entity"
+    },
+    "workflows": {
+      "title": "Business lines",
+      "description": "Enable or disable the business lines supported by this environment. These drive which case types appear in Cases.",
+      "toggleAria": "Toggle {{label}} business line"
+    },
+    "schema": {
+      "title": "Database schema explorer",
+      "description": "Expand each entity to inspect table names, keys, fields, and inbound or outbound relationships."
+    },
+    "dataset": {
+      "title": "Dataset preview",
+      "description": "Validate that the active mock data is a connected entity graph rather than isolated rows.",
+      "records": "Records",
+      "workflows": "Business lines",
+      "issues": "Issues"
+    },
+    "import": {
+      "title": "Import data",
+      "description": "Import is staged as an architecture-ready flow. This phase shows mapping and validation without mutating data.",
+      "dropTitle": "XML, JSON, or CSV package",
+      "dropDescription": "Future imports will map case-by-case or environment packages to entity schemas, validate relationships, and preview errors before data is accepted.",
+      "steps": {
+        "upload": "Upload a source package",
+        "map": "Map fields to schema",
+        "validate": "Validate IDs and relationships",
+        "preview": "Preview accepted records and errors"
+      }
+    }
+  },
+  "intelligence": {
+    "intro": "Configure which parts of the AI layer are visible to users across the workspace.",
+    "rows": {
+      "assistant": {
+        "label": "AI Assistant module",
+        "description": "Show the Assistant entry in the navigation rail. Disabling also hides the full-page Copilot."
+      },
+      "sidePanel": {
+        "label": "AI side panel",
+        "description": "Show the chat bubble in the header that opens the AI panel alongside any screen."
+      },
+      "caseAssistant": {
+        "label": "Case AI assistant",
+        "description": "Show the contextual Assistant banner and side panel on case detail pages."
+      },
+      "activityFeed": {
+        "label": "AI activity feed",
+        "description": "Show the feed widget in the navigation rail. When shown, it activates automatically."
+      }
+    }
+  },
+  "language": {
+    "intro": "Choose the language used across the workspace. Switching is instant — no reload required.",
+    "currentLabel": "Current language",
+    "selectAria": "Select {{name}}",
+    "languages": {
+      "en": {
+        "nativeName": "English",
+        "englishName": "English",
+        "region": "United States",
+        "sample": "Welcome back — pick up where you left off."
+      },
+      "fr": {
+        "nativeName": "Français",
+        "englishName": "French",
+        "region": "Canada",
+        "sample": "Bon retour — reprenez là où vous étiez."
+      },
+      "es": {
+        "nativeName": "Español",
+        "englishName": "Spanish",
+        "region": "Latinoamérica",
+        "sample": "Bienvenido de nuevo — continúe donde lo dejó."
+      }
+    }
+  },
+  "roles": {
+    "comingSoon": "Coming soon",
+    "intro": "Assessor and Manager roles with distinct permissions and access levels. Settings are previewed here so you know where they will live.",
+    "definitions": {
+      "assessor": {
+        "name": "Assessor",
+        "description": "Reviews cases, records decisions within authority, and assigns requirements."
+      },
+      "manager": {
+        "name": "Manager",
+        "description": "Oversees the team, reassigns workload, approves escalations, and manages case types."
+      }
+    },
+    "rowAria": "{{name}} role (placeholder)"
+  }
+}

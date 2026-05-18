@@ -1,0 +1,38 @@
+{
+  "actions": {
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "remove": "Quitar",
+    "replace": "Reemplazar",
+    "edit": "Editar",
+    "add": "Agregar",
+    "create": "Crear",
+    "moreActions": "Más acciones",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "more": "Más"
+  },
+  "carousel": {
+    "previousSlide": "Diapositiva anterior",
+    "nextSlide": "Diapositiva siguiente",
+    "carousel": "carrusel",
+    "slide": "diapositiva"
+  },
+  "command": {
+    "title": "Paleta de comandos",
+    "description": "Buscar un comando para ejecutar…",
+    "placeholder": "Escriba un comando o búsqueda…"
+  },
+  "pagination": {
+    "label": "paginación",
+    "previousPage": "Ir a la página anterior",
+    "nextPage": "Ir a la página siguiente",
+    "morePages": "Más páginas"
+  },
+  "sidebar": {
+    "label": "Barra lateral",
+    "description": "Muestra la barra lateral móvil.",
+    "toggle": "Mostrar u ocultar la barra lateral"
+  }
+}

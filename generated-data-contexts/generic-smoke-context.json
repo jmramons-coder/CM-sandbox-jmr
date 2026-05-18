@@ -1,0 +1,390 @@
+{
+  "version": "1.0",
+  "environment": {
+    "id": "generic-smoke-context",
+    "organizationLabel": "Generic",
+    "market": "US / UK configurable",
+    "businessModel": "mga",
+    "historyRange": "2 years",
+    "documentMode": "metadata_only"
+  },
+  "entities": {
+    "clients": [
+      { "id": "CLI-0001", "kind": "client", "name": "Billy Bud", "type": "person", "summary": "Claimant and policy owner." },
+      { "id": "CLI-0002", "kind": "client", "name": "Amelia Hart", "type": "person", "summary": "New business applicant." },
+      { "id": "CLI-0003", "kind": "client", "name": "Marc Tremblay", "type": "person", "summary": "Beneficiary on policy POL-1001." },
+      { "id": "CLI-0004", "kind": "client", "name": "Elena Rossi", "type": "person", "summary": "Customer service policyholder." },
+      { "id": "CLI-0005", "kind": "client", "name": "Northstar Advisory", "type": "organization", "summary": "Agency supporting new business submissions." }
+    ],
+    "policies": [
+      {
+        "id": "POL-1001",
+        "kind": "policy",
+        "label": "POL-1001",
+        "status": "Active",
+        "product": "Income Protection",
+        "participants": [
+          { "clientId": "CLI-0001", "role": "owner", "effectiveDate": "2024-01-01" },
+          { "clientId": "CLI-0001", "role": "insured", "effectiveDate": "2024-01-01" },
+          { "clientId": "CLI-0003", "role": "beneficiary", "allocationPct": 100 }
+        ],
+        "agents": [{ "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell", "role": "servicing agent" }],
+        "linkedObjects": [
+          { "kind": "client", "id": "CLI-0001", "label": "Billy Bud", "role": "owner" },
+          { "kind": "client", "id": "CLI-0003", "label": "Marc Tremblay", "role": "beneficiary" },
+          { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell" }
+        ]
+      },
+      {
+        "id": "POL-1002",
+        "kind": "policy",
+        "label": "POL-1002",
+        "status": "Draft",
+        "product": "Guardian Life 20",
+        "participants": [
+          { "clientId": "CLI-0002", "role": "owner" },
+          { "clientId": "CLI-0002", "role": "insured" }
+        ],
+        "agents": [{ "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell", "role": "writing agent" }],
+        "linkedObjects": [
+          { "kind": "client", "id": "CLI-0002", "label": "Amelia Hart" },
+          { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell" }
+        ]
+      },
+      {
+        "id": "POL-1003",
+        "kind": "policy",
+        "label": "POL-1003",
+        "status": "Active",
+        "product": "Whole Life",
+        "participants": [
+          { "clientId": "CLI-0004", "role": "owner" },
+          { "clientId": "CLI-0003", "role": "beneficiary", "allocationPct": 100 }
+        ],
+        "agents": [{ "kind": "agent", "id": "AGT-0002", "label": "Natasha Trace", "role": "servicing agent" }],
+        "linkedObjects": [
+          { "kind": "client", "id": "CLI-0004", "label": "Elena Rossi" },
+          { "kind": "client", "id": "CLI-0003", "label": "Marc Tremblay", "role": "beneficiary" },
+          { "kind": "agent", "id": "AGT-0002", "label": "Natasha Trace" }
+        ]
+      }
+    ],
+    "agents": [
+      {
+        "id": "AGT-0001",
+        "kind": "agent",
+        "name": "Pete Mitchell",
+        "status": "onboarding",
+        "agencyName": "Topgun Advisory",
+        "licenses": [
+          { "id": "LIC-0001", "jurisdiction": "California", "status": "pending" },
+          { "id": "LIC-0002", "jurisdiction": "New York", "status": "active", "effectiveDate": "2025-12-01" }
+        ],
+        "contracts": [
+          { "id": "CON-0001", "carrier": "Guardian Financial Services", "status": "draft" }
+        ],
+        "linkedObjects": [
+          { "kind": "policy", "id": "POL-1001", "label": "POL-1001" },
+          { "kind": "policy", "id": "POL-1002", "label": "POL-1002" },
+          { "kind": "case", "id": "CASE-AGT-0001", "label": "Agent onboarding case" }
+        ]
+      },
+      {
+        "id": "AGT-0002",
+        "kind": "agent",
+        "name": "Natasha Trace",
+        "status": "active",
+        "agencyName": "Northstar Advisory",
+        "licenses": [
+          { "id": "LIC-0003", "jurisdiction": "Ontario", "status": "active", "effectiveDate": "2024-08-01" }
+        ],
+        "contracts": [
+          { "id": "CON-0002", "carrier": "Guardian Financial Services", "status": "active", "effectiveDate": "2024-08-01" }
+        ],
+        "linkedObjects": [
+          { "kind": "policy", "id": "POL-1003", "label": "POL-1003" },
+          { "kind": "client", "id": "CLI-0004", "label": "Elena Rossi" }
+        ]
+      }
+    ],
+    "applications": [
+      { "id": "APP-1002", "kind": "application", "label": "Application APP-1002", "status": "Incomplete", "product": "Guardian Life 20", "clientId": "CLI-0002" },
+      { "id": "APP-1003", "kind": "application", "label": "Application APP-1003", "status": "Underwriting review", "product": "Executive Life", "clientId": "CLI-0003" }
+    ],
+    "cases": [
+      {
+        "id": "CASE-CLM-0001",
+        "kind": "case",
+        "caseKind": "claim",
+        "caseTypeCode": "IP",
+        "workflowTemplateId": "claim-income-protection",
+        "title": "Disability benefit claim decision",
+        "status": "Pending Decision",
+        "statusCode": "pending_decision",
+        "priority": "High",
+        "phaseId": "pre-approval",
+        "activeStepId": "decision",
+        "primaryParty": { "kind": "client", "id": "CLI-0001", "label": "Billy Bud", "role": "claimant" },
+        "participants": [{ "kind": "client", "id": "CLI-0001", "label": "Billy Bud", "role": "claimant" }],
+        "linkedObjects": [
+          { "kind": "client", "id": "CLI-0001", "label": "Billy Bud" },
+          { "kind": "policy", "id": "POL-1001", "label": "POL-1001" },
+          { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell" }
+        ],
+        "moduleSummaries": [
+          { "module": "requirements", "total": 2, "attention": 0, "completed": 2 },
+          { "module": "tasks", "total": 2, "attention": 1 },
+          { "module": "documents", "total": 2 }
+        ],
+        "facts": [
+          { "id": "benefit", "label": "Monthly benefit", "value": "$6,250", "category": "financial", "importance": "primary" },
+          { "id": "dateOfLoss", "label": "Date of loss", "value": "2026-01-30", "category": "claim", "importance": "primary" }
+        ],
+        "sections": [
+          { "id": "claimant-plan", "label": "Claimant & Plan", "defaultOpen": true, "fields": [
+            { "id": "claimant", "label": "Claimant", "value": "Billy Bud" },
+            { "id": "policy", "label": "Policy", "value": "POL-1001" },
+            { "id": "benefit", "label": "Monthly benefit", "value": "$6,250" }
+          ] }
+        ],
+        "analysis": {
+          "confidence": 91,
+          "recommendation": "Approve",
+          "narrative": "All claim requirements are fulfilled and the evidence supports approval.",
+          "assessmentLabel": "Claim — decision pending",
+          "netAssessmentScore": -35,
+          "factors": [
+            { "category": "Medical Evidence", "item": "Functional evidence supports own-occupation disability", "score": -10, "source": "medical_records" },
+            { "category": "Documentation", "item": "All required claim documents validated", "score": -10, "source": "document_engine" }
+          ]
+        },
+        "decision": {
+          "state": "active",
+          "headerCallout": "All requirements complete - review the AI recommendation before recording a final decision.",
+          "recommendation": {
+            "decision": "Approve",
+            "confidence": 91,
+            "attribution": "AI crew - Claims analysis",
+            "narrative": "Eligibility criteria are satisfied and no exclusions were detected.",
+            "benefitAmount": "$6,250/month"
+          }
+        },
+        "claimDetails": {
+          "claimSubType": "disability_benefit",
+          "claimNumber": "CASE-CLM-0001",
+          "dateOfLoss": "2026-01-30",
+          "disabilityOnset": "2026-01-30",
+          "cause": "Motorcycle accident with multiple fractures",
+          "preExistingConditions": "Managed Type 2 Diabetes",
+          "claimEndDate": "TBD"
+        }
+      },
+      {
+        "id": "CASE-NB-0001",
+        "kind": "case",
+        "caseKind": "new_business",
+        "caseTypeCode": "NB",
+        "workflowTemplateId": "new-business-application",
+        "title": "New business application intake",
+        "status": "Pending Info",
+        "statusCode": "pending_info",
+        "priority": "Normal",
+        "phaseId": "pre-approval",
+        "activeStepId": "requirement-gathering",
+        "primaryParty": { "kind": "client", "id": "CLI-0002", "label": "Amelia Hart", "role": "applicant" },
+        "participants": [
+          { "kind": "client", "id": "CLI-0002", "label": "Amelia Hart", "role": "applicant" },
+          { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell", "role": "writing agent" }
+        ],
+        "linkedObjects": [
+          { "kind": "client", "id": "CLI-0002", "label": "Amelia Hart" },
+          { "kind": "policy", "id": "POL-1002", "label": "POL-1002" },
+          { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell" }
+        ],
+        "moduleSummaries": [
+          { "module": "requirements", "total": 2, "attention": 1 },
+          { "module": "tasks", "total": 2, "attention": 1 },
+          { "module": "communications", "total": 1 }
+        ],
+        "facts": [
+          { "id": "product", "label": "Product", "value": "Guardian Life 20", "category": "application", "importance": "primary" },
+          { "id": "missing", "label": "Missing item", "value": "Owner signature", "category": "application", "importance": "primary" }
+        ],
+        "sections": [
+          { "id": "application-intake", "label": "Application intake", "defaultOpen": true, "fields": [
+            { "id": "applicant", "label": "Applicant", "value": "Amelia Hart" },
+            { "id": "agent", "label": "Agent", "value": "Pete Mitchell" },
+            { "id": "missing", "label": "Missing item", "value": "Owner signature" }
+          ] }
+        ],
+        "analysis": {
+          "confidence": 68,
+          "recommendation": "Request Info",
+          "narrative": "Application intake is blocked by owner signature and premium validation.",
+          "assessmentLabel": "New Business - Intake Clarification",
+          "factors": [
+            { "category": "Completeness", "item": "Owner signature missing", "score": 15, "source": "application_check" }
+          ]
+        }
+      },
+      {
+        "id": "CASE-CS-0001",
+        "kind": "case",
+        "caseKind": "customer_service",
+        "caseTypeCode": "CS",
+        "workflowTemplateId": "customer-service-case",
+        "title": "Address and beneficiary update",
+        "status": "Pending Verification",
+        "statusCode": "pending_verification",
+        "priority": "Normal",
+        "phaseId": "verification",
+        "activeStepId": "identity-verification",
+        "primaryParty": { "kind": "client", "id": "CLI-0004", "label": "Elena Rossi", "role": "customer" },
+        "participants": [
+          { "kind": "client", "id": "CLI-0004", "label": "Elena Rossi", "role": "customer" },
+          { "kind": "client", "id": "CLI-0003", "label": "Marc Tremblay", "role": "beneficiary" }
+        ],
+        "linkedObjects": [
+          { "kind": "client", "id": "CLI-0004", "label": "Elena Rossi" },
+          { "kind": "policy", "id": "POL-1003", "label": "POL-1003" },
+          { "kind": "agent", "id": "AGT-0002", "label": "Natasha Trace" }
+        ],
+        "moduleSummaries": [
+          { "module": "requests", "total": 1, "attention": 1 },
+          { "module": "tasks", "total": 1 },
+          { "module": "documents", "total": 1 }
+        ],
+        "facts": [
+          { "id": "requestType", "label": "Request type", "value": "Address and beneficiary update", "category": "service", "importance": "primary" },
+          { "id": "verification", "label": "Verification status", "value": "Pending authority check", "category": "identity", "importance": "primary" }
+        ],
+        "sections": [
+          { "id": "service-request", "label": "Service request", "defaultOpen": true, "fields": [
+            { "id": "customer", "label": "Customer", "value": "Elena Rossi" },
+            { "id": "policy", "label": "Policy", "value": "POL-1003" },
+            { "id": "pending", "label": "Pending item", "value": "Representative authority confirmation" }
+          ] }
+        ],
+        "analysis": {
+          "confidence": 82,
+          "recommendation": "Verify authority",
+          "narrative": "Address and beneficiary updates can proceed after representative authority validation.",
+          "assessmentLabel": "Customer Service - Pending Verification",
+          "factors": [
+            { "category": "Identity", "item": "Representative authority pending", "score": 10, "source": "service_rules" }
+          ]
+        }
+      },
+      {
+        "id": "CASE-AGT-0001",
+        "kind": "case",
+        "caseKind": "agent_onboarding",
+        "caseTypeCode": "AG",
+        "workflowTemplateId": "agent-onboarding",
+        "title": "Agent onboarding and contracting",
+        "status": "Licensing Review",
+        "statusCode": "licensing_review",
+        "priority": "High",
+        "phaseId": "licensing",
+        "activeStepId": "license-check",
+        "primaryParty": { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell", "role": "agent" },
+        "participants": [
+          { "kind": "client", "id": "CLI-0005", "label": "Northstar Advisory", "role": "agency" }
+        ],
+        "linkedObjects": [
+          { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell" },
+          { "kind": "document", "id": "DOC-AGT-CON-0001", "label": "Agent contract package.pdf" }
+        ],
+        "moduleSummaries": [
+          { "module": "requirements", "total": 2, "attention": 1 },
+          { "module": "tasks", "total": 2, "attention": 1 },
+          { "module": "documents", "total": 1 }
+        ],
+        "facts": [
+          { "id": "agent", "label": "Agent", "value": "Pete Mitchell", "category": "agent", "importance": "primary" },
+          { "id": "contract", "label": "Contract status", "value": "Draft pending effectiveness", "category": "contract", "importance": "primary" }
+        ],
+        "sections": [
+          { "id": "agent-onboarding", "label": "Agent onboarding", "defaultOpen": true, "fields": [
+            { "id": "agent", "label": "Agent", "value": "Pete Mitchell" },
+            { "id": "agency", "label": "Agency", "value": "Topgun Advisory" },
+            { "id": "contract", "label": "Contract", "value": "CON-0001" }
+          ] }
+        ],
+        "analysis": {
+          "confidence": 79,
+          "recommendation": "Complete contracting",
+          "narrative": "Licensing is partially ready and the contract packet needs review before appointment activation.",
+          "assessmentLabel": "Agent Onboarding - Contracting",
+          "factors": [
+            { "category": "Contracting", "item": "Carrier contract remains in draft", "score": 10, "source": "contracting_system" }
+          ]
+        }
+      }
+    ],
+    "tasks": [
+      { "id": "TSK-CLM-0001", "kind": "task", "label": "Record final claim decision", "status": "To Do", "priority": "High", "owner": "Victor Ramon", "hasAI": true, "aiSummary": "All evidence is fulfilled and the AI crew recommends approval.", "aiAction": "Record decision", "slaRemaining": "2h 14m", "slaStatus": "warning", "origin": "Decision step", "createdDate": "2026-03-26 08:30", "queue": "my_tasks", "requiredAuthorityLevel": 4, "panelContext": { "summaryStatus": "Ready decision", "contextTitle": "Claim decision control point", "contextSummary": "Review the AI decision recommendation and record the final claim outcome.", "suggestions": ["Review requirements", "Validate benefit amount", "Record decision"], "evidenceDocumentId": "DOC-CLM-0001" }, "linkedObjects": [{ "kind": "case", "id": "CASE-CLM-0001", "label": "CASE-CLM-0001" }] },
+      { "id": "TSK-NB-0001", "kind": "task", "label": "Clarify owner signature", "status": "To Do", "priority": "High", "owner": "Victor Ramon", "hasAI": true, "aiSummary": "Application package is missing owner signature.", "aiAction": "Request correction", "slaRemaining": "6h", "slaStatus": "warning", "origin": "Completeness check", "queue": "my_tasks", "requiredAuthorityLevel": 2, "panelContext": { "summaryStatus": "Follow-up needed", "contextTitle": "Application clarification", "contextSummary": "Owner signature and premium details must be clarified before application intake can progress.", "suggestions": ["Email advisor", "Track response", "Update requirement"] }, "linkedObjects": [{ "kind": "case", "id": "CASE-NB-0001", "label": "CASE-NB-0001" }, { "kind": "policy", "id": "POL-1002", "label": "POL-1002" }, { "kind": "client", "id": "CLI-0002", "label": "Amelia Hart" }] },
+      { "id": "TSK-CS-0001", "kind": "task", "label": "Validate address change for policy owner", "status": "To Do", "priority": "Normal", "owner": "Service Team", "aiSummary": "Representative authority must be confirmed before service updates are applied.", "slaRemaining": "2d", "slaStatus": "normal", "origin": "Service verification", "queue": "my_tasks", "requiredAuthorityLevel": 1, "panelContext": { "summaryStatus": "Authority pending", "contextTitle": "Representative verification", "contextSummary": "Confirm authority for the requested policy update.", "suggestions": ["Review authorization form", "Confirm with customer", "Apply update"] }, "linkedObjects": [{ "kind": "case", "id": "CASE-CS-0001", "label": "CASE-CS-0001" }, { "kind": "policy", "id": "POL-1003", "label": "POL-1003" }, { "kind": "client", "id": "CLI-0004", "label": "Elena Rossi", "role": "owner" }] },
+      { "id": "TSK-AGT-0001", "kind": "task", "label": "Verify agent contract effectiveness", "status": "To Do", "priority": "High", "owner": "Licensing Team", "hasAI": true, "aiSummary": "Contract packet and license readiness need review before appointment activation.", "aiAction": "Review contract", "slaRemaining": "4h", "slaStatus": "warning", "origin": "Agent onboarding", "queue": "team_tasks", "requiredAuthorityLevel": 2, "panelContext": { "summaryStatus": "Contract review", "contextTitle": "Agent onboarding packet", "contextSummary": "Confirm license and contract status before appointment activation.", "suggestions": ["Review contract", "Check licenses", "Queue appointment activation"], "evidenceDocumentId": "DOC-AGT-CON-0001" }, "linkedObjects": [{ "kind": "case", "id": "CASE-AGT-0001", "label": "CASE-AGT-0001" }, { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell" }, { "kind": "document", "id": "DOC-AGT-CON-0001", "label": "Agent contract package.pdf" }] }
+    ],
+    "documents": [
+      { "id": "DOC-CLM-0001", "kind": "document", "label": "Claim evidence packet.pdf", "category": "claim", "status": "Pending Review", "uploaded": "2026-03-26", "source": "medical_provider", "aiSummary": "Claim evidence packet supports the AI approval recommendation.", "aiAction": "Review", "linkedRequirement": "Medical evidence", "linkedCase": "CASE-CLM-0001", "fileSize": "1.2 MB", "fileAvailable": false, "placeholderReason": "Metadata generated; actual file must be imported.", "linkedObjects": [{ "kind": "case", "id": "CASE-CLM-0001", "label": "CASE-CLM-0001" }, { "kind": "requirement", "id": "REQ-CLM-0001", "label": "Medical evidence" }] },
+      { "id": "DOC-NB-0001", "kind": "document", "label": "Application package.pdf", "category": "application", "status": "Pending Review", "uploaded": "2026-02-01", "source": "advisor_email", "aiSummary": "Application package is missing owner signature.", "aiAction": "Request signature", "fileSize": "1.4 MB", "fileAvailable": false, "placeholderReason": "Application package metadata generated.", "linkedObjects": [{ "kind": "case", "id": "CASE-NB-0001", "label": "CASE-NB-0001" }] },
+      { "id": "DOC-CS-0001", "kind": "document", "label": "Address authorization form.pdf", "category": "identity", "status": "Pending Review", "uploaded": "2026-04-10", "source": "service_center", "aiSummary": "Authorization form received; representative authority requires review.", "aiAction": "Review", "fileSize": "420 KB", "fileAvailable": false, "placeholderReason": "Waiting for service center upload.", "linkedObjects": [{ "kind": "case", "id": "CASE-CS-0001", "label": "CASE-CS-0001" }] },
+      { "id": "DOC-AGT-CON-0001", "kind": "document", "label": "Agent contract package.pdf", "category": "contract", "status": "Pending Review", "uploaded": "2026-05-01", "source": "contracting_system", "aiSummary": "Draft carrier appointment packet is ready for contracting review.", "aiAction": "Review", "fileSize": "980 KB", "fileAvailable": false, "placeholderReason": "Contract package metadata generated.", "linkedObjects": [{ "kind": "case", "id": "CASE-AGT-0001", "label": "CASE-AGT-0001" }, { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell" }] }
+    ],
+    "requests": [
+      { "id": "REQ-CS-0001", "kind": "request", "label": "Address and beneficiary update", "status": "Pending Info", "source": "Client Portal", "category": "Address Change", "priority": "High", "received": "2026-04-10", "sourceChannel": "client_portal", "sourceDetail": "Submitted via Client Portal", "requester": "Elena Rossi", "clientId": "CLI-0004", "policyNumber": "POL-1003", "assignedTo": "Service Team", "due": "Today", "aiSummary": "Address and beneficiary update request matched to policy, but representative authority must be verified.", "nextAction": "Review representative authority", "systemSteps": [
+        { "id": "step-policy-link", "kind": "link_policy", "status": "completed", "title": "Matched to policy", "description": "Portal session and policy number matched Elena Rossi to POL-1003.", "linkedTo": { "label": "POL-1003", "hint": "Policy" } },
+        { "id": "step-task-created", "kind": "create_task", "status": "awaiting_review", "title": "Created verification task", "description": "Task generated to validate representative authority." }
+      ], "linkedObjects": [{ "kind": "case", "id": "CASE-CS-0001", "label": "CASE-CS-0001" }, { "kind": "policy", "id": "POL-1003", "label": "POL-1003" }, { "kind": "client", "id": "CLI-0004", "label": "Elena Rossi" }] },
+      { "id": "REQ-NB-0001", "kind": "request", "label": "Advisor clarification request", "status": "New", "source": "Advisor Email", "category": "New Business", "priority": "Normal", "received": "2026-02-01", "sourceChannel": "email", "sourceDetail": "Advisor email intake", "requester": "Pete Mitchell", "assignedTo": "New Business Queue", "due": "4h", "aiSummary": "Advisor clarification request created for missing owner signature.", "nextAction": "Reply to advisor", "systemSteps": [
+        { "id": "step-case-created", "kind": "create_case", "status": "completed", "title": "Linked to application case", "description": "Email was matched to the new business intake case." },
+        { "id": "step-followup", "kind": "follow_up_client", "status": "queued", "title": "Prepared advisor follow-up", "description": "Drafted message requesting owner signature." }
+      ], "linkedObjects": [{ "kind": "case", "id": "CASE-NB-0001", "label": "CASE-NB-0001" }, { "kind": "agent", "id": "AGT-0001", "label": "Pete Mitchell" }] }
+    ],
+    "requirements": [
+      { "id": "REQ-CLM-0001", "kind": "requirement", "label": "Medical evidence", "category": "medical", "status": "Pending", "workflowStepId": "requirements", "linkedObjects": [{ "kind": "case", "id": "CASE-CLM-0001", "label": "CASE-CLM-0001" }] },
+      { "id": "REQ-NB-0001", "kind": "requirement", "label": "Owner signature", "category": "signature", "status": "Pending", "workflowStepId": "initial-review", "linkedObjects": [{ "kind": "case", "id": "CASE-NB-0001", "label": "CASE-NB-0001" }] },
+      { "id": "REQ-CS-0001", "kind": "requirement", "label": "Representative authority", "category": "identity", "status": "Pending", "workflowStepId": "identity-verification", "linkedObjects": [{ "kind": "case", "id": "CASE-CS-0001", "label": "CASE-CS-0001" }] },
+      { "id": "REQ-AGT-0001", "kind": "requirement", "label": "License verification", "category": "license", "status": "Pending", "workflowStepId": "license-check", "linkedObjects": [{ "kind": "case", "id": "CASE-AGT-0001", "label": "CASE-AGT-0001" }] }
+    ],
+    "communications": [
+      { "id": "COM-0001", "kind": "communication", "channel": "email", "direction": "outbound", "subject": "Request for owner signature", "status": "draft", "linkedObjects": [{ "kind": "case", "id": "CASE-NB-0001", "label": "CASE-NB-0001" }] },
+      { "id": "COM-0002", "kind": "communication", "channel": "phone", "direction": "inbound", "subject": "Address update call", "status": "received", "linkedObjects": [{ "kind": "case", "id": "CASE-CS-0001", "label": "CASE-CS-0001" }] },
+      { "id": "COM-0003", "kind": "communication", "channel": "portal", "direction": "outbound", "subject": "Agent onboarding reminder", "status": "sent", "linkedObjects": [{ "kind": "case", "id": "CASE-AGT-0001", "label": "CASE-AGT-0001" }] }
+    ],
+    "notes": [
+      { "id": "NOTE-0001", "kind": "note", "body": "Claim decision should verify benefit amount before approval.", "author": "AI crew", "createdAt": "2026-03-26T08:45:00Z", "visibility": "internal", "linkedObjects": [{ "kind": "case", "id": "CASE-CLM-0001", "label": "CASE-CLM-0001" }] }
+    ],
+    "events": [
+      { "id": "EVT-0001", "kind": "event", "label": "Claim evidence requested", "actor": "system", "timestamp": "2026-01-15T09:00:00Z", "linkedObjects": [{ "kind": "case", "id": "CASE-CLM-0001", "label": "CASE-CLM-0001" }] },
+      { "id": "EVT-0002", "kind": "event", "label": "Application package received", "actor": "integration", "timestamp": "2026-02-01T10:00:00Z", "linkedObjects": [{ "kind": "case", "id": "CASE-NB-0001", "label": "CASE-NB-0001" }] },
+      { "id": "EVT-0004", "kind": "event", "label": "Address verification started", "actor": "system", "timestamp": "2026-04-10T11:00:00Z", "linkedObjects": [{ "kind": "case", "id": "CASE-CS-0001", "label": "CASE-CS-0001" }] },
+      { "id": "EVT-0005", "kind": "event", "label": "Agent contract review queued", "actor": "system", "timestamp": "2026-05-01T13:00:00Z", "linkedObjects": [{ "kind": "case", "id": "CASE-AGT-0001", "label": "CASE-AGT-0001" }] }
+    ],
+    "documentEvidence": [
+      { "id": "EVD-DOC-CLM-0001", "kind": "document_evidence", "documentId": "DOC-CLM-0001", "title": "Claim evidence packet review", "summary": "Evidence packet supports claim decision readiness.", "pages": [{ "number": 1, "label": "Evidence summary" }], "findings": [{ "id": "medical-support", "severity": "Medium", "title": "Medical support confirmed", "reasoning": "Medical evidence aligns with stated disability.", "impact": "Supports approval recommendation." }], "linkedObjects": [{ "kind": "document", "id": "DOC-CLM-0001", "label": "Claim evidence packet.pdf" }] }
+    ],
+    "assistantResponses": [
+      { "id": "AI-0001", "workflowTemplateId": "claim-income-protection", "prompt": "What is blocking this claim?", "response": "Nothing is blocking the claim; decision review is ready.", "linkedObjects": [{ "kind": "case", "id": "CASE-CLM-0001", "label": "CASE-CLM-0001" }] }
+    ]
+  },
+  "relationships": [
+    { "id": "REL-0001", "source": { "kind": "client", "id": "CLI-0001" }, "target": { "kind": "policy", "id": "POL-1001" }, "relationship": "owner" },
+    { "id": "REL-0002", "source": { "kind": "client", "id": "CLI-0003" }, "target": { "kind": "policy", "id": "POL-1001" }, "relationship": "beneficiary" },
+    { "id": "REL-0003", "source": { "kind": "agent", "id": "AGT-0001" }, "target": { "kind": "policy", "id": "POL-1001" }, "relationship": "servicing agent" },
+    { "id": "REL-0004", "source": { "kind": "policy", "id": "POL-1001" }, "target": { "kind": "case", "id": "CASE-CLM-0001" }, "relationship": "claim policy context" },
+    { "id": "REL-0005", "source": { "kind": "case", "id": "CASE-NB-0001" }, "target": { "kind": "task", "id": "TSK-NB-0001" }, "relationship": "has task" },
+    { "id": "REL-0006", "source": { "kind": "case", "id": "CASE-AGT-0001" }, "target": { "kind": "agent", "id": "AGT-0001" }, "relationship": "onboards agent" },
+    { "id": "REL-0007", "source": { "kind": "document", "id": "DOC-CLM-0001" }, "target": { "kind": "requirement", "id": "REQ-CLM-0001" }, "relationship": "supports requirement" }
+  ],
+  "validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": [
+      "Documents are metadata-only by design for this smoke context."
+    ]
+  }
+}

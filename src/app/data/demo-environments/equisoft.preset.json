@@ -1,0 +1,40 @@
+{
+  "id": "demo-equisoft",
+  "name": "Equisoft (default)",
+  "description": "Equisoft Amplify branding with the shared SBLI-driven demo cases dataset.",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "settings": {
+    "branding": {
+      "productName": "Amplify Case Management",
+      "showProductName": true,
+      "logoMode": "default",
+      "headerColor": "#003a5a",
+      "primaryColor": "#006296",
+      "accentColor": "#602fa0",
+      "onHeaderColor": "#ffffff"
+    },
+    "themeMode": "dark",
+    "language": "en",
+    "mode": "multi",
+    "activeCaseTypeId": "ct-ip",
+    "preferences": {
+      "aiActivityEnabled": true,
+      "aiSidePanelEnabled": true,
+      "casesAiAssistantEnabled": false,
+      "aiActivityVisible": false
+    },
+    "modules": {
+      "home": true,
+      "cases": true,
+      "folders": true,
+      "finances": false,
+      "tasks": true,
+      "requests": true,
+      "documents": true,
+      "aiActions": true,
+      "insights": false,
+      "reports": false,
+      "copilot": true
+    }
+  }
+}
