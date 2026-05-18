@@ -7,7 +7,11 @@ import { SearchBar } from './ds';
 import { ModuleTabsBar } from './ModuleTabsBar';
 import { Checkbox } from './ui/checkbox';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
-import { MODULE_TABLE_LAYOUT_CLASS, moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import {
+  MODULE_TABLE_LAYOUT_CLASS,
+  MODULE_TABLE_SUMMARY_COL_CLASS,
+  moduleTableScrollContainerClass,
+} from '../utils/module-table-scroll';
 import { filterDatasetBySettings, getSystemDataset, listDocuments } from '../data/objectRepository';
 import { UI_CLASS } from '../constants/design-tokens';
 import { getStatusLozengeType } from '../utils/status-display';
@@ -385,7 +389,7 @@ export function DocumentModule() {
                   <colgroup>
                     <col style={{ width: DOC_TABLE_CHECKBOX_COL_WIDTH }} />
                     <col style={{ width: DOC_TABLE_NAME_COL_WIDTH }} />
-                    <col style={{ width: 320 }} />
+                    <col style={{ minWidth: 320 }} />
                     <col style={{ width: 150 }} />
                     <col style={{ width: 120 }} />
                     <col style={{ width: 120 }} />
@@ -414,7 +418,7 @@ export function DocumentModule() {
                           <ReorderIcon isActive={sortColumn === 'name'} />
                         </button>
                       </th>
-                      <th className={`min-w-[320px] border-b border-border-default bg-surface-primary ${DOC_TABLE_SUMMARY_COL_CLASS} py-3 text-left align-middle text-sm font-normal text-text-secondary`}>
+                      <th className={`border-b border-border-default bg-surface-primary ${MODULE_TABLE_SUMMARY_COL_CLASS} ${DOC_TABLE_SUMMARY_COL_CLASS} py-3 text-left align-middle text-sm font-normal text-text-secondary`}>
                         <SummaryTableColumnHeader className="text-sm font-normal leading-[20px] text-text-secondary" />
                       </th>
                       <th className="sticky top-0 min-w-[150px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle text-sm font-normal text-text-secondary">
@@ -511,7 +515,7 @@ export function DocumentModule() {
                               />
                             </div>
                           </td>
-                          <td className={`min-w-[320px] border-b border-border-default bg-inherit ${DOC_TABLE_SUMMARY_COL_CLASS} py-3 align-top ${TABLE_CELL_ALIGN_CLASS}`}>
+                          <td className={`border-b border-border-default bg-inherit ${MODULE_TABLE_SUMMARY_COL_CLASS} ${DOC_TABLE_SUMMARY_COL_CLASS} py-3 align-top ${TABLE_CELL_ALIGN_CLASS}`}>
                             <TwoLineSummaryCell
                               title={deriveDocumentSummaryTitle(doc.name, doc.aiSummary)}
                               summary={documentSummarySubtitle(doc.name, doc.aiSummary)}

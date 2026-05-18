@@ -15,7 +15,11 @@ import { TEAMS, CURRENT_USER } from '../data/mock-tasks';
 import { filterDatasetBySettings, getSystemDataset, listTasks } from '../data/objectRepository';
 import { updateTaskStatus } from '../data/datasetMutations';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
-import { MODULE_TABLE_LAYOUT_CLASS, moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import {
+  MODULE_TABLE_LAYOUT_CLASS,
+  MODULE_TABLE_SUMMARY_COL_CLASS,
+  moduleTableScrollContainerClass,
+} from '../utils/module-table-scroll';
 import { UI_CLASS } from '../constants/design-tokens';
 import { getStatusLozengeType, sortTasks } from '../utils';
 import { filterTasks } from '../utils/task-filters';
@@ -486,7 +490,7 @@ export function TaskModule() {
                   <colgroup>
                     <col style={{ width: TASK_TABLE_STICKY_COL.checkboxWidth }} />
                     <col style={{ width: TASK_TABLE_STICKY_COL.packWidth }} />
-                    <col style={{ width: 320 }} />
+                    <col style={{ minWidth: 320 }} />
                     <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} />
                     <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} />
                     {isOnTeamTasks ? <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} /> : null}
@@ -526,7 +530,7 @@ export function TaskModule() {
                           </button>
                         </div>
                       </th>
-                      <th className="sticky top-0 min-w-[320px] border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle">
+                      <th className={`sticky top-0 border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${MODULE_TABLE_SUMMARY_COL_CLASS}`}>
                         <button onClick={() => handleSort('taskType')} className="group flex items-center gap-1 hover:text-brand-blue">
                           <div className={thStyle} style={fontVar}>
                             <SummaryTableColumnHeader className="leading-[20px] text-text-primary" style={fontVar} />
@@ -678,7 +682,7 @@ export function TaskModule() {
                               </div>
                             </div>
                           </td>
-                          <td className={`min-w-[320px] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
+                          <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${MODULE_TABLE_SUMMARY_COL_CLASS} ${cellSurface}`}>
                             <TwoLineSummaryCell
                               title={task.aiSummary ?? task.description ?? '—'}
                               titleMaxLines={2}

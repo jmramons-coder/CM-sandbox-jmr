@@ -72,7 +72,11 @@ import {
   TwoLineSummaryCell,
 } from './ModuleCellHelpers';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
-import { MODULE_TABLE_LAYOUT_CLASS, moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import {
+  MODULE_TABLE_LAYOUT_CLASS,
+  MODULE_TABLE_SUMMARY_COL_CLASS,
+  moduleTableScrollContainerClass,
+} from '../utils/module-table-scroll';
 
 /** Request ID + case share one sticky cell so the left pack scrolls as a unit. */
 const REQUEST_TABLE_REQUEST_COL_WIDTH = 168;
@@ -92,7 +96,7 @@ const REQUEST_SUMMARY_COL_WIDTH = 400;
 const REQUEST_SCROLL_COL_MIN = 112;
 const REQUEST_REQUESTER_COL_WIDTH = 140;
 const REQUEST_STATUS_ACTIONS_WIDTH = 190;
-const REQUEST_SUMMARY_COL_CLASS = 'min-w-[400px] w-[400px] max-w-[400px]';
+const REQUEST_SUMMARY_COL_CLASS = `${MODULE_TABLE_SUMMARY_COL_CLASS} min-w-[400px]`;
 const REQUEST_TABLE_MIN_WIDTH =
   REQUEST_TABLE_STICKY_COL.checkboxWidth +
   REQUEST_TABLE_STICKY_COL.packWidth +
@@ -410,7 +414,7 @@ export function RequestsModule() {
                   <colgroup>
                     <col style={{ width: REQUEST_TABLE_STICKY_COL.checkboxWidth }} />
                     <col style={{ width: REQUEST_TABLE_STICKY_COL.packWidth }} />
-                    <col style={{ width: REQUEST_SUMMARY_COL_WIDTH }} />
+                    <col style={{ minWidth: REQUEST_SUMMARY_COL_WIDTH }} />
                     <col style={{ width: REQUEST_SCROLL_COL_MIN }} />
                     <col style={{ width: REQUEST_SCROLL_COL_MIN }} />
                     <col style={{ width: REQUEST_REQUESTER_COL_WIDTH }} />
