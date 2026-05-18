@@ -75,7 +75,8 @@ async function main() {
       fs,
       dir: ROOT,
       message: COMMIT_MESSAGE,
-      author: { name: 'CM Sandbox', email: 'sandbox@local.dev' },
+      author: COMMIT_AUTHOR,
+      committer: COMMIT_AUTHOR,
     });
     console.log(`Committed ${sha.slice(0, 7)}`);
   } else {
