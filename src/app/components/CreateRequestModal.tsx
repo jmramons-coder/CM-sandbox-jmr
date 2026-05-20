@@ -13,6 +13,7 @@ import {
   CreationSelect,
   CreationTextarea,
 } from './CreationModalControls';
+import { RESPONSIVE_FORM_DIALOG_CLASS } from './responsiveDialog';
 import {
   RequestAudienceChooser,
   RequestCategoryFilter,
@@ -65,11 +66,15 @@ export function CreateRequestModal({
   onCreated,
   onOpenChange,
   open,
+  embedded = false,
+  onFlowBack,
 }: {
   dataSource: DataSourceSettings;
   onCreated: (input: { datasetId: string; requestId: string }) => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  embedded?: boolean;
+  onFlowBack?: () => void;
 }) {
   const dataset = useMemo(() => getSystemDataset(dataSource.activeDatasetId), [dataSource.activeDatasetId]);
   const [mode, setMode] = useState<RequestCreationMode>('external');
@@ -194,10 +199,15 @@ export function CreateRequestModal({
     onOpenChange(false);
   };
 
-  return (
-    <Dialog modal={false} open={open} onOpenChange={(next) => { if (!next) reset(); onOpenChange(next); }}>
-      {open ? <CreationModalBackdrop /> : null}
-      <DialogContent className="z-[1110] flex max-h-[min(860px,calc(100vh-2rem))] w-[min(1080px,calc(100vw-2rem))] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1080px]">
+  if (!open) return null;
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next) reset();
+    onOpenChange(next);
+  };
+
+  const form = (
+    <>
         <DialogHeader className={CREATION_MODAL_HEADER_CLASS}>
           <DialogTitle>Create request</DialogTitle>
           <DialogDescription>
@@ -342,10 +352,23 @@ export function CreateRequestModal({
           canSubmit={canSubmit}
           isFirstStep
           isLastStep
-          onCancel={() => { reset(); onOpenChange(false); }}
+          onFlowBack={onFlowBack}
+          onCancel={() => handleOpenChange(false)}
           onSubmit={submit}
           submitLabel="Create request"
         />
+    </>
+  );
+
+  if (embedded) {
+    return <div className="flex min-h-0 flex-1 flex-col">{form}</div>;
+  }
+
+  return (
+    <Dialog modal={false} open={open} onOpenChange={handleOpenChange}>
+      {open ? <CreationModalBackdrop /> : null}
+      <DialogContent layout="auto" className={RESPONSIVE_FORM_DIALOG_CLASS}>
+        {form}
       </DialogContent>
     </Dialog>
   );

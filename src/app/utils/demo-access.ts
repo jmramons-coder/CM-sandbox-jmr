@@ -1,5 +1,5 @@
 /** Session flag for the temporary demo access gate (replaced by real auth later). */
-const DEMO_ACCESS_STORAGE_KEY = 'amplify-demo-access-granted';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 /** Placeholder access code until backend auth exists. */
 const DEMO_ACCESS_CODE = 'nextgencm26!';
@@ -7,7 +7,7 @@ const DEMO_ACCESS_CODE = 'nextgencm26!';
 export function isDemoAccessGranted(): boolean {
   if (typeof window === 'undefined') return false;
   try {
-    return sessionStorage.getItem(DEMO_ACCESS_STORAGE_KEY) === '1';
+    return sessionStorage.getItem(STORAGE_KEYS.demoAccessGranted) === '1';
   } catch {
     return false;
   }
@@ -15,7 +15,7 @@ export function isDemoAccessGranted(): boolean {
 
 export function grantDemoAccess(): void {
   try {
-    sessionStorage.setItem(DEMO_ACCESS_STORAGE_KEY, '1');
+    sessionStorage.setItem(STORAGE_KEYS.demoAccessGranted, '1');
   } catch {
     // ignore quota / private mode
   }
@@ -23,7 +23,7 @@ export function grantDemoAccess(): void {
 
 export function revokeDemoAccess(): void {
   try {
-    sessionStorage.removeItem(DEMO_ACCESS_STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEYS.demoAccessGranted);
   } catch {
     // ignore
   }

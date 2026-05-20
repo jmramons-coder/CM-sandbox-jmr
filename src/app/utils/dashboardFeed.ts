@@ -343,9 +343,9 @@ export function buildDashboardFollowUps(
         tone,
       };
     })
-    .filter((row): row is DashboardFollowUpRow => Boolean(row));
+    .filter((row) => row !== null) as DashboardFollowUpRow[];
 
-  const documentRows: DashboardFollowUpRow[] = dataset.documents
+  const documentRows = dataset.documents
     .filter(documentNeedsAttention)
     .map((doc) => {
       const caseId = doc.linkedCaseId ?? getLinkedCaseId(doc.linkedObjects);
@@ -371,7 +371,7 @@ export function buildDashboardFollowUps(
         tone,
       };
     })
-    .filter((row): row is DashboardFollowUpRow => Boolean(row));
+    .filter((row) => row !== null) as DashboardFollowUpRow[];
 
   const toneRank: Record<DashboardFollowUpRow['tone'], number> = { overdue: 0, review: 1, due: 2 };
 

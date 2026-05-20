@@ -1,17 +1,10 @@
 import { useState } from 'react';
 import { X, ChevronDown, ExternalLink, Clock, AlertTriangle, Check, FileText } from 'lucide-react';
 import type { CaseRequirement } from '../types';
+import { getRequirementStatusLozengeType } from '../utils/status-display';
 import { AiCueSparkle } from './AiCueSparkle';
 import { CollapsibleDetailSection } from './CollapsibleDetailSection';
 import { LozengeTag } from './LozengeTag';
-
-function statusLozengeType(status: CaseRequirement['status']) {
-  if (status === 'Fulfilled' || status === 'Waived') return 'Success' as const;
-  if (status === 'Overdue') return 'Alert' as const;
-  if (status === 'Pending') return 'Warning' as const;
-  if (status === 'Ordered') return 'Informative' as const;
-  return 'Neutral' as const;
-}
 
 function sourceLabel(source: string) {
   if (source === 'ai_rule_engine') return 'AI Rule Engine';
@@ -95,7 +88,7 @@ export function RequirementDetailSidePanel({
         </div>
         <h2 className="mb-2 text-xl font-semibold text-text-heading">{requirement.name}</h2>
         <div className="mb-1 flex items-center gap-2">
-          <LozengeTag label={requirement.status} type={statusLozengeType(requirement.status)} subtle />
+          <LozengeTag label={requirement.status} type={getRequirementStatusLozengeType(requirement.status, 'panel')} subtle />
           <LozengeTag label={requirement.category} type="Neutral" subtle />
           {requirement.source === 'ai_rule_engine' && (
             <LozengeTag label="AI" type="Discovery" subtle showSparkles />

@@ -193,9 +193,8 @@
 
   html {
     height: 100%;
+    width: 100%;
     font-size: var(--font-size);
-    /* Avoid layout shift when scrollbars show/hide (e.g. AI panel toggling overflow). */
-    scrollbar-gutter: stable;
     overflow-x: clip;
     overflow-y: hidden;
     overscroll-behavior: none;
@@ -204,6 +203,8 @@
 
   #root {
     height: 100%;
+    width: 100%;
+    max-width: 100%;
     overflow: hidden;
     overscroll-behavior: none;
     background: var(--brand-header);
@@ -315,6 +316,21 @@
 
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Compact shell (mobile + tablet): hide scrollbars; touch scroll still works */
+  @media (max-width: 1023px) {
+    html * {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    html *::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+      background: transparent;
+    }
   }
 }
 
@@ -445,6 +461,30 @@
   to {
     opacity: 0;
     transform: translateX(16px);
+  }
+}
+
+@keyframes mobileNavDrawerIn {
+  from {
+    transform: translate3d(0, -100%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes mobileNavDrawerOut {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -100%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-drawer {
+    animation: none !important;
   }
 }
 

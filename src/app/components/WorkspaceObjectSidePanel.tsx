@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentType, type Mous
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, MessageSquare, X } from 'lucide-react';
 import { getCollapsedSidePanelWidth } from '../utils/sidepanel-width';
+import { APP_EVENTS } from '../constants/storage-keys';
 
 type IconType = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
 
@@ -31,6 +32,8 @@ type WorkspaceObjectSidePanelProps = {
   onPanelWidthChange?: (width: number) => void;
   zIndexClassName?: string;
   portal?: boolean;
+  /** When false, hides the left-edge resize handle (mobile full-width panels). */
+  showResizeHandle?: boolean;
   /**
    * When true (default), clicking outside the panel closes it.
    * Clicks on elements marked with `data-keep-sidepanel` (typically table
@@ -57,6 +60,7 @@ export function WorkspaceObjectSidePanel({
   onAssistantRequest,
   panelWidth,
   portal = true,
+  showResizeHandle = true,
   zIndexClassName = 'z-[190]',
 }: WorkspaceObjectSidePanelProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -123,8 +127,8 @@ export function WorkspaceObjectSidePanel({
         onAssistantRequest();
       }
     };
-    window.addEventListener('amplify-open-sidepanel-context', onOpenAssistantContext);
-    return () => window.removeEventListener('amplify-open-sidepanel-context', onOpenAssistantContext);
+    window.addEventListener(APP_EVENTS.openSidePanelContext, onOpenAssistantContext);
+    return () => window.removeEventListener(APP_EVENTS.openSidePanelContext, onOpenAssistantContext);
   }, [assistantContent, onAssistantRequest]);
 
   useEffect(() => {
@@ -190,13 +194,15 @@ export function WorkspaceObjectSidePanel({
         height: 'calc(100dvh - 48px)',
       }}
     >
-      <div
-        className="group absolute bottom-0 left-0 top-0 z-[100] w-5 -translate-x-1/2 cursor-col-resize bg-transparent"
-        onMouseDown={() => onResizeStart()}
-      >
-        <span className={`pointer-events-none absolute left-1/2 top-0 h-full w-px -translate-x-1/2 transition-colors ${isResizing ? 'bg-brand-blue' : 'bg-border-default group-hover:bg-brand-blue'}`} />
-        <span className={`pointer-events-none absolute left-1/2 top-1/2 flex h-9 w-2 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border bg-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] transition-colors ${isResizing ? 'border-brand-blue' : 'border-border-default group-hover:border-brand-blue'}`} />
-      </div>
+      {showResizeHandle ? (
+        <div
+          className="group absolute bottom-0 left-0 top-0 z-[100] w-5 -translate-x-1/2 cursor-col-resize bg-transparent"
+          onMouseDown={() => onResizeStart()}
+        >
+          <span className={`pointer-events-none absolute left-1/2 top-0 h-full w-px -translate-x-1/2 transition-colors ${isResizing ? 'bg-brand-blue' : 'bg-border-default group-hover:bg-brand-blue'}`} />
+          <span className={`pointer-events-none absolute left-1/2 top-1/2 flex h-9 w-2 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border bg-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] transition-colors ${isResizing ? 'border-brand-blue' : 'border-border-default group-hover:border-brand-blue'}`} />
+        </div>
+      ) : null}
 
       <div
         className="relative shrink-0 border-b border-border-soft px-4 py-2"
@@ -306,7 +312,11 @@ export function WorkspaceObjectSidePanel({
         </div>
       </div>
 
-      {assistantOpen && assistantActive && assistantContent ? assistantContent : children}
+      {assistantOpen && assistantActive && assistantContent ? assistantContent : (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {children}
+        </div>
+      )}
     </div>
   );
 

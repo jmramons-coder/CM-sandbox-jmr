@@ -46,7 +46,16 @@ export function AiInsightCell({ summary, action }: AiInsightCellProps) {
   );
 }
 
-export function AiInsightInline({ summary, action }: { summary?: string; action?: string }) {
+export function AiInsightInline({
+  summary,
+  action,
+  showSourceBadge = true,
+}: {
+  summary?: string;
+  action?: string;
+  /** When false, summary/action only (badge shown elsewhere, e.g. mobile task card header). */
+  showSourceBadge?: boolean;
+}) {
   if (!summary && !action) return null;
 
   const displaySummary = summary ? stripSummaryTitleDecorators(summary) : undefined;
@@ -54,8 +63,8 @@ export function AiInsightInline({ summary, action }: { summary?: string; action?
   return (
     <div className="flex max-w-[320px] flex-col gap-1.5">
       {displaySummary && (
-        <div className="flex items-start gap-1.5 text-sm text-text-secondary">
-          <MiniAiSourceBadge />
+        <div className={`text-sm text-text-secondary ${showSourceBadge ? 'flex items-start gap-1.5' : ''}`}>
+          {showSourceBadge ? <MiniAiSourceBadge /> : null}
           <span className="line-clamp-2 whitespace-normal break-words leading-snug">{displaySummary}</span>
         </div>
       )}

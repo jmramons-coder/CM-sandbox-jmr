@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
 import { Plus, X, Clock, ChevronDown, Kanban, List, MoreVertical, Users, Lock, Check, ArrowLeftRight, ClipboardList } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
-import { FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
+import { AiInsightInline, FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
 import { TaskKanbanBoard } from './tasks/TaskKanbanBoard';
 import { PriorityChip, SearchBar } from './ds';
 import { TaskDetailEmbeddedView, type TaskPanelNavigationPayload } from './TaskDetailSidePanel';
@@ -15,6 +15,8 @@ import { TEAMS, CURRENT_USER } from '../data/mock-tasks';
 import { filterDatasetBySettings, getSystemDataset, listTasks } from '../data/objectRepository';
 import { updateTaskStatus } from '../data/datasetMutations';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
+import { useViewportLayout } from '../hooks/useViewportLayout';
+import { APP_EVENTS, STORAGE_KEYS } from '../constants/storage-keys';
 import {
   MODULE_TABLE_LAYOUT_CLASS,
   MODULE_TABLE_SUMMARY_COL_CLASS,
@@ -26,9 +28,11 @@ import { filterTasks } from '../utils/task-filters';
 import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
 import type { Task, TaskViewMode, TaskTabType, SortableColumn, SortDirection } from '../types';
 import { getDefaultSidePanelWidth } from '../utils/sidepanel-width';
+import { ModuleMobileListCardShell } from './ModuleMobileListCard';
 import { ModuleTableCheckboxColumnCell } from './ModuleTableCheckboxColumn';
 import {
   isTaskAiSourced,
+  MiniAiSourceBadge,
   MODULE_TABLE_CHECKBOX_COL_WIDTH,
   MODULE_TABLE_FIRST_STICKY_COL_PADDING_CLASS,
   SummaryTableColumnHeader,
@@ -37,10 +41,12 @@ import {
   TABLE_LINK_TRUNCATE_CLASS,
   TABLE_SUBTEXT_CLASS,
   TABLE_TEXT_CLASS,
+  TaskAssigneeAvatarStack,
   TaskSourceTag,
   TaskTableFirstColumnCell,
   TwoLineSummaryCell,
 } from './ModuleCellHelpers';
+import { getTaskAssigneeNames } from '../utils/task-assignees';
 
 /** Task + case share one sticky cell so the left pack scrolls as a unit (no per-column sticky gaps). */
 const TASK_TABLE_TASK_COL_WIDTH = 152;
@@ -67,6 +73,87 @@ const TASK_TABLE_MIN_WIDTH =
   TASK_TABLE_STATUS_WIDTH +
   TASK_TABLE_ACTIONS_WIDTH;
 const TASK_TABLE_MIN_WIDTH_TEAM = TASK_TABLE_MIN_WIDTH + TASK_TABLE_SCROLL_COL_MIN;
+
+function TaskCardMetaField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">{label}</p>
+      <div className="mt-0.5 min-w-0 text-[12px] font-semibold leading-snug text-text-primary">{children}</div>
+    </div>
+  );
+}
+
+function TaskMobileListCard({
+  task,
+  selected,
+  restricted,
+  onSelect,
+  onNavigateCase,
+  queueTeamId,
+}: {
+  task: Task;
+  selected: boolean;
+  restricted: boolean;
+  onSelect: () => void;
+  onNavigateCase: (caseId: string) => void;
+  queueTeamId?: string;
+}) {
+  const partyName = task.primaryPartyName ?? task.claimantName;
+  const partyLabel = task.primaryPartyLabel ?? 'Claimant';
+  const assigneeNames = getTaskAssigneeNames(task, { queueTeamId });
+  const showAiSourceBadge =
+    isTaskAiSourced(task) || task.hasAI || Boolean(task.aiSummary || task.description);
+
+  return (
+    <ModuleMobileListCardShell selected={selected} restricted={restricted} onSelect={onSelect}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          {showAiSourceBadge ? <MiniAiSourceBadge /> : null}
+          <PriorityChip priority={task.priority} />
+          <LozengeTag label={task.status} type={getStatusLozengeType(task.status, 'task')} subtle />
+        </div>
+        <TaskAssigneeAvatarStack names={assigneeNames} />
+      </div>
+
+      <h3 className="mb-2 text-sm font-semibold leading-snug text-text-heading">{task.taskType}</h3>
+
+      {task.aiSummary || task.description ? (
+        <div className="mb-3">
+          <AiInsightInline summary={task.aiSummary ?? task.description} showSourceBadge={false} />
+        </div>
+      ) : null}
+
+      <div className="mb-3 grid grid-cols-2 gap-x-3 gap-y-3">
+        <TaskCardMetaField label="Case">
+          {task.caseId ? (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onNavigateCase(task.caseId!);
+              }}
+              className={`${TABLE_LINK_CLASS} break-words text-left`}
+            >
+              {task.caseId}
+            </button>
+          ) : (
+            <span className="text-text-muted">—</span>
+          )}
+        </TaskCardMetaField>
+        <TaskCardMetaField label={partyLabel}>
+          <span className="break-words">{partyName || '—'}</span>
+        </TaskCardMetaField>
+      </div>
+
+      {!isTaskAiSourced(task) ? (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <TaskSourceTag task={task} />
+        </div>
+      ) : null}
+    </ModuleMobileListCardShell>
+  );
+}
+
 export function TaskModule() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -81,6 +168,7 @@ export function TaskModule() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskPanelContexts, setTaskPanelContexts] = useState<WorkspacePanelContext[]>([]);
   const [activePanelContextId, setActivePanelContextId] = useState('');
+  const { isCompactShell } = useViewportLayout();
   const [viewMode, setViewMode] = useState<TaskViewMode>('table');
   const setTaskViewMode = useCallback((mode: TaskViewMode) => {
     setViewMode(mode);
@@ -203,15 +291,15 @@ export function TaskModule() {
   useEffect(() => {
     const sync = () => {
       try {
-        setBillyPostApprovalFirst(sessionStorage.getItem('amplify-billy-post-approval') === '1');
+        setBillyPostApprovalFirst(sessionStorage.getItem(STORAGE_KEYS.billyPostApproval) === '1');
       } catch {
         setBillyPostApprovalFirst(false);
       }
     };
-    window.addEventListener('amplify-billy-flow', sync);
+    window.addEventListener(APP_EVENTS.billyFlow, sync);
     window.addEventListener('focus', sync);
     return () => {
-      window.removeEventListener('amplify-billy-flow', sync);
+      window.removeEventListener(APP_EVENTS.billyFlow, sync);
       window.removeEventListener('focus', sync);
     };
   }, []);
@@ -429,42 +517,68 @@ export function TaskModule() {
             <FilterDropdown label="SLA Status" options={['All', 'At risk', 'On track', 'Breached']} value={slaStatusFilter} onChange={setSlaStatusFilter} />
           </div>
 
-          <div
-            className="order-2 ml-auto flex shrink-0 overflow-hidden rounded-md border border-border-default xl:order-3"
-            role="group"
-            aria-label="Task view"
-          >
-            <button
-              type="button"
-              onClick={() => setTaskViewMode('kanban')}
-              className={`flex items-center gap-1.5 px-2.5 py-2 text-[11px] font-semibold transition-colors ${viewMode === 'kanban' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
-              title="Board view"
-              aria-pressed={viewMode === 'kanban'}
+          {!isCompactShell ? (
+            <div
+              className="order-2 ml-auto flex shrink-0 overflow-hidden rounded-md border border-border-default xl:order-3"
+              role="group"
+              aria-label="Task view"
             >
-              <Kanban className="h-4 w-4 shrink-0" />
-              Board
-            </button>
-            <button
-              type="button"
-              onClick={() => setTaskViewMode('table')}
-              className={`flex items-center gap-1.5 border-l border-border-default px-2.5 py-2 text-[11px] font-semibold transition-colors ${viewMode === 'table' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
-              title="Table view"
-              aria-pressed={viewMode === 'table'}
-            >
-              <List className="h-4 w-4 shrink-0" />
-              Table
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => setTaskViewMode('kanban')}
+                className={`flex items-center gap-1.5 px-2.5 py-2 text-[11px] font-semibold transition-colors ${viewMode === 'kanban' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
+                title="Board view"
+                aria-pressed={viewMode === 'kanban'}
+              >
+                <Kanban className="h-4 w-4 shrink-0" />
+                Board
+              </button>
+              <button
+                type="button"
+                onClick={() => setTaskViewMode('table')}
+                className={`flex items-center gap-1.5 border-l border-border-default px-2.5 py-2 text-[11px] font-semibold transition-colors ${viewMode === 'table' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
+                title="Table view"
+                aria-pressed={viewMode === 'table'}
+              >
+                <List className="h-4 w-4 shrink-0" />
+                Table
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
 
       {/* List + Side Panel */}
       <div className="relative z-0 flex min-h-0 flex-1 overflow-hidden">
         <div
-          key={viewMode}
-          className={`relative z-0 flex min-h-0 min-w-0 flex-1 flex-col transition-all ${viewMode === 'kanban' ? 'bg-[#f4f5f7]' : 'bg-white'}`}
+          key={isCompactShell ? 'card' : viewMode}
+          className={`relative z-0 flex min-h-0 min-w-0 flex-1 flex-col transition-all ${
+            !isCompactShell && viewMode === 'kanban' ? 'bg-[#f4f5f7]' : 'bg-white'
+          }`}
         >
-          {viewMode === 'kanban' ? (
+          {isCompactShell ? (
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                <div className="flex flex-col gap-3">
+                  {sortedTasks.map((task) => {
+                    const restricted = isOnTeamTasks && !task.pickedUpBy && isRestricted(task);
+                    return (
+                      <TaskMobileListCard
+                        key={task.id}
+                        task={task}
+                        selected={selectedTask?.id === task.id}
+                        restricted={restricted}
+                        onSelect={() => openTaskPanel(task)}
+                        onNavigateCase={(caseId) => navigate(`/cases/${caseId}`)}
+                        queueTeamId={isOnTeamTasks ? selectedTeamId : undefined}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+              <ModuleTablePaginationFooter total={sortedTasks.length} labelStyle={fontVar} />
+            </div>
+          ) : viewMode === 'kanban' ? (
             <TaskKanbanBoard
               tasks={sortedTasks}
               selectedTaskId={selectedTask?.id}
@@ -477,7 +591,6 @@ export function TaskModule() {
               isRestricted={isRestricted}
             />
           ) : (
-            /* Table View */
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <div
                 ref={setTaskTableScrollEl}

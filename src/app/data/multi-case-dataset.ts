@@ -1,4 +1,5 @@
 import type { CaseKind, CaseRecord, ObjectRef, WorkObjectKind, DisplayCurrency } from '../domain/objectRefs';
+import { GUARDIAN_DATASET } from './guardian-dataset';
 import { SBLI_DATASET } from './sbli-dataset';
 import type {
   RequestCategory,
@@ -412,4 +413,5 @@ export const MULTI_CASE_DEMO_DATASET: SystemDataset = SBLI_DATASET;
 
 export const SYSTEM_DATASETS: SystemDataset[] = [
   MULTI_CASE_DEMO_DATASET,
+  GUARDIAN_DATASET,
 ];

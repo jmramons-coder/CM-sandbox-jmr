@@ -710,7 +710,9 @@ export function PlatformSettingsProvider({ children }: { children: ReactNode }) 
         settings: createDemoConfigurationSnapshot(settings),
       });
       downloadDeployablePreset(file);
-      return file.id === 'demo-sbli' ? 'sbli.preset.json' : 'equisoft.preset.json';
+      if (file.id === 'demo-sbli') return 'sbli.preset.json';
+      if (file.id === 'demo-guardian-1821') return 'guardian.preset.json';
+      return 'equisoft.preset.json';
     },
     [settings],
   );

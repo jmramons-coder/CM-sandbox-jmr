@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { CreationModalBackdrop } from '../CreationModalControls';
+import { RESPONSIVE_WIDE_FORM_DIALOG_CLASS } from '../responsiveDialog';
 import {
   SmartRequestUploadPreview,
   type SmartRequestUploadedFile,
@@ -140,7 +141,7 @@ export function SmartRequestModal({
   return (
     <Dialog modal={false} open={open} onOpenChange={handleOpenChange}>
       {open ? <CreationModalBackdrop /> : null}
-      <DialogContent className={SMART_REQUEST_MODAL_SIZE_CLASS}>
+      <DialogContent layout="auto" className={RESPONSIVE_WIDE_FORM_DIALOG_CLASS}>
         <DialogHeader className="shrink-0 gap-0 border-b border-border-default bg-white px-6 pb-4 pt-5">
           <div className="flex items-start gap-2">
             <Inbox className="mt-1 size-5 shrink-0 text-text-muted" aria-hidden />

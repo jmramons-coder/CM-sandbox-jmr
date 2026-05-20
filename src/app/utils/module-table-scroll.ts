@@ -13,13 +13,14 @@ export const MODULE_TABLE_SUMMARY_COL_CLASS = 'w-full min-w-[320px]';
 
 /**
  * Scroll container for module tables: vertical scroll always; horizontal only when needed.
- * `scrollbar-gutter: stable` avoids vertical scrollbar stealing width and triggering phantom horizontal scroll.
+ * `scrollbar-gutter: auto` reserves gutter only when a vertical scrollbar is present (unlike
+ * `stable`, which leaves a permanent white strip on the right when content does not scroll).
  */
 export function moduleTableScrollContainerClass(hasHorizontalOverflow: boolean, extra = '') {
   return [
     'app-scrollbar relative isolate min-h-0 min-w-0',
     'overflow-y-auto',
-    '[scrollbar-gutter:stable]',
+    '[scrollbar-gutter:auto]',
     hasHorizontalOverflow ? 'overflow-x-auto' : 'overflow-x-hidden',
     extra,
   ]

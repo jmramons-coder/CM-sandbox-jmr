@@ -60,7 +60,7 @@
     "activeToggleAria": "Activer l'environnement de démo {{name}}",
     "builtIn": "Intégré · fourni avec l'application",
     "deleteAria": "Supprimer l'environnement de démo {{name}}",
-    "sharedDatasetNote": "Les deux environnements intégrés partagent le jeu de données SBLI. Activez pour changer l'image de marque. Icône téléchargement : exporter pour un déploiement git.",
+    "sharedDatasetNote": "Equisoft et SBLI utilisent le jeu de données de démo américain ; Guardian 1821 utilise le jeu de données Guardian UK (GBP). Activez pour changer d'environnement.",
     "exportDeployAria": "Exporter {{name}} pour déploiement",
     "exportDeployDone": "Fichier {{filename}} téléchargé. Remplacez {{path}} dans le dépôt, validez et déployez.",
     "summary": {

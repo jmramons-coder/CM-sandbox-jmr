@@ -1,0 +1,358 @@
+{
+  "_meta": {
+    "description": "Amplify — Home dashboard redesign seed data. All widget data for assessor and manager role views.",
+    "version": "2.0",
+    "generated": "2026-05-20",
+    "architecture_ref": "amplify_home_redesign_architecture.md",
+    "render_function": "renderDashboard()",
+    "render_target": "#dshWrap",
+    "state_vars": {
+      "dshRole":       { "type": "string",  "values": ["assessor","manager"], "default": "assessor" },
+      "dshCaseFilter": { "type": "string",  "values": ["all","pending","active","recovery"], "default": "all" },
+      "dshActTab":     { "type": "string",  "values": ["24h","week"], "default": "24h" }
+    },
+    "data_status": {
+      "DASH_DATA_const": "lives in const DASH_DATA at JS position ~315k",
+      "inline_data": "9 objects defined inside renderDashboard() — listed under inlineData below",
+      "real_data_sources": "TASKS object, D object (cases/sw), REQS object, CASE_META object"
+    }
+  },
+
+  "DASH_DATA": {
+    "_note": "This is the existing const DASH_DATA object. Only kpis, cards, cases, and activity arrays come from here. All other widget data is in inlineData below.",
+
+    "assessor": {
+      "user": "Victor Ramon",
+      "eyebrow": "MISSION CONTROL",
+      "headline": "Today's control priorities",
+      "sub": "Unblock review, protect SLA, and move decisions forward.",
+
+      "kpis": [
+        { "val": "$500K", "label": "Blocked exposure",  "cls": "red"  },
+        { "val": "5",     "label": "Ready decisions",   "cls": "blue" },
+        { "val": "$700K", "label": "Today's release",   "cls": "grn"  }
+      ],
+
+      "cards": [
+        {
+          "icon": "ti-checkbox",
+          "iconBg": "var(--blue-bg)", "iconColor": "var(--blue-t)",
+          "val": "17", "valCls": "",
+          "title": "Assigned to me",
+          "sub": "1 overdue · 5 ready"
+        },
+        {
+          "icon": "ti-alert-triangle",
+          "iconBg": "var(--amber-bg)", "iconColor": "var(--amber-t)",
+          "val": "4", "valCls": "amber",
+          "title": "Attention required",
+          "sub": "Controls or missing evidence"
+        },
+        {
+          "icon": "ti-clock",
+          "iconBg": "var(--red-bg)", "iconColor": "var(--red-t)",
+          "val": "At risk", "valCls": "red",
+          "title": "SLA health",
+          "sub": "Next breach 2026-05-15"
+        }
+      ],
+
+      "cases": [
+        { "key": "bb", "name": "Billy Bud",     "id": "CD26-5546112", "type": "CD", "status": "Pending decision", "dot": "#E24B4A", "val": "$500,000", "sla": "SLA Today", "slaCls": "red",   "assignee": "Victor Ramon"   },
+        { "key": "sd", "name": "Thomas Dupont", "id": "CD44-6679812", "type": "CD", "status": "Pending decision", "dot": "#E24B4A", "val": "$500,000", "sla": "SLA Today", "slaCls": "red",   "assignee": "Victor Ramon"   },
+        { "key": "mt", "name": "Marc Tremblay", "id": "NB66-7622343", "type": "NB", "status": "Active",           "dot": "#3B6D11", "val": "$625,000", "sla": "SLA 2d",   "slaCls": "amber", "assignee": "Victor Ramon"   },
+        { "key": "er", "name": "Elena Rossi",   "id": "NB98-9989870", "type": "NB", "status": "Active",           "dot": "#185FA5", "val": "$350,000", "sla": "SLA 2d",   "slaCls": "amber", "assignee": "Richard Daniels" }
+      ],
+
+      "activity24h": [],
+      "_activity24hNote": "Empty — assessor had no activity in the last 24h. Renders empty-state illustration.",
+
+      "activityWeek": [
+        { "ts": "May 14", "actor": "You",       "action": "APS ordered from Dr. Kowalski",               "case": "NB66-7622343" },
+        { "ts": "May 14", "actor": "AI Agent",  "action": "Preliminary scoring generated — +75 debits",  "case": "NB66-7622343" },
+        { "ts": "May 13", "actor": "You",       "action": "Tele-interview scheduled for Elena Rossi",    "case": "NB98-9989870" },
+        { "ts": "May 13", "actor": "AI Agent",  "action": "Accelerated UW eligibility confirmed — 95%",  "case": "NB98-9989870" }
+      ]
+    },
+
+    "manager": {
+      "user": "Sarah Mitchell",
+      "eyebrow": "TEAM OVERVIEW",
+      "headline": "Portfolio health & team priorities",
+      "sub": "Monitor team workload, SLA risk, and escalations across all cases.",
+
+      "kpis": [
+        { "val": "$2.1M", "label": "Portfolio exposure",     "cls": "red"   },
+        { "val": "12",    "label": "Team ready decisions",   "cls": "blue"  },
+        { "val": "3",     "label": "SLA breaches this week", "cls": "amber" },
+        { "val": "88%",   "label": "Avg AI confidence",      "cls": "grn"   }
+      ],
+
+      "cards": [
+        {
+          "icon": "ti-users",
+          "iconBg": "var(--blue-bg)", "iconColor": "var(--blue-t)",
+          "val": "3", "valCls": "",
+          "title": "Active assessors",
+          "sub": "Victor (17 tasks) · Richard (12) · Sarah (8)"
+        },
+        {
+          "icon": "ti-escalator-up",
+          "iconBg": "var(--red-bg)", "iconColor": "var(--red-t)",
+          "val": "3", "valCls": "red",
+          "title": "Pending escalations",
+          "sub": "Awaiting manager review or approval"
+        },
+        {
+          "icon": "ti-clock",
+          "iconBg": "var(--amber-bg)", "iconColor": "var(--amber-t)",
+          "val": "2", "valCls": "amber",
+          "title": "SLA at risk",
+          "sub": "CD26 & CD44 both breach today"
+        }
+      ],
+
+      "cases": [
+        { "key": "bb", "name": "Billy Bud",     "id": "CD26-5546112", "type": "CD", "status": "Pending decision", "dot": "#E24B4A", "val": "$500,000", "sla": "SLA Today", "slaCls": "red",   "assignee": "Victor Ramon"   },
+        { "key": "sd", "name": "Thomas Dupont", "id": "CD44-6679812", "type": "CD", "status": "Pending decision", "dot": "#E24B4A", "val": "$500,000", "sla": "SLA Today", "slaCls": "red",   "assignee": "Victor Ramon"   },
+        { "key": "mt", "name": "Marc Tremblay", "id": "NB66-7622343", "type": "NB", "status": "Active",           "dot": "#3B6D11", "val": "$625,000", "sla": "SLA 2d",   "slaCls": "amber", "assignee": "Victor Ramon"   },
+        { "key": "er", "name": "Elena Rossi",   "id": "NB98-9989870", "type": "NB", "status": "Active",           "dot": "#185FA5", "val": "$350,000", "sla": "SLA 2d",   "slaCls": "amber", "assignee": "Richard Daniels" }
+      ],
+
+      "activity24h": [
+        { "ts": "10:22",     "actor": "Victor Ramon",    "action": "APS chase sent to Dr. Kowalski (2nd request)",               "case": "NB66-7622343" },
+        { "ts": "09:45",     "actor": "AI Agent",        "action": "Scoring updated: +75 debits confirmed (paramedical pending)", "case": "NB66-7622343" },
+        { "ts": "09:12",     "actor": "Richard Daniels", "action": "Tele-interview confirmed for Elena Rossi May 17",            "case": "NB98-9989870" },
+        { "ts": "Yesterday", "actor": "Victor Ramon",    "action": "FCE escalation flag raised — 35 days overdue",               "case": "CD26-5546112" }
+      ],
+
+      "activityWeek": [
+        { "ts": "May 14", "actor": "Victor Ramon",    "action": "APS ordered from Dr. Kowalski",                       "case": "NB66-7622343" },
+        { "ts": "May 14", "actor": "AI Agent",        "action": "Scoring generated — +75 debits, rated offer likely",  "case": "NB66-7622343" },
+        { "ts": "May 13", "actor": "Richard Daniels", "action": "Tele-interview scheduled for Elena Rossi",            "case": "NB98-9989870" },
+        { "ts": "May 13", "actor": "AI Agent",        "action": "Accelerated UW eligibility confirmed — 95%",          "case": "NB98-9989870" },
+        { "ts": "May 12", "actor": "Victor Ramon",    "action": "MIB hit reviewed — traditional UW path confirmed",    "case": "NB66-7622343" },
+        { "ts": "May 10", "actor": "AI Agent",        "action": "MIB comparison complete — no discrepancies (96%)",   "case": "CD44-6679812" }
+      ]
+    }
+  },
+
+  "inlineData": {
+    "_note": "These 9 objects are currently defined inline inside renderDashboard(). They should be moved to DASH_DATA or a separate const for maintainability. Currently hardcoded — see gaps section.",
+
+    "trendArrows": {
+      "_purpose": "Trend arrow and context label shown below each KPI chip value",
+      "assessor": [
+        { "arrow": "↑", "cls": "up",   "label": "vs last week",       "_kpi": "Blocked exposure"  },
+        { "arrow": "→", "cls": "ok",   "label": "steady",              "_kpi": "Ready decisions"   },
+        { "arrow": "↑", "cls": "down", "label": "from $400K cleared",  "_kpi": "Today's release"   }
+      ],
+      "manager": [
+        { "arrow": "↑", "cls": "up",   "label": "vs last week",        "_kpi": "Portfolio exposure"     },
+        { "arrow": "↑", "cls": "up",   "label": "team +3 this week",   "_kpi": "Team ready decisions"   },
+        { "arrow": "→", "cls": "ok",   "label": "same as last week",   "_kpi": "SLA breaches this week" },
+        { "arrow": "↑", "cls": "ok",   "label": "from 85% last month", "_kpi": "Avg AI confidence"      }
+      ],
+      "_clsValues": "up=red text (bad), down=green text (good — value went down), ok=green text (positive direction)"
+    },
+
+    "briefTexts": {
+      "_purpose": "AI daily brief narrative paragraph — shown in the purple strip at top of dashboard body",
+      "assessor": "Two cases are at their SLA deadline today — both decision-ready with AI confidence above 90%. The single blocker holding most value is the FCE on Billy Bud's case, now 35 days overdue. Your highest-value action today: approve the Dupont $500K payout.",
+      "manager":  "Victor Ramon has two decisions ready for your countersign totalling $1M in exposure. Both cleared AI review with 91–96% confidence. Marc Tremblay's APS is 2 days overdue — consider escalation to medical director if no response by end of day."
+    },
+
+    "briefActions": {
+      "_purpose": "CTA link shown at bottom of the AI daily brief strip",
+      "assessor": { "label": "Go to decision →",      "fn": "switchModule('cases');go('sd')" },
+      "manager":  { "label": "Review escalations →",  "fn": "switchModule('tasks')"          }
+    },
+
+    "progressData": {
+      "_purpose": "Data for the weekly progress ring SVG and streak/velocity row",
+      "_ringFormula": "dashArray = (pct/100) * (2 * Math.PI * 28). Ring radius R=28, cx=cy=34.",
+      "_ringColor": "pct>=80 → var(--green-b), pct>=50 → var(--blue-b), else var(--amber-b)",
+      "assessor": {
+        "done":     6,
+        "target":   10,
+        "streak":   3,
+        "velDir":   "up",
+        "velLabel": "+2 vs last week",
+        "pct":      60
+      },
+      "manager": {
+        "done":     31,
+        "target":   40,
+        "streak":   0,
+        "velDir":   "flat",
+        "velLabel": "steady this week",
+        "pct":      78
+      },
+      "_velDirValues": "up → ti-trending-up icon, down → ti-trending-down, flat → ti-trending-right"
+    },
+
+    "stageProgress": {
+      "_purpose": "Drives the segmented stage progress bars in the case health panel. Values match D[key].sw array.",
+      "_derivedFrom": "D[caseKey].sw — count stages with s.s==='done', s.s==='active', remainder='next'",
+      "stagesTotal":  { "bb": 5, "sd": 5, "mt": 5, "er": 4 },
+      "stagesDone":   { "bb": 4, "sd": 3, "mt": 2, "er": 1 },
+      "stagesActive": { "bb": 1, "sd": 1, "mt": 1, "er": 1 },
+      "_segmentRendering": "done → .dsh-stage-seg.done (green), active → .dsh-stage-seg.active (blue), remainder → .dsh-stage-seg (gray)"
+    },
+
+    "blockerData": {
+      "_purpose": "The red blocker bar anchored to the bottom of the case health panel",
+      "assessor": {
+        "count": 3,
+        "val":   "$1.125M",
+        "items": "FCE overdue 35d · Earnings verification · APS pending",
+        "_derivedFrom": "count of REQS with status='overdue' across assessor's cases. val = sum of face amounts of those cases."
+      },
+      "manager": {
+        "count": 5,
+        "val":   "$1.975M",
+        "items": "FCE 35d · APS 2d · Earnings · Decline letter · Tele-interview",
+        "_derivedFrom": "count of all REQS with status='overdue' or 'not_started' blocking a decision stage, across all cases."
+      }
+    },
+
+    "focusData": {
+      "_purpose": "The single priority focus card. One task per role — the highest-impact action available.",
+      "assessor": {
+        "tid":      "CD-6130",
+        "prio":     "High",
+        "conf":     "96% AI confidence",
+        "title":    "Approve $500,000 death benefit payout — Thomas Dupont",
+        "link":     "Thomas Dupont · CD44-6679812",
+        "caseKey":  "sd",
+        "ai":       "All requirements met. MIB comparison complete — no discrepancies. Contestability lapsed (6y 11m). ACH routing verified. Recommend approval.",
+        "ctaLabel": "Go to decision",
+        "ctaFn":    "switchModule('cases');go('sd')"
+      },
+      "manager": {
+        "tid":      "CD-5221",
+        "prio":     "High",
+        "conf":     "91% AI confidence",
+        "title":    "Countersign required — WOP rider approval, Billy Bud",
+        "link":     "Billy Bud · CD26-5546112",
+        "caseKey":  "bb",
+        "ai":       "Victor Ramon recommends approval. Total disability confirmed. Decision exceeds Band 3 authority — your countersign releases the monthly premium waiver ($38/mo, retroactive Jan 30).",
+        "ctaLabel": "Review & countersign",
+        "ctaFn":    "switchModule('cases');go('bb')"
+      }
+    },
+
+    "velData": {
+      "_purpose": "Team velocity rows in the manager right column. Shows queue trend per assessor with sparklines.",
+      "_sparkNote": "spark[] is a 5-point array — last 5 working days of task queue count. Rendered as bar sparkline.",
+      "assessors": [
+        {
+          "name":       "Victor Ramon",
+          "initials":   "VR",
+          "avCls":      "",
+          "tasks":      17,
+          "overdue":    2,
+          "trend":      "warn",
+          "trendLabel": "↑ queue growing",
+          "spark":      [10, 11, 13, 15, 17]
+        },
+        {
+          "name":       "Richard Daniels",
+          "initials":   "RD",
+          "avCls":      "amber",
+          "tasks":      12,
+          "overdue":    0,
+          "trend":      "ok",
+          "trendLabel": "↓ clearing well",
+          "spark":      [14, 13, 13, 12, 12]
+        },
+        {
+          "name":       "Sarah Mitchell",
+          "initials":   "SM",
+          "avCls":      "green",
+          "tasks":      8,
+          "overdue":    0,
+          "trend":      "flat",
+          "trendLabel": "→ steady",
+          "spark":      [8, 8, 9, 8, 8]
+        }
+      ],
+      "_trendValues":  "warn=red badge, ok=green badge, flat=gray badge",
+      "_sparkRendering": "bar height = (v/max)*16 + 4px. Last bar (.hi class) uses full opacity."
+    },
+
+    "metricBars": {
+      "_purpose": "Three-bar performance metrics shown in the weekly progress panel (bottom of right column for assessor, inside progress panel for manager).",
+
+      "assessorWeekly": [
+        { "label": "SLA compliance", "val": "75%", "bar": 75, "cls": "amber" },
+        { "label": "AI alignment",   "val": "91%", "bar": 91, "cls": ""      },
+        { "label": "Reqs fulfilled", "val": "49%", "bar": 49, "cls": "amber" }
+      ],
+
+      "managerAIHealth": [
+        { "label": "Avg AI confidence",  "val": "88%", "bar": 88, "cls": ""      },
+        { "label": "Alignment rate",     "val": "91%", "bar": 91, "cls": ""      },
+        { "label": "Low-conf. pending",  "val": "2",   "bar": 20, "cls": "amber" }
+      ],
+
+      "managerTeamMetrics": [
+        { "label": "SLA compliance",    "val": "75%", "bar": 75, "cls": "amber" },
+        { "label": "Decision velocity", "val": "+3",  "bar": 60, "cls": ""      },
+        { "label": "AI alignment",      "val": "91%", "bar": 91, "cls": ""      }
+      ],
+
+      "_clsValues": "empty string → var(--blue-b) fill, 'amber' → var(--amber-b) fill, 'red' → var(--red-b) fill",
+      "_barRendering": "width: {bar}% on .dsh-bar-fill element inside .dsh-bar-track"
+    }
+  },
+
+  "activityDotClasses": {
+    "_purpose": "CSS class suffix for colored dot on each activity row",
+    "AI Agent":  "ai     → var(--purple-b)",
+    "System":    "system → var(--b2) (gray)",
+    "human":     "human  → var(--blue-b)",
+    "_rule": "If actor === 'AI Agent' → 'ai'. If actor === 'System' → 'system'. Otherwise → 'human'."
+  },
+
+  "realDataDerivations": {
+    "_note": "How each hardcoded value should ultimately be computed from the real data objects.",
+
+    "progressData.assessor.done": {
+      "source": "TASKS object",
+      "formula": "count of tasks where assignee === currentUser && status === 'done'"
+    },
+    "progressData.assessor.pct": {
+      "source": "TASKS object",
+      "formula": "Math.round((done / target) * 100)"
+    },
+    "stageProgress": {
+      "source": "D[caseKey].sw array",
+      "formula": "stagesDone[k] = sw.filter(s => s.s === 'done').length; stagesActive[k] = sw.filter(s => s.s === 'active').length; stagesTotal[k] = sw.length"
+    },
+    "blockerData.count": {
+      "source": "REQS object",
+      "formula": "count of requirements where status === 'overdue' across all cases in current user scope"
+    },
+    "blockerData.val": {
+      "source": "REQS + D objects",
+      "formula": "sum of D[caseKey].val for each case that has at least one overdue requirement"
+    },
+    "focusData": {
+      "source": "TASKS object",
+      "formula": "filter tasks where status === 'in_queue' && priority === 'high', sort by AI confidence desc, pick [0]"
+    },
+    "metricBars.assessorWeekly.SLA compliance": {
+      "source": "D object + SLA data",
+      "formula": "count(cases where SLA not breached) / total cases * 100"
+    },
+    "metricBars.assessorWeekly.AI alignment": {
+      "source": "TASKS + DECISIONS",
+      "formula": "count(completed tasks where human decision matched AI recommendedOptionId) / count(completed decision tasks) * 100"
+    },
+    "metricBars.assessorWeekly.Reqs fulfilled": {
+      "source": "REQS object",
+      "formula": "count(status === 'fulfilled') / total reqs * 100. Currently: 17/35 = 49%"
+    }
+  }
+}

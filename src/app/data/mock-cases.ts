@@ -756,10 +756,79 @@ function applyCaseAnatomyToOverview(
   return { ...overview, generalInformation: { sections: nextSections } };
 }
 
+function buildNotFoundCaseOverview(caseId: string, dataset: SystemDataset): CaseOverview {
+  return {
+    id: caseId,
+    caseKind: 'claim',
+    caseTypeCode: 'IP',
+    workflowTemplateId: 'ct_claim_disability',
+    title: `Case not found`,
+    primaryParty: { kind: 'client', id: 'unknown', label: 'Unknown', role: 'party' },
+    primaryPartyName: 'Unknown',
+    primaryPartyLabel: 'Primary party',
+    participants: [],
+    linkedObjects: [],
+    moduleSummaries: [],
+    facts: [],
+    sections: [],
+    claimantName: 'Unknown',
+    claimantProfile: {
+      gender: '—',
+      dob: '—',
+      smoker: '—',
+      location: '—',
+      email: '—',
+      phone: '—',
+    },
+    productName: '—',
+    policyNumber: '—',
+    productType: '—',
+    monthlyBenefit: '—',
+    caseStatus: 'Not in active dataset',
+    caseTypeLabel: 'Case',
+    lineOfBusiness: dataset.label ?? 'Dataset',
+    phase: 'pre-approval',
+    preApprovalStages: PRE_APPROVAL_STAGES,
+    postApprovalStages: POST_APPROVAL_STAGES,
+    stageLabels: PRE_APPROVAL_STAGES,
+    activeStage: 1,
+    decisionTabState: 'locked',
+    aiConfidence: 0,
+    aiNarrative: '',
+    aiRecommendation: 'Monitor',
+    aiDetailedResume: [
+      `Case id "${caseId}" is not in the active dataset (${dataset.id}).`,
+      'Choose a case from the sidebar or switch dataset in Platform Settings.',
+    ],
+    assessmentFactors: [],
+    assessmentLabel: 'Not found',
+    netAssessmentScore: 0,
+    claimNumber: caseId,
+    dateOfLoss: '—',
+    disabilityOnset: '—',
+    cause: '—',
+    preExistingConditions: '—',
+    claimEndDate: '—',
+    paidBenefits: [],
+    plannedBenefits: [],
+    assessmentTrend: [],
+    restorationPlan: [],
+    requirements: [],
+    generalInformation: {
+      sections: [],
+      aiSummary: {
+        text: `This case id is not part of dataset "${dataset.label}". It may be an old bookmark — open a case from the list or activate the matching dataset.`,
+        confidence: 0,
+        generatedAt: new Date().toISOString().slice(0, 10),
+      },
+    },
+  };
+}
+
 export function getCaseOverview(
   caseId: string,
   dataset: SystemDataset = MULTI_CASE_DEMO_DATASET,
-  includeLegacyOverlay = true,
+  includeLegacyOverlay = false,
   layout?: CaseOverviewLayoutContext,
 ): CaseOverview {
   const systemRecord = dataset.cases.find((item) => item.id === caseId);
@@ -770,30 +839,11 @@ export function getCaseOverview(
     }
     return overview;
   }
-  const defaultId = MOCK_CASES[0].id;
-  const baseCase = CASE_OVERVIEWS[defaultId];
   if (includeLegacyOverlay) {
     const legacyCase = CASE_OVERVIEWS[caseId];
     if (legacyCase) return legacyCase;
   }
-  return {
-    ...baseCase,
-    id: caseId,
-    title: `Case ${caseId}`,
-    claimantName: 'Unknown primary party',
-    primaryPartyName: 'Unknown primary party',
-    claimNumber: caseId,
-    policyNumber: 'N/A',
-    caseStatus: 'Not found',
-    aiNarrative: 'No case record exists in the active dataset.',
-    aiDetailedResume: ['No case record exists in the active dataset.'],
-    assessmentFactors: [],
-    requirements: [],
-    linkedObjects: [],
-    participants: [],
-    facts: [],
-    sections: [],
-  };
+  return buildNotFoundCaseOverview(caseId, dataset);
 }
 
 function createOverviewFromSystemRecord(record: SystemDataset['cases'][number], dataset: SystemDataset): CaseOverview {
@@ -945,8 +995,10 @@ function createOverviewFromSystemRecord(record: SystemDataset['cases'][number], 
       benefitAmount: record.decision.recommendation.benefitAmount ?? policyRecord?.monthlyBenefit ?? financialFact,
     } : undefined,
     headerCallout: record.decision?.headerCallout,
-    aiConfidence: record.analysis?.confidence ?? 72,
-    aiNarrative: record.analysis?.narrative ?? record.facts.map((fact) => `${fact.label}: ${fact.value}`).join(' · '),
+    aiConfidence: record.generalInformation?.aiSummary?.confidence ?? record.analysis?.confidence ?? 72,
+    aiNarrative: record.generalInformation?.aiSummary?.text
+      ? ''
+      : record.analysis?.narrative ?? record.facts.map((fact) => `${fact.label}: ${fact.value}`).join(' · '),
     aiRecommendation: (record.analysis?.recommendation === 'Approve' ? 'Approve' : record.caseKind === 'claim' ? 'Pending' : 'Monitor'),
     aiDetailedResume: record.analysis?.detailedResume ?? [
       `${record.title} is a ${workflow?.caseNoun ?? 'case'} in ${record.status}.`,

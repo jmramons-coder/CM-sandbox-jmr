@@ -4,8 +4,11 @@ import { BUILTIN_CASE_TYPES } from '../domain/caseTypes';
 import { DEFAULT_LANGUAGE, type SupportedLanguage } from '../i18n/types';
 import type { Branding } from '../contexts/PlatformSettingsContext';
 
+import { GUARDIAN_DATASET_ID } from './guardianDemoCaseIds';
+
 export const DEMO_ENV_EQUISOFT_ID = 'demo-equisoft';
 export const DEMO_ENV_SBLI_ID = 'demo-sbli';
+export const DEMO_ENV_GUARDIAN_ID = 'demo-guardian-1821';
 export const SHARED_DEMO_DATASET_ID = DEFAULT_DATASET_ID;
 
 /** Shape committed in `src/app/data/demo-environments/*.preset.json` */
@@ -22,14 +25,24 @@ export type DeployableDemoPresetFile = {
     activeCaseTypeId: string | null;
     preferences: DemoConfigurationSnapshot['preferences'];
     modules: DemoConfigurationSnapshot['modules'];
-    dataSource?: Pick<DemoConfigurationSnapshot['dataSource'], 'displayCurrency'>;
+    dataSource?: Pick<DemoConfigurationSnapshot['dataSource'], 'displayCurrency' | 'activeDatasetId'>;
   };
 };
 
 export const DEPLOYABLE_PRESET_REPO_PATH: Record<string, string> = {
   [DEMO_ENV_EQUISOFT_ID]: 'src/app/data/demo-environments/equisoft.preset.json',
   [DEMO_ENV_SBLI_ID]: 'src/app/data/demo-environments/sbli.preset.json',
+  [DEMO_ENV_GUARDIAN_ID]: 'src/app/data/demo-environments/guardian.preset.json',
 };
+
+function datasetDefaultsForPreset(presetId: string, file?: DeployableDemoPresetFile['settings']['dataSource']) {
+  const activeDatasetId =
+    file?.activeDatasetId ??
+    (presetId === DEMO_ENV_GUARDIAN_ID ? GUARDIAN_DATASET_ID : SHARED_DEMO_DATASET_ID);
+  const displayCurrency =
+    file?.displayCurrency ?? (activeDatasetId === GUARDIAN_DATASET_ID ? 'GBP' : 'USD');
+  return { activeDatasetId, displayCurrency };
+}
 
 export function buildDemoSnapshotFromBranding(branding: Branding): DemoConfigurationSnapshot {
   return {
@@ -76,6 +89,7 @@ export function buildDemoSnapshotFromBranding(branding: Branding): DemoConfigura
 
 export function hydrateDeployablePreset(file: DeployableDemoPresetFile): SavedDemoConfiguration {
   const base = buildDemoSnapshotFromBranding(file.settings.branding);
+  const datasetDefaults = datasetDefaultsForPreset(file.id, file.settings.dataSource);
   return {
     id: file.id,
     name: file.name,
@@ -93,8 +107,8 @@ export function hydrateDeployablePreset(file: DeployableDemoPresetFile): SavedDe
       dataSource: {
         ...base.dataSource,
         ...(file.settings.dataSource ?? {}),
-        activeDatasetId: SHARED_DEMO_DATASET_ID,
-        displayCurrency: file.settings.dataSource?.displayCurrency ?? 'USD',
+        activeDatasetId: datasetDefaults.activeDatasetId,
+        displayCurrency: datasetDefaults.displayCurrency,
         legacyMockOverlayEnabled: false,
       },
     },
@@ -117,9 +131,14 @@ export function snapshotToDeployablePreset(
       activeCaseTypeId: config.settings.activeCaseTypeId,
       preferences: config.settings.preferences,
       modules: config.settings.modules,
-      dataSource: config.settings.dataSource?.displayCurrency
-        ? { displayCurrency: config.settings.dataSource.displayCurrency }
-        : undefined,
+      dataSource: {
+        ...(config.settings.dataSource?.displayCurrency
+          ? { displayCurrency: config.settings.dataSource.displayCurrency }
+          : {}),
+        ...(config.settings.dataSource?.activeDatasetId
+          ? { activeDatasetId: config.settings.dataSource.activeDatasetId }
+          : {}),
+      },
     },
   };
 }
@@ -128,7 +147,12 @@ export function downloadDeployablePreset(file: DeployableDemoPresetFile): void {
   const blob = new Blob([`${JSON.stringify(file, null, 2)}\n`], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
-  const filename = file.id === DEMO_ENV_SBLI_ID ? 'sbli.preset.json' : 'equisoft.preset.json';
+  const filename =
+    file.id === DEMO_ENV_SBLI_ID
+      ? 'sbli.preset.json'
+      : file.id === DEMO_ENV_GUARDIAN_ID
+        ? 'guardian.preset.json'
+        : 'equisoft.preset.json';
   anchor.href = url;
   anchor.download = filename;
   anchor.click();

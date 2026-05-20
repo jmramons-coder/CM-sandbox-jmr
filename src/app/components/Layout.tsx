@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
-import { ChevronDown, FileText, Maximize2, MessageSquare, Pencil, Plus, Search } from 'lucide-react';
+import { ChevronDown, FileText, Maximize2, Menu, MessageSquare, Pencil, Plus, Search } from 'lucide-react';
+import { MobileNavDrawer } from './MobileNavDrawer';
+import { MobileBottomNav, MOBILE_BOTTOM_NAV_CLEARANCE } from './MobileBottomNav';
 import { AgentSearchOptionContent, CaseSearchOptionContent, InitialsAvatar } from './ds';
 import { toAgentSummarySearchResult } from '../utils/agent-display';
 import { toCaseSummarySearchResult } from '../utils/case-display';
@@ -29,6 +31,10 @@ import { resolveBrandingLogoSrc } from '../utils/branding-logo';
 
 import { buildAssistantReply } from '../domain/assistantReplyBuilder';
 import type { LiveContext } from '../contexts/LiveContextProvider';
+import { useViewportLayout } from '../hooks/useViewportLayout';
+import { ViewportLayoutProvider } from '../contexts/ViewportLayoutContext';
+import { ActiveUserProvider } from '../contexts/ActiveUserContext';
+import { APP_EVENTS, STORAGE_KEYS } from '../constants/storage-keys';
 
 function resolveCopilotContextId(context?: LiveContext): string | undefined {
   if (!context) return undefined;
@@ -386,6 +392,7 @@ function LayoutInner() {
   const navigate = useNavigate();
   const { t } = useTranslation('nav');
   const [guideOpen, setGuideOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [globalAIWidth, setGlobalAIWidth] = useState(() => getDefaultSidePanelWidth({ min: 480 }));
   const [globalAIResizing, setGlobalAIResizing] = useState(false);
 
@@ -421,6 +428,7 @@ function LayoutInner() {
       : undefined;
   const headerLogoTextFill = themeMode === 'light' ? '#1b1c1e' : '#ffffff';
   const activeApp = getActiveApp(location.pathname);
+  const { isCompactShell } = useViewportLayout();
   const isFolderCreationForm = location.pathname.startsWith('/folders/') && location.pathname.endsWith('/add');
   const aiActivityEnabled = platformSettings.preferences.aiActivityEnabled;
   const aiSidePanelEnabled = platformSettings.preferences.aiSidePanelEnabled !== false;
@@ -429,19 +437,19 @@ function LayoutInner() {
    * work regardless of whether the toggle was flipped in the sidebar or in the modal. */
   useEffect(() => {
     try {
-      sessionStorage.setItem('amplify-ai-activity', aiActivityEnabled ? '1' : '0');
+      sessionStorage.setItem(STORAGE_KEYS.aiActivityEnabled, aiActivityEnabled ? '1' : '0');
     } catch {
       /* */
     }
     try {
-      window.dispatchEvent(new Event('amplify-ai-activity-toggle'));
+      window.dispatchEvent(new Event(APP_EVENTS.aiActivityToggle));
     } catch {
       /* */
     }
   }, [aiActivityEnabled]);
 
   useEffect(() => {
-    try { sessionStorage.removeItem('amplify-billy-post-approval'); } catch { /* */ }
+    try { sessionStorage.removeItem(STORAGE_KEYS.billyPostApproval); } catch { /* */ }
   }, []);
 
   useEffect(() => {
@@ -485,26 +493,41 @@ function LayoutInner() {
   }, [location.pathname]);
   const productNameParts = useMemo(() => splitProductName(branding.productName), [branding.productName]);
 
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
+
   return (
     <>
-      <div className="flex h-screen min-h-0 min-w-0 w-full flex-col overflow-x-clip" style={{ backgroundColor: 'var(--brand-header)' }}>
+      <div className="flex h-screen min-h-0 min-w-0 w-full max-w-full flex-col overflow-x-clip" style={{ backgroundColor: 'var(--brand-header)' }}>
       <header
-        className={`flex h-[48px] items-center justify-between px-4 shrink-0 isolate relative z-[1000] ${themeMode === 'dark' ? 'shadow-[0_2px_4px_rgba(0,0,0,0.10),0_6px_20px_rgba(0,0,0,0.08)]' : ''}`}
+        className={`flex h-[48px] shrink-0 items-center gap-2 px-3 isolate relative z-[1000] lg:justify-between lg:gap-0 lg:px-4 ${themeMode === 'dark' ? 'shadow-[0_2px_4px_rgba(0,0,0,0.10),0_6px_20px_rgba(0,0,0,0.08)]' : ''}`}
         style={{ backgroundColor: 'var(--brand-header)', color: 'var(--brand-on-header)' }}
       >
-        <div className="flex items-center gap-3">
-          <div className="flex items-end gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {activeApp.id !== 'eapp' ? (
+            <button
+              type="button"
+              className={`inline-flex min-h-[40px] min-w-[40px] shrink-0 items-center justify-center rounded-lg lg:hidden ${themeMode === 'light' ? 'hover:bg-black/[0.06]' : 'hover:bg-white/10'}`}
+              aria-label={t('mobileNav.openMenu')}
+              aria-expanded={mobileNavOpen}
+              onClick={() => setMobileNavOpen((open) => !open)}
+            >
+              <Menu className="h-5 w-5" strokeWidth={2} />
+            </button>
+          ) : null}
+          <div className="flex min-w-0 items-end gap-2">
             {headerLogoSrc ? (
               <img
                 src={headerLogoSrc}
                 alt={branding.productName}
-                className="h-[28px] max-w-[120px] object-contain"
+                className="h-[26px] max-w-[100px] object-contain lg:h-[28px] lg:max-w-[120px]"
               />
             ) : (
-              <SimpleLogo className="h-[28px] w-[90px]" textFill={headerLogoTextFill} />
+              <SimpleLogo className="h-[26px] w-[80px] lg:h-[28px] lg:w-[90px]" textFill={headerLogoTextFill} />
             )}
             {branding.showProductName ? (
-              <span className="mb-[1px] flex flex-col items-start text-left leading-[0.95] opacity-85">
+              <span className="mb-[1px] hidden flex-col items-start text-left leading-[0.95] opacity-85 lg:flex">
                 <span className="text-[11px] font-semibold">{productNameParts.first}</span>
                 {productNameParts.second ? (
                   <span className="text-[11px] font-medium">{productNameParts.second}</span>
@@ -515,8 +538,8 @@ function LayoutInner() {
         </div>
 
         <HeaderGlobalSearch />
-        
-        <div className="content-stretch flex gap-[16px] items-center justify-center relative">
+
+        <div className="ml-auto flex shrink-0 items-center gap-2 lg:gap-4">
           {aiSidePanelEnabled && (
             <div className="content-stretch flex gap-[8px] items-center relative shrink-0">
 
@@ -533,7 +556,7 @@ function LayoutInner() {
                           return;
                         }
                         const detail = { handled: false };
-                        window.dispatchEvent(new CustomEvent('amplify-open-sidepanel-context', { detail }));
+                        window.dispatchEvent(new CustomEvent(APP_EVENTS.openSidePanelContext, { detail }));
                         if (detail.handled) return;
                         setGlobalAIOpen(true);
                       }}
@@ -567,22 +590,25 @@ function LayoutInner() {
             </div>
           )}
 
-          <div className="h-[16px] shrink-0 w-px opacity-25" style={{ backgroundColor: 'var(--brand-on-header)' }} />
+          <div
+            className="hidden h-[16px] w-px shrink-0 opacity-25 lg:block"
+            style={{ backgroundColor: 'var(--brand-on-header)' }}
+          />
 
-          <div className="h-[32px] relative shrink-0">
-            <div className="content-stretch flex h-full items-start relative">
-              <UserMenu />
-            </div>
+          <div className="relative h-[32px] shrink-0">
+            <UserMenu />
           </div>
 
-          <AppSwitcher />
+          <div className="hidden lg:block">
+            <AppSwitcher />
+          </div>
         </div>
       </header>
 
       <div className={`flex min-h-0 min-w-0 flex-1 overflow-hidden ${themeMode === 'light' ? 'bg-[#f5f5f7]' : ''}`}>
         {/* Hide the vertical nav when inside an eApp form instance (full-page form). */}
         {activeApp.id !== 'eapp' ? (
-          <aside className="relative w-[96px] shrink-0">
+          <aside className="relative hidden w-[96px] shrink-0 lg:block">
             {themeMode === 'light' ? (
               <span
                 aria-hidden="true"
@@ -595,16 +621,46 @@ function LayoutInner() {
               onToggleAiActivity={() => {
                 const next = !aiActivityEnabled;
                 setAiActivityEnabledCtx(next);
-                window.dispatchEvent(new Event('amplify-ai-activity-toggle'));
+                window.dispatchEvent(new Event(APP_EVENTS.aiActivityToggle));
               }}
             />
           </aside>
         ) : null}
 
-        <main className={`relative z-10 min-w-0 flex-1 ${themeMode === 'light' ? `${isFolderCreationForm ? '' : 'rounded-tl-[16px]'} overflow-hidden border-l border-t border-border-default bg-surface-primary shadow-[0_-2px_6px_rgba(0,0,0,0.04)]` : 'overflow-visible'}`}>
-          <Outlet />
+        <main
+          className={`relative z-10 min-h-0 min-w-0 w-full max-w-full flex-1 overflow-hidden ${themeMode === 'light' ? `${isFolderCreationForm ? '' : 'rounded-tl-[16px] max-lg:rounded-tl-none'} border-l border-t border-border-default bg-surface-primary shadow-[0_-2px_6px_rgba(0,0,0,0.04)] max-lg:border-l-0` : ''}`}
+        >
+          <div
+            className="h-full min-h-0"
+            style={
+              activeApp.id !== 'eapp' && isCompactShell
+                ? { paddingBottom: MOBILE_BOTTOM_NAV_CLEARANCE }
+                : undefined
+            }
+          >
+            <Outlet />
+          </div>
         </main>
       </div>
+      {activeApp.id !== 'eapp' ? (
+        <MobileNavDrawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)}>
+          <VerticalNav
+            variant="drawer"
+            onNavigate={() => setMobileNavOpen(false)}
+            onOpenGuide={() => {
+              setMobileNavOpen(false);
+              setGuideOpen(true);
+            }}
+            aiActivityEnabled={aiActivityEnabled}
+            onToggleAiActivity={() => {
+              const next = !aiActivityEnabled;
+              setAiActivityEnabledCtx(next);
+              window.dispatchEvent(new Event(APP_EVENTS.aiActivityToggle));
+            }}
+          />
+        </MobileNavDrawer>
+      ) : null}
+      {activeApp.id !== 'eapp' ? <MobileBottomNav /> : null}
       {globalAIOpen && !isOnCopilotModule && aiSidePanelEnabled ? (
         <WorkspaceObjectSidePanel
           contexts={[{ id: 'assistant', label: activeSessionTitle, icon: MessageSquare }]}
@@ -694,6 +750,8 @@ function LayoutInner() {
 
 export function Layout() {
   return (
+    <ViewportLayoutProvider>
+    <ActiveUserProvider>
     <PlatformSettingsProvider>
     <CasesNavProvider>
     <GlobalCreateProvider>
@@ -707,5 +765,7 @@ export function Layout() {
     </GlobalCreateProvider>
     </CasesNavProvider>
     </PlatformSettingsProvider>
+    </ActiveUserProvider>
+    </ViewportLayoutProvider>
   );
 }

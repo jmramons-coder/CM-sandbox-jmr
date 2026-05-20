@@ -10,6 +10,7 @@ import { getEntityFolderById, isEntityFolderId } from '../data/mock-entity-folde
 import { filterDatasetBySettings, getSystemDataset } from '../data/objectRepository';
 import { useTranslatedFolder, useTranslatedEntityFolder } from '../data/useFolders';
 import { entitySlug, type EntitySubFolderGroup } from '../domain/entityFolders';
+import { useMobileSidePanelLayout } from '../hooks/useMobileSidePanelLayout';
 import { useResizableSidePanel } from '../hooks/useResizableSidePanel';
 import { UI_CLASS } from '../constants/design-tokens';
 import { getStatusLozengeType } from '../utils/status-display';
@@ -518,6 +519,10 @@ export function FoldersWorkspace() {
     isResizing,
     setIsResizing,
   } = useResizableSidePanel();
+  const { effectivePanelWidth, showPanelContent, peekWidth } = useMobileSidePanelLayout(
+    panelWidth,
+    sidePanelOpen,
+  );
   const sidePanelWasOpen = useRef(true);
 
   useEffect(() => {
@@ -622,10 +627,11 @@ export function FoldersWorkspace() {
   return (
     <div className="relative flex h-full min-h-0 min-w-0 overflow-x-visible">
       <aside
-        className={`relative flex min-h-0 shrink-0 flex-col overflow-x-visible ${UI_CLASS.workspaceTopLeftRadius} ${UI_CLASS.sidePanelBackground} ${sidePanelOpen ? 'z-10 border-r border-border-default' : 'z-0 min-w-0 border-0'}`}
-        style={{ width: sidePanelOpen ? panelWidth : 0, transition: 'width 0.2s ease' }}
+        className={`relative flex min-h-0 shrink-0 flex-col overflow-hidden ${UI_CLASS.workspaceTopLeftRadius} ${UI_CLASS.sidePanelBackground} border-r border-border-default ${sidePanelOpen ? 'z-10' : 'z-0'}`}
+        style={{ width: effectivePanelWidth, transition: 'width 0.2s ease' }}
+        aria-hidden={!sidePanelOpen}
       >
-        {sidePanelOpen ? (
+        {showPanelContent ? (
           <>
         <div className="px-5 pb-2 pt-4">
           <div className="mb-3">
@@ -936,7 +942,10 @@ export function FoldersWorkspace() {
       </aside>
       <SidePanelToggle
         open={sidePanelOpen}
-        panelWidth={panelWidth}
+        panelWidth={effectivePanelWidth}
+        panelEdgeOffset={effectivePanelWidth}
+        closedOffset={peekWidth}
+        layoutAnchored
         isResizing={isResizing}
         onToggle={() => {
           setIsResizing(false);
@@ -954,7 +963,7 @@ export function FoldersWorkspace() {
             position: 'fixed',
             top: LAYOUT_HEADER_HEIGHT_PX,
             left: 0,
-            width: MAIN_NAV_WIDTH_PX + (sidePanelOpen ? panelWidth : 0),
+            width: MAIN_NAV_WIDTH_PX + effectivePanelWidth,
             bottom: 0,
             zIndex: 25,
             backgroundColor: 'rgba(30, 41, 59, 0.18)',

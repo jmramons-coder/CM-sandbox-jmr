@@ -3,7 +3,8 @@ import { stripSummaryTitleDecorators } from '../utils/summaryText';
 import { getStatusLozengeType } from '../utils/status-display';
 import { AiCueSparkle } from './AiCueSparkle';
 import { LozengeTag } from './LozengeTag';
-import { PriorityChip } from './ds';
+import { InitialsAvatar, PriorityChip } from './ds';
+import { cn } from './ui/utils';
 
 export const TABLE_LINK_CLASS = 'text-[13px] font-semibold text-brand-blue underline underline-offset-2 hover:underline';
 /** Primary table ID/name link with ellipsis (case list, folder list, requests, etc.). */
@@ -168,39 +169,44 @@ export function TaskSourceTag(task: { origin?: string; hasAI?: boolean; aiGenera
   return <ModuleSourceTag label={label} variant={variant} />;
 }
 
-const DOCUMENT_SOURCE_LABELS: Record<string, string> = {
-  ai_agent: 'AI Agent',
-  ai: 'AI Agent',
-  ai_extraction: 'AI Agent',
-  ai_rule_engine: 'AI Agent',
-  hospital_feed: 'Hospital Feed',
-  physio_portal: 'Physio Portal',
-  pharmacy_check: 'Pharmacy Check',
-  employer_portal: 'Employer Portal',
-  payroll_system: 'Payroll System',
-  specialist_upload: 'Specialist Upload',
-  id_verification: 'ID Verification',
-  claimant_upload: 'Claimant Upload',
-  claimant_portal: 'Claimant Portal',
-  policy_admin: 'Policy Admin',
-  medical_provider: 'Medical Provider',
-  broker_portal: 'Broker Portal',
-  mib: 'MIB',
-  mvr_system: 'MVR System',
-};
+const TASK_ASSIGNEE_STACK_MAX = 3;
 
-export function getDocumentSourceLabel(source: string): string {
-  const key = source.trim().toLowerCase().replace(/\s+/g, '_');
-  if (DOCUMENT_SOURCE_LABELS[key]) return DOCUMENT_SOURCE_LABELS[key];
-  if (key.includes('_')) {
-    return key
-      .split('_')
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
-  }
-  return source.trim();
+/** Overlapping initials avatars for task assignees (mobile cards, etc.). */
+export function TaskAssigneeAvatarStack({ names }: { names: string[] }) {
+  if (names.length === 0) return null;
+
+  const visible = names.slice(0, TASK_ASSIGNEE_STACK_MAX);
+  const overflow = names.length - visible.length;
+
+  return (
+    <div
+      className="flex shrink-0 items-center"
+      role="group"
+      aria-label={`Assigned: ${names.join(', ')}`}
+    >
+      {visible.map((name, index) => (
+        <InitialsAvatar
+          key={`${name}-${index}`}
+          name={name}
+          size="xs"
+          className={cn('ring-2 ring-white', index > 0 && '-ml-2.5')}
+          style={{ zIndex: visible.length - index }}
+        />
+      ))}
+      {overflow > 0 ? (
+        <span
+          className="-ml-2.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-[#eef0f3] text-[10px] font-semibold text-text-secondary ring-2 ring-white"
+          style={{ zIndex: 0 }}
+          aria-hidden
+        >
+          +{overflow}
+        </span>
+      ) : null}
+    </div>
+  );
 }
+
+export { getDocumentSourceLabel } from '../data/documentMetadata';
 
 export function resolveDocumentSourceVariant(source: string): ModuleSourceTagVariant {
   const key = source.trim().toLowerCase().replace(/\s+/g, '_');

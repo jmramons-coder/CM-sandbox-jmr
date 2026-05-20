@@ -15,7 +15,7 @@ import type {
   SystemDataset,
 } from './multi-case-dataset';
 import { getScenarioPackForProfile } from './scenarioPacks';
-import { deriveAiActionsFromDataset } from './objectRepository';
+import { deriveAiActionsFromDataset } from './aiActionDerivation';
 import { validateSystemDataset } from './dataQualityGuards';
 import { workflowTemplateIdForClaim } from '../domain/workflows';
 

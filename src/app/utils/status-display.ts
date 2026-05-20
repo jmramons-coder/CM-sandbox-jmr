@@ -1,7 +1,7 @@
 import { UI_CLASS } from '../constants/design-tokens';
 import type { LozengeType, TaskPriority } from '../types';
 
-export type AppStatusContext = 'case' | 'folder' | 'task' | 'document' | 'entityTable' | 'application';
+export type AppStatusContext = 'case' | 'folder' | 'task' | 'document' | 'requirement' | 'entityTable' | 'application';
 
 export function getRagDotClass(rag: string | undefined): string {
   if (rag === 'Red' || rag === 'Amber' || rag === 'Green') return UI_CLASS.ragDot[rag];
@@ -71,6 +71,14 @@ export function getStatusLozengeType(
     return 'Neutral';
   }
 
+  if (context === 'requirement') {
+    if (normalized === 'Fulfilled' || normalized === 'Waived' || normalized === 'Completed') return 'Success';
+    if (normalized === 'Overdue') return 'Alert';
+    if (normalized === 'Pending') return 'Discovery';
+    if (normalized === 'Ordered' || normalized === 'Scheduled') return 'Informative';
+    return 'Neutral';
+  }
+
   if (context === 'entityTable' || context === 'folder') {
     if (upper === 'ACTIVE') return 'Informative';
     if (upper === 'INACTIVE' || upper === 'TERMINATED') return 'Neutral';
@@ -103,6 +111,35 @@ export function getStatusLozengeType(
     normalized.includes('Awaiting') ||
     normalized === 'In Progress'
   ) return 'Warning';
+  return 'Informative';
+}
+
+export type RequirementStatusStyle = 'caseTable' | 'panel';
+
+/** Requirement status lozenges — panel style matches side panels; caseTable matches CaseView grids. */
+export function getRequirementStatusLozengeType(
+  status: string,
+  style: RequirementStatusStyle = 'caseTable',
+): LozengeType {
+  const normalized = status.trim();
+  const lower = normalized.toLowerCase();
+  if (['fulfilled', 'waived', 'completed'].includes(lower)) return 'Success';
+  if (lower === 'overdue') return 'Alert';
+  if (lower === 'ordered' || lower === 'scheduled') return 'Informative';
+  if (['pending', 'in_review'].includes(lower)) {
+    return style === 'panel' ? 'Warning' : 'Discovery';
+  }
+  return getStatusLozengeType(normalized, 'requirement');
+}
+
+export function getRelatedCaseStatusLozengeType(status: string): LozengeType {
+  if (status === 'Declined' || status === 'Terminated: Declined') return 'Alert';
+  if (status.startsWith('Terminated:') || status.startsWith('Closed:')) return 'Neutral';
+  if (status === 'Approved') return 'Success';
+  if (status.startsWith('Active')) return 'Informative';
+  if (status === 'Pending Requirements' || status === 'Pending Decision' || status === 'In Progress') {
+    return 'Warning';
+  }
   return 'Informative';
 }
 

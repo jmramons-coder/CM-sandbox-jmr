@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { APPS, getActiveApp, type AppDef } from '../domain/apps';
 import { useThemeMode } from '../contexts/PlatformSettingsContext';
+import { AppSwitcherDemoSection } from './AppSwitcherDemoSection';
 
 export function AppSwitcher() {
   const { t } = useTranslation('nav');
@@ -49,12 +50,12 @@ export function AppSwitcher() {
         side="bottom"
         align="end"
         sideOffset={12}
-        className="w-[240px] p-0"
+        className="w-[300px] p-0"
       >
         <div className="px-4 pt-3 pb-1">
           <p className="text-[12px] font-semibold text-text-primary">{t('appSwitcher.products')}</p>
         </div>
-        <div className="flex flex-col px-2 pb-3">
+        <div className="flex flex-col px-2 pb-2">
           {APPS.map((app) => {
             const isActive = app.id === activeApp.id;
             return (
@@ -84,6 +85,7 @@ export function AppSwitcher() {
             );
           })}
         </div>
+        <AppSwitcherDemoSection onClose={() => setOpen(false)} />
       </PopoverContent>
     </Popover>
   );

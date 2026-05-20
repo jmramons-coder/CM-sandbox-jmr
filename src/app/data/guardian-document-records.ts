@@ -1,0 +1,273 @@
+import type { DatasetDocumentRecord } from './multi-case-dataset';
+import { GUARDIAN_DEMO_CASE_IDS } from './guardianDemoCaseIds';
+
+const IP = GUARDIAN_DEMO_CASE_IDS.incomeProtectionClaim;
+const CI = GUARDIAN_DEMO_CASE_IDS.criticalIllnessClaim;
+const LIFE = GUARDIAN_DEMO_CASE_IDS.lifeDeathClaim;
+const NB = GUARDIAN_DEMO_CASE_IDS.nbFullUw;
+const NB_S = GUARDIAN_DEMO_CASE_IDS.nbSimplified;
+
+function doc(
+  id: string,
+  caseId: string,
+  label: string,
+  category: string,
+  extra: Partial<DatasetDocumentRecord> = {},
+): DatasetDocumentRecord {
+  const linkedRequirementId = extra.linkedRequirementId;
+  const linkedRequirement = extra.linkedRequirement;
+  return {
+    id,
+    kind: 'document',
+    label,
+    filename: extra.filename ?? label.replace(/\s+/g, '_').toLowerCase(),
+    category,
+    status: extra.status ?? 'Validated',
+    uploaded: extra.uploaded ?? 'May 12, 2026',
+    uploadedAt: extra.uploadedAt ?? '2026-05-12',
+    source: extra.source ?? 'Guardian Claims',
+    claimant: extra.claimant,
+    reqContext: extra.reqContext,
+    insights: extra.insights,
+    followUps: extra.followUps ?? 0,
+    insight: extra.insight ?? extra.aiSummary,
+    aiInsight: extra.aiInsight ?? true,
+    aiConfidence: extra.aiConfidence ?? 0.88,
+    aiSummary: extra.aiSummary,
+    aiAction: extra.aiAction ?? 'Review evidence',
+    linkedRequirement,
+    linkedRequirementId,
+    linkedCase: caseId,
+    linkedCaseId: caseId,
+    fileType: extra.fileType ?? 'PDF',
+    fileSize: extra.fileSize ?? 'Metadata only',
+    fileAvailable: false,
+    placeholderReason: 'Guardian document preview — file to be generated',
+    ...extra,
+    linkedObjects: [
+      { kind: 'case', id: caseId, label: caseId },
+      ...(linkedRequirementId
+        ? [{ kind: 'requirement' as const, id: linkedRequirementId, label: linkedRequirement ?? linkedRequirementId }]
+        : []),
+      ...(extra.linkedObjects ?? []).filter((ref) => ref.kind !== 'case' && ref.kind !== 'requirement'),
+    ],
+  };
+}
+
+export const GUARDIAN_DOCUMENT_RECORDS: DatasetDocumentRecord[] = [
+  doc('doc_gdn_ip_fnol', IP, 'FNOL confirmation email — James Hartley.pdf', 'Claim', {
+    filename: 'FNOL_confirmation_hartley.pdf',
+    uploaded: 'Mar 18, 2026',
+    uploadedAt: '2026-03-18',
+    source: 'Guardian Claims — automated',
+    claimant: 'James Hartley',
+    linkedRequirementId: 'req_gdn_ip_001',
+    linkedRequirement: 'FNOL — phone registration',
+    reqContext:
+      'Email sent to life assured and Harriet Shaw (adviser) after phone FNOL to 0808 173 1821. Confirms claim reference CLM-IP-2026-0142 and next steps for employer and medical evidence.',
+    aiSummary: 'FNOL registered 18 Mar 2026. Own-occupation IP claim opened; deferred period timeline included.',
+    insights: [
+      { anchor: '§1', title: 'Claim reference issued', body: 'CLM-IP-2026-0142 linked to policy GDN-IP-2023-009871. Monthly benefit £4,200, 13-week deferred period.', confidence: 'High' },
+      { anchor: '§2', title: 'Adviser copied', body: 'Harriet Shaw notified per PDG Claims Charter — named handler Victor Ramon assigned.', confidence: 'High' },
+    ],
+  }),
+  doc('doc_gdn_ip_employer', IP, 'Employer Fit Note — TechFlow Ltd.pdf', 'Medical', {
+    status: 'Pending Review',
+    uploaded: 'May 16, 2026',
+    uploadedAt: '2026-05-16',
+    source: 'Employer HR',
+    claimant: 'James Hartley',
+    linkedRequirementId: 'req_gdn_ip_003',
+    linkedRequirement: 'Employer incapacity confirmation',
+    followUps: 2,
+    reqContext: 'Fit Note from employer HR for software engineering role. Required to confirm inability to perform own occupation.',
+    aiSummary: 'Fit Note received but does not explicitly state unable to perform software engineering duties — chase clarification.',
+    insights: [
+      { anchor: 'p.1', title: 'Occupation wording gap', body: 'Note states “unfit for work” without referencing own-occupation duties.', confidence: 'Medium' },
+      { anchor: 'p.1', title: 'Dates align with onset', body: 'Covers 10 Feb 2026 onward — consistent with deferred period end.', confidence: 'High' },
+    ],
+  }),
+  doc('doc_gdn_ip_consultant', IP, 'Consultant letter — spinal incapacity (Dr Patel).pdf', 'Medical', {
+    status: 'Pending Review',
+    uploaded: 'May 15, 2026',
+    uploadedAt: '2026-05-15',
+    source: 'Medical provider',
+    claimant: 'James Hartley',
+    linkedRequirementId: 'req_gdn_ip_004',
+    linkedRequirement: 'Consultant letter — unable to work',
+    reqContext: 'Private consultant orthopaedic letter regarding L4/L5 disc injury.',
+    aiSummary: 'Consultant confirms lumbar disc injury; no full-time software engineering until reassessment Jul 2026.',
+    insights: [
+      { anchor: '§Clinical', title: 'Own-occupation support', body: 'Cannot sustain prolonged sitting/coding — aligns with IP definition.', confidence: 'High' },
+    ],
+  }),
+  doc('doc_gdn_ip_halo', IP, 'HALO consent form — James Hartley.pdf', 'Claim', {
+    uploaded: 'Mar 20, 2026',
+    uploadedAt: '2026-03-20',
+    claimant: 'James Hartley',
+    linkedRequirementId: 'req_gdn_ip_005',
+    linkedRequirement: 'HALO consent & handoff',
+    aiSummary: 'Signed consent for HALO specialist support at point of claim.',
+  }),
+  doc('doc_gdn_ip_questionnaire', IP, 'IP incapacity questionnaire — James Hartley.pdf', 'Claim', {
+    uploaded: 'Mar 19, 2026',
+    uploadedAt: '2026-03-19',
+    claimant: 'James Hartley',
+    linkedRequirementId: 'req_gdn_ip_006',
+    linkedRequirement: 'IP incapacity questionnaire',
+    aiSummary: 'Occupation Software Engineer; incapacity from 10 Feb 2026; disclosures consistent.',
+  }),
+
+  doc('doc_gdn_ci_fnol', CI, 'CI claim registration — Leana Mitchell.pdf', 'Claim', {
+    uploaded: 'Apr 2, 2026',
+    uploadedAt: '2026-04-02',
+    claimant: 'Leana Mitchell',
+    linkedRequirementId: 'req_gdn_ci_001',
+    linkedRequirement: 'FNOL — phone registration',
+    aiSummary: 'Adviser-reported CI notification; claim registered same day by phone.',
+  }),
+  doc('doc_gdn_ci_diagnosis', CI, 'Consultant diagnosis letter — Leana Mitchell (oncology).pdf', 'Medical', {
+    uploaded: 'May 2, 2026',
+    uploadedAt: '2026-05-02',
+    source: 'NHS consultant',
+    claimant: 'Leana Mitchell',
+    linkedRequirementId: 'req_gdn_ci_002',
+    linkedRequirement: 'UK consultant diagnosis letter',
+    reqContext: 'Written diagnosis from UK consultant oncologist — primary evidence for faster-fairer CI payout.',
+    aiSummary: 'Meets Guardian CI definition — invasive ductal carcinoma. Full £150,000 payout recommended.',
+    aiConfidence: 0.94,
+    insights: [
+      { anchor: '§Diagnosis', title: 'Definition satisfied', body: 'Invasive ductal carcinoma — listed under Guardian CI definitions.', confidence: 'High' },
+      { anchor: '§Staging', title: 'Full benefit appropriate', body: 'Stage IIA — full sum assured recommended.', confidence: 'High' },
+    ],
+  }),
+  doc('doc_gdn_ci_pathology', CI, 'Histopathology report — Bristol NHS Trust.pdf', 'Medical', {
+    uploaded: 'May 4, 2026',
+    uploadedAt: '2026-05-04',
+    claimant: 'Leana Mitchell',
+    linkedRequirementId: 'req_gdn_ci_002',
+    linkedRequirement: 'UK consultant diagnosis letter',
+    aiSummary: 'Histopathology corroborates consultant letter.',
+  }),
+  doc('doc_gdn_ci_halo_plan', CI, 'HALO support plan — Leana Mitchell.pdf', 'Claim', {
+    uploaded: 'May 6, 2026',
+    uploadedAt: '2026-05-06',
+    claimant: 'Leana Mitchell',
+    linkedRequirementId: 'req_gdn_ci_004',
+    linkedRequirement: 'HALO support plan',
+    aiSummary: 'HALO nurse assigned; chemotherapy support pathway documented.',
+  }),
+
+  doc('doc_gdn_life_death_cert', LIFE, 'Death certificate — David Clarke.pdf', 'Legal', {
+    uploaded: 'Apr 28, 2026',
+    uploadedAt: '2026-04-28',
+    claimant: 'Sarah Clarke',
+    linkedRequirementId: 'req_gdn_life_001',
+    linkedRequirement: 'Death certificate',
+    aiSummary: 'Death certificate verified. Cause: cardiac arrest.',
+  }),
+  doc('doc_gdn_life_claim_form', LIFE, 'Life claim form — Sarah Clarke.pdf', 'Claim', {
+    uploaded: 'Apr 29, 2026',
+    uploadedAt: '2026-04-29',
+    claimant: 'Sarah Clarke',
+    linkedRequirementId: 'req_gdn_life_005',
+    linkedRequirement: 'Life claim form',
+    aiSummary: 'Beneficiary claim form complete; bank details included.',
+  }),
+  doc('doc_gdn_life_funeral', LIFE, 'Funeral invoice — Clarke family.pdf', 'Financial', {
+    uploaded: 'May 1, 2026',
+    uploadedAt: '2026-05-01',
+    claimant: 'Sarah Clarke',
+    linkedRequirementId: 'req_gdn_life_002',
+    linkedRequirement: 'Funeral Payment Pledge advance (£10,000)',
+    aiSummary: 'Invoice £9,850 — funeral advance paid under PDG pledge.',
+  }),
+  doc('doc_gdn_life_probate', LIFE, 'Probate application draft — Clarke estate.pdf', 'Legal', {
+    status: 'Pending Review',
+    uploaded: 'May 14, 2026',
+    uploadedAt: '2026-05-14',
+    claimant: 'Sarah Clarke',
+    linkedRequirementId: 'req_gdn_life_003',
+    linkedRequirement: 'Grant of probate',
+    followUps: 1,
+    aiSummary: 'Probate not yet granted — final £490,000 on hold.',
+  }),
+  doc('doc_gdn_life_bank', LIFE, 'Beneficiary bank verification — Sarah Clarke.pdf', 'Financial', {
+    uploaded: 'Apr 30, 2026',
+    uploadedAt: '2026-04-30',
+    claimant: 'Sarah Clarke',
+    linkedRequirementId: 'req_gdn_life_004',
+    linkedRequirement: 'Beneficiary bank details',
+    aiSummary: 'BACS verified — used for funeral advance.',
+  }),
+
+  doc('doc_gdn_nb_app', NB, 'Application — Priya Sharma (Life & CI).pdf', 'Financial', {
+    uploaded: 'May 10, 2026',
+    uploadedAt: '2026-05-10',
+    source: 'Guardian Adviser Portal',
+    claimant: 'Priya Sharma',
+    linkedRequirementId: 'req_gdn_nb_001',
+    linkedRequirement: 'Application & adviser fact find',
+    aiSummary: '£350,000 Life & CI; children’s CI rider; non-smoker.',
+  }),
+  doc('doc_gdn_nb_fact_find', NB, 'Adviser fact find — Priya Sharma.pdf', 'Financial', {
+    uploaded: 'May 10, 2026',
+    uploadedAt: '2026-05-10',
+    source: 'Harriet Shaw — Shaw & Partners',
+    claimant: 'Priya Sharma',
+    linkedRequirementId: 'req_gdn_nb_001',
+    linkedRequirement: 'Application & adviser fact find',
+    aiSummary: 'Fact find supports affordability for combined protection.',
+  }),
+  doc('doc_gdn_nb_mib', NB, 'MIB search results — Priya Sharma.pdf', 'Financial', {
+    uploaded: 'May 11, 2026',
+    uploadedAt: '2026-05-11',
+    linkedRequirementId: 'req_gdn_nb_003',
+    linkedRequirement: 'MIB search',
+    aiSummary: 'MIB clear — no adverse alerts.',
+  }),
+  doc('doc_gdn_nb_gp_request', NB, 'GP report request — Reading Medical Centre.pdf', 'Medical', {
+    status: 'Pending Review',
+    uploaded: 'May 12, 2026',
+    uploadedAt: '2026-05-12',
+    source: 'Underwriting',
+    claimant: 'Priya Sharma',
+    linkedRequirementId: 'req_gdn_nb_002',
+    linkedRequirement: 'GP report (Medicals)',
+    followUps: 3,
+    aiSummary: 'GP report ordered — not returned; blocks final decision.',
+  }),
+  doc('doc_gdn_nb_children_ci', NB, 'Children’s CI selection form — Sharma family.pdf', 'Financial', {
+    uploaded: 'May 11, 2026',
+    uploadedAt: '2026-05-11',
+    claimant: 'Priya Sharma',
+    linkedRequirementId: 'req_gdn_nb_004',
+    linkedRequirement: 'Children’s CI selection form',
+    aiSummary: 'Two children on optional rider — form complete.',
+  }),
+  doc('doc_gdn_nb_tele_interview', NB, 'Tele-interview notes — Priya Sharma.pdf', 'Medical', {
+    uploaded: 'May 14, 2026',
+    uploadedAt: '2026-05-14',
+    claimant: 'Priya Sharma',
+    linkedRequirementId: 'req_gdn_nb_005',
+    linkedRequirement: 'Tele-interview (full UW)',
+    aiSummary: 'Tele-interview 14 May — no adverse disclosures.',
+  }),
+
+  doc('doc_gdn_nb_s_app', NB_S, 'Application — Oliver Hughes (Life Essentials).pdf', 'Financial', {
+    uploaded: 'May 15, 2026',
+    uploadedAt: '2026-05-15',
+    claimant: 'Oliver Hughes',
+    linkedRequirementId: 'req_gdn_nb_s_001',
+    linkedRequirement: 'Application — Life Essentials',
+    aiSummary: 'Life Essentials £100,000; simplified path; clean disclosures.',
+  }),
+  doc('doc_gdn_nb_s_tele_schedule', NB_S, 'Tele-interview schedule — Oliver Hughes.pdf', 'Financial', {
+    uploaded: 'May 16, 2026',
+    uploadedAt: '2026-05-16',
+    claimant: 'Oliver Hughes',
+    linkedRequirementId: 'req_gdn_nb_s_002',
+    linkedRequirement: 'Tele-interview',
+    aiSummary: 'Interview scheduled 19 May 2026 10:00.',
+  }),
+];

@@ -15,15 +15,28 @@
   "globalCreate": {
     "title": "Crear",
     "ariaLabel": "Crear un registro",
+    "pickDescription": "Elija qué desea crear para comenzar.",
     "case": "Caso",
     "task": "Tarea",
-    "request": "Solicitud"
+    "request": "Solicitud",
+    "caseDescription": "Abrir un nuevo expediente con partes, pólizas y contexto de ingreso.",
+    "taskDescription": "Asignar trabajo con plazos, colas y enlace opcional al caso.",
+    "requestDescription": "Enviar una solicitud de servicio a clientes o terceros."
   },
   "activityFeed": {
     "label": "Feed",
     "ariaLabel": "Feed de actividad de IA",
     "popoverTitle": "Feed de actividad de IA",
     "popoverBody": "Actívelo para ver en tiempo real lo que el equipo de IA realiza: tareas procesadas, planes en curso y seguimiento de sus casos."
+  },
+  "mobileNav": {
+    "ariaLabel": "Navegación principal",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "menuTitle": "Menú",
+    "more": "Más",
+    "search": "Buscar",
+    "searchCasesOnlyHint": "La búsqueda completa de clientes y pólizas está disponible en escritorio. Cambie a Casos o use una pantalla más grande."
   },
   "header": {
     "openAssistant": "Abrir el Asistente Amplify",
@@ -46,13 +59,26 @@
   "userMenu": {
     "openMenu": "Abrir el menú de usuario",
     "profile": "Perfil",
+    "profileDescription": "Su rol, banda y autoridad de aprobación para esta sesión de demo.",
+    "profileRole": "Rol",
+    "profileBand": "Banda",
+    "profileTeam": "Equipo",
+    "profileAuthority": "Autoridad máx.",
     "soonBadge": "Próximo",
     "platformSettings": "Configuración de la plataforma",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "roleView": "Vista por rol",
+    "roleAssessor": "Evaluador",
+    "roleManager": "Gerente",
+    "roleAssessorHint": "Vista evaluador — Victor Ramon",
+    "roleManagerHint": "Vista gerente — Sarah Mitchell"
   },
   "appSwitcher": {
     "switchApplication": "Cambiar de aplicación",
     "products": "Productos",
+    "clientDemo": "Demo cliente",
+    "clientDemoHint": "Active un entorno de demo con marca.",
+    "openDemoSettings": "Configuración del entorno de demo",
     "resources": "Recursos",
     "platformGuide": "Guía de la plataforma",
     "documentationSpec": "Documentación y especificación",

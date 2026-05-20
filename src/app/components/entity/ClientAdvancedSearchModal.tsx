@@ -141,7 +141,10 @@ export function ClientAdvancedSearchModal({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : close())}>
-      <DialogContent className="flex h-[640px] w-[920px] flex-col gap-0 overflow-visible p-0 sm:max-w-[920px]">
+      <DialogContent
+        layout="auto"
+        className="z-[1110] flex flex-col gap-0 overflow-hidden p-0 max-lg:h-full max-lg:max-h-none max-lg:w-full max-lg:max-w-none max-lg:rounded-none lg:h-[640px] lg:w-[920px] lg:sm:max-w-[920px]"
+      >
         <div className="shrink-0 px-6 pb-4 pt-5">
           <DialogTitle className="text-[18px] font-semibold text-text-primary">
             {t('entity.advancedClientSearch.title')}

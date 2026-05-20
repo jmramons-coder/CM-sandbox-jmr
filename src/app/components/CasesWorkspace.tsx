@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Briefcase, MoreVertical, X } from 'lucide-react';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router';
 import { useCasesNav } from '../contexts/CasesNavContext';
 import { filterDatasetBySettings, getSystemDataset, listCaseSummaries } from '../data/objectRepository';
+import { DEMO_CASE_IDS, resolveCaseRouteId } from '../data/demoCaseIds';
 import { useDataSourceSettings } from '../contexts/PlatformSettingsContext';
+import { useMobileSidePanelLayout } from '../hooks/useMobileSidePanelLayout';
 import { useResizableSidePanel } from '../hooks/useResizableSidePanel';
+import { useViewportLayout } from '../hooks/useViewportLayout';
 import { UI_CLASS } from '../constants/design-tokens';
 import { getStatusLozengeType, getStatusShort } from '../utils/status-display';
 import { LozengeTag } from './LozengeTag';
 import {
+  LAYOUT_HEADER_HEIGHT_PX,
+  MOBILE_SIDE_PANEL_SCRIM_Z_CLASS,
+  MOBILE_SIDE_PANEL_TOGGLE_Z_CLASS,
+  MOBILE_SIDE_PANEL_Z_CLASS,
   SidePanelResizeStrip,
   SidePanelToggle,
 } from './WorkspaceSidePanelChrome';
@@ -16,9 +24,23 @@ import {
 export function CasesWorkspace() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { caseId } = useParams();
+  const { caseId: routeCaseId } = useParams();
   const dataSource = useDataSourceSettings();
-  const { openCases, addOpenCase, removeOpenCase, clearOpenCases } = useCasesNav();
+  const activeDataset = useMemo(
+    () => filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource),
+    [dataSource],
+  );
+  const caseId = useMemo(
+    () => (routeCaseId ? resolveCaseRouteId(routeCaseId, activeDataset) : undefined),
+    [routeCaseId, activeDataset],
+  );
+
+  useEffect(() => {
+    if (!routeCaseId || !caseId || caseId === routeCaseId) return;
+    navigate(`/cases/${caseId}${location.search}`, { replace: true });
+  }, [caseId, routeCaseId, location.search, navigate]);
+  const { openCases, addOpenCase, removeOpenCase, clearOpenCases, setLastActiveCaseId } = useCasesNav();
+  const { isCompactShell } = useViewportLayout();
   const [seenCases, setSeenCases] = useState<Set<string>>(() => new Set(openCases.map((c) => c.caseId)));
   const [openExpanded, setOpenExpanded] = useState(true);
   const {
@@ -27,13 +49,43 @@ export function CasesWorkspace() {
     setSidePanelOpen,
     isResizing,
     setIsResizing,
-  } = useResizableSidePanel();
+  } = useResizableSidePanel({ initiallyOpen: !isCompactShell });
+  const {
+    workspaceRef,
+    effectivePanelWidth,
+    showPanelContent,
+    peekWidth,
+    mobileContentWidth,
+    mobileContentPush,
+  } = useMobileSidePanelLayout(panelWidth, sidePanelOpen);
   const [openCasesMenuOpen, setOpenCasesMenuOpen] = useState(false);
   const openCasesMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (caseId) setSeenCases((prev) => { if (prev.has(caseId)) return prev; const next = new Set(prev); next.add(caseId); return next; });
   }, [caseId]);
+
+  useEffect(() => {
+    if (caseId) setLastActiveCaseId(caseId);
+  }, [caseId, setLastActiveCaseId]);
+
+  useEffect(() => {
+    if (isCompactShell) setSidePanelOpen(false);
+  }, [isCompactShell, setSidePanelOpen]);
+
+  const prevCaseIdRef = useRef(caseId);
+  useEffect(() => {
+    if (isCompactShell && caseId && caseId !== prevCaseIdRef.current) {
+      setSidePanelOpen(false);
+    }
+    prevCaseIdRef.current = caseId;
+  }, [caseId, isCompactShell, setSidePanelOpen]);
+
+  const openCaseDetail = (targetCaseId: string) => {
+    addOpenCase(targetCaseId);
+    if (isCompactShell) setSidePanelOpen(false);
+    navigate(`/cases/${targetCaseId}`);
+  };
 
   useEffect(() => {
     if (!openCasesMenuOpen) return;
@@ -71,10 +123,10 @@ export function CasesWorkspace() {
       timers.add(t);
     };
     const cycle = () => {
-      removeOpenCase('CD44-6679812');
-      navigate('/cases/CD26-5546112?guide=new-case-appears', { replace: true });
-      schedule(() => addOpenCase('CD44-6679812'), addAt);
-      schedule(() => navigate('/cases/CD44-6679812', { replace: true }), navAt);
+      removeOpenCase(DEMO_CASE_IDS.deathClaim);
+      navigate(`/cases/${DEMO_CASE_IDS.wopClaim}?guide=new-case-appears`, { replace: true });
+      schedule(() => addOpenCase(DEMO_CASE_IDS.deathClaim), addAt);
+      schedule(() => navigate(`/cases/${DEMO_CASE_IDS.deathClaim}`, { replace: true }), navAt);
       schedule(cycle, cycleMs);
     };
     cycle();
@@ -82,10 +134,10 @@ export function CasesWorkspace() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const summaryById = useMemo(() => {
-    const dataset = filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource);
-    return new Map(listCaseSummaries(dataset).map((item) => [item.id, item]));
-  }, [dataSource]);
+  const summaryById = useMemo(
+    () => new Map(listCaseSummaries(activeDataset).map((item) => [item.id, item])),
+    [activeDataset],
+  );
 
   const getCaseStatusShort = (id: string) => {
     const fullStatus = summaryById.get(id)?.status ?? 'Active';
@@ -97,13 +149,11 @@ export function CasesWorkspace() {
     return getStatusLozengeType(fullStatus, 'case');
   };
 
-  return (
-    <div className="relative flex h-full min-h-0 min-w-0 overflow-x-visible">
-      <aside
-        className={`relative flex min-h-0 shrink-0 flex-col overflow-x-visible ${UI_CLASS.workspaceTopLeftRadius} ${UI_CLASS.sidePanelBackground} ${sidePanelOpen ? 'z-10 border-r border-border-default' : 'z-0 min-w-0 border-0'}`}
-        style={{ width: sidePanelOpen ? panelWidth : 0 }}
-      >
-        {sidePanelOpen ? (
+  const panelChromeClass = `${UI_CLASS.workspaceTopLeftRadius} ${UI_CLASS.sidePanelBackground} border-r border-border-default ${
+    !isResizing ? 'transition-[width] duration-200 ease-out' : ''
+  }`;
+
+  const casesPanelContent = showPanelContent ? (
           <>
         <div className="px-5 pb-2 pt-4">
           <div className="mb-3">
@@ -192,15 +242,11 @@ export function CasesWorkspace() {
                     key={item.caseId}
                     role="button"
                     tabIndex={0}
-                    onClick={() => {
-                      addOpenCase(item.caseId);
-                      navigate(`/cases/${item.caseId}`);
-                    }}
+                    onClick={() => openCaseDetail(item.caseId)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        addOpenCase(item.caseId);
-                        navigate(`/cases/${item.caseId}`);
+                        openCaseDetail(item.caseId);
                       }
                     }}
                     className={`group flex w-full cursor-pointer items-center gap-2 rounded-[8px] border px-2 py-1.5 text-left text-sm transition-colors ${
@@ -248,25 +294,116 @@ export function CasesWorkspace() {
           )}
         </div>
 
-        <SidePanelResizeStrip isResizing={isResizing} onResizePointerDown={() => setIsResizing(true)} />
-          </>
+        {!isCompactShell ? (
+          <SidePanelResizeStrip isResizing={isResizing} onResizePointerDown={() => setIsResizing(true)} />
         ) : null}
-      </aside>
-      <SidePanelToggle
-        open={sidePanelOpen}
-        panelWidth={panelWidth}
-        isResizing={isResizing}
-        onToggle={() => {
-          setIsResizing(false);
-          setSidePanelOpen((prev) => !prev);
-        }}
-        ariaLabelOpen="Open cases panel"
-        ariaLabelClose="Close cases panel"
-      />
+          </>
+  ) : null;
 
-      <div className="relative z-0 min-w-0 flex-1 overflow-hidden">
-        <Outlet />
-      </div>
+  const closeMobilePanel = () => {
+    setIsResizing(false);
+    setSidePanelOpen(false);
+  };
+
+  const toggleProps = {
+    open: sidePanelOpen,
+    panelWidth: effectivePanelWidth,
+    panelEdgeOffset: effectivePanelWidth,
+    closedOffset: peekWidth,
+    toggleTopPx: isCompactShell ? 80 : undefined,
+    isResizing,
+    onToggle: () => {
+      setIsResizing(false);
+      setSidePanelOpen((prev) => !prev);
+    },
+    ariaLabelOpen: 'Open cases panel',
+    ariaLabelClose: 'Close cases panel',
+  } as const;
+
+  const mobilePanelAside = (
+    <aside
+      className={`fixed left-0 ${MOBILE_SIDE_PANEL_Z_CLASS} flex min-h-0 flex-col overflow-hidden ${panelChromeClass}`}
+      style={{
+        top: LAYOUT_HEADER_HEIGHT_PX,
+        height: `calc(100dvh - ${LAYOUT_HEADER_HEIGHT_PX}px)`,
+        width: effectivePanelWidth,
+      }}
+    >
+      {casesPanelContent}
+    </aside>
+  );
+
+  const mobileOverlayPortal =
+    isCompactShell && sidePanelOpen && typeof document !== 'undefined'
+      ? createPortal(
+          <>
+            <button
+              type="button"
+              aria-label="Close cases panel"
+              className={`fixed inset-0 ${MOBILE_SIDE_PANEL_SCRIM_Z_CLASS} bg-black/20 transition-opacity duration-200 lg:hidden`}
+              onClick={closeMobilePanel}
+            />
+            {mobilePanelAside}
+            <SidePanelToggle
+              {...toggleProps}
+              useFixedPosition
+              className={MOBILE_SIDE_PANEL_TOGGLE_Z_CLASS}
+            />
+          </>,
+          document.body,
+        )
+      : null;
+
+  const mainOutlet = (
+    <div className="relative z-0 h-full min-h-0 min-w-0 overflow-hidden">
+      <Outlet />
+    </div>
+  );
+
+  const toggleControl = <SidePanelToggle {...toggleProps} layoutAnchored={!isCompactShell} />;
+
+  return (
+    <div ref={workspaceRef} className="relative h-full min-h-0 min-w-0 overflow-hidden">
+      {mobileOverlayPortal}
+      {isCompactShell ? (
+        <>
+          {!sidePanelOpen ? (
+            <>
+              <aside
+                className={`absolute left-0 top-0 z-20 flex h-full min-h-0 flex-col overflow-hidden ${panelChromeClass}`}
+                style={{ width: effectivePanelWidth }}
+                aria-hidden
+              />
+              {toggleControl}
+            </>
+          ) : null}
+          <div
+            className="relative z-0 h-full shrink-0 overflow-hidden"
+            style={{
+              width: mobileContentWidth,
+              marginLeft: peekWidth,
+              transform: mobileContentPush ? `translateX(${mobileContentPush}px)` : undefined,
+              transition: isResizing ? 'none' : 'transform 200ms ease-out',
+            }}
+          >
+            {mainOutlet}
+          </div>
+        </>
+      ) : (
+        <div className="relative flex h-full min-h-0 min-w-0 overflow-x-clip">
+          <aside
+            className={`relative flex min-h-0 shrink-0 flex-col overflow-hidden ${panelChromeClass} ${
+              sidePanelOpen ? 'z-10' : 'z-0'
+            }`}
+            style={{ width: effectivePanelWidth }}
+            aria-hidden={!sidePanelOpen}
+          >
+            {casesPanelContent}
+          </aside>
+          {toggleControl}
+          <div className="relative z-0 min-w-0 flex-1 overflow-hidden">{mainOutlet}</div>
+        </div>
+      )}
     </div>
   );
 }

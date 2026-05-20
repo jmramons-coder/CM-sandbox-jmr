@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useCopilot, newChatDefaultTitle, type CopilotSession } from '../contexts/CopilotContext';
 import { UI_CLASS } from '../constants/design-tokens';
+import { useMobileSidePanelLayout } from '../hooks/useMobileSidePanelLayout';
 import { useResizableSidePanel } from '../hooks/useResizableSidePanel';
 import { AiCopilotDock } from './AiCopilotFooter';
 import { AiCueSparkle } from './AiCueSparkle';
@@ -31,6 +32,15 @@ export function CopilotFullPage() {
     isResizing,
     setIsResizing,
   } = useResizableSidePanel();
+  const {
+    workspaceRef,
+    isCompactShell,
+    effectivePanelWidth,
+    showPanelContent,
+    peekWidth,
+    mobileContentWidth,
+    mobileContentPush,
+  } = useMobileSidePanelLayout(panelWidth, sidePanelOpen);
   const [search, setSearch] = useState('');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -151,14 +161,11 @@ export function CopilotFullPage() {
     );
   };
 
-  return (
-    <div className="relative flex h-full min-h-0 min-w-0 overflow-x-visible">
-      {/* ─── Session sidebar (mirrors CasesWorkspace aside) ─── */}
-      <aside
-        className={`relative flex min-h-0 shrink-0 flex-col overflow-x-visible ${UI_CLASS.workspaceTopLeftRadius} ${UI_CLASS.sidePanelBackground} ${sidePanelOpen ? 'z-10 border-r border-border-default' : 'z-0 min-w-0 border-0'}`}
-        style={{ width: sidePanelOpen ? panelWidth : 0 }}
-      >
-        {sidePanelOpen ? (
+  const panelChromeClass = `${UI_CLASS.workspaceTopLeftRadius} ${UI_CLASS.sidePanelBackground} border-r border-border-default ${
+    !isResizing ? 'transition-[width] duration-200 ease-out' : ''
+  }`;
+
+  const sessionSidebarContent = showPanelContent ? (
           <>
             {/* Header */}
             <div className="border-b border-border-default px-5 pb-4 pt-5">
@@ -224,25 +231,28 @@ export function CopilotFullPage() {
               )}
             </div>
 
-            <SidePanelResizeStrip isResizing={isResizing} onResizePointerDown={() => setIsResizing(true)} />
+            {!isCompactShell ? (
+              <SidePanelResizeStrip isResizing={isResizing} onResizePointerDown={() => setIsResizing(true)} />
+            ) : null}
           </>
-        ) : null}
-      </aside>
-      <SidePanelToggle
-        open={sidePanelOpen}
-        panelWidth={panelWidth}
-        isResizing={isResizing}
-        onToggle={() => {
-          setIsResizing(false);
-          setSidePanelOpen((prev) => !prev);
-        }}
-        ariaLabelOpen="Open AI panel"
-        ariaLabelClose="Close AI panel"
-      />
+  ) : null;
 
-      {/* ─── Chat area ─── */}
-      <div className="relative z-0 min-w-0 flex-1 overflow-hidden">
-        <div className="flex h-full min-h-0 min-w-0 flex-col bg-surface-primary">
+  const contentScrim = isCompactShell && sidePanelOpen ? (
+    <button
+      type="button"
+      aria-label="Close AI panel"
+      className="absolute inset-0 z-[5] bg-black/20 transition-opacity duration-200"
+      onClick={() => {
+        setIsResizing(false);
+        setSidePanelOpen(false);
+      }}
+    />
+  ) : null;
+
+  const chatArea = (
+    <div className="relative z-0 h-full min-h-0 min-w-0 overflow-hidden">
+      {contentScrim}
+      <div className="flex h-full min-h-0 min-w-0 flex-col bg-surface-primary">
           {/* Top bar */}
           <div className="flex shrink-0 items-center gap-3 border-b border-[#e8eaed] bg-surface-primary px-6 py-3">
             <span className="min-w-0 truncate text-[14px] font-semibold text-text-heading">{sessionTitle}</span>
@@ -294,8 +304,66 @@ export function CopilotFullPage() {
             onSendMessage={sendMessage}
             aiPanelTab="workspace"
           />
-        </div>
       </div>
+    </div>
+  );
+
+  const toggleControl = (
+    <SidePanelToggle
+      open={sidePanelOpen}
+      panelWidth={effectivePanelWidth}
+      panelEdgeOffset={effectivePanelWidth}
+      closedOffset={peekWidth}
+      toggleTopPx={isCompactShell ? 80 : undefined}
+      layoutAnchored={!isCompactShell}
+      isResizing={isResizing}
+      onToggle={() => {
+        setIsResizing(false);
+        setSidePanelOpen((prev) => !prev);
+      }}
+      ariaLabelOpen="Open AI panel"
+      ariaLabelClose="Close AI panel"
+    />
+  );
+
+  return (
+    <div ref={workspaceRef} className="relative h-full min-h-0 min-w-0 overflow-hidden">
+      {isCompactShell ? (
+        <>
+          <aside
+            className={`absolute left-0 top-0 z-20 flex h-full min-h-0 flex-col overflow-hidden ${panelChromeClass}`}
+            style={{ width: effectivePanelWidth }}
+          >
+            {sessionSidebarContent}
+          </aside>
+          {toggleControl}
+          <div
+            className="relative z-0 h-full shrink-0 overflow-hidden"
+            style={{
+              width: mobileContentWidth,
+              marginLeft: peekWidth,
+              transform: mobileContentPush ? `translateX(${mobileContentPush}px)` : undefined,
+              transition: isResizing ? 'none' : 'transform 200ms ease-out',
+            }}
+          >
+            {chatArea}
+          </div>
+        </>
+      ) : (
+        <div className="relative flex h-full min-h-0 min-w-0 overflow-x-clip">
+          <aside
+            className={`relative flex min-h-0 shrink-0 flex-col overflow-hidden ${panelChromeClass} ${
+              sidePanelOpen ? 'z-10' : 'z-0'
+            }`}
+            style={{ width: effectivePanelWidth }}
+            aria-hidden={!sidePanelOpen}
+          >
+            {showPanelContent ? sessionSidebarContent : null}
+          </aside>
+          {toggleControl}
+          <div className="relative z-0 min-w-0 flex-1 overflow-hidden">{chatArea}</div>
+        </div>
+      )}
     </div>
   );
 }

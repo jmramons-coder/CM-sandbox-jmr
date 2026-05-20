@@ -21,6 +21,7 @@ import {
   CreationSelect,
   CreationTextarea,
 } from './CreationModalControls';
+import { RESPONSIVE_FORM_DIALOG_CLASS } from './responsiveDialog';
 import { CreationSection } from './creation/CreationSection';
 import { CreationReviewSection } from './creation/CreationReviewSection';
 import { CaseKindChooser, CaseReviewSummary, ClaimSubTypeFilter } from './cases/CaseCreationSections';
@@ -32,11 +33,15 @@ export function CreateCaseModal({
   onCreated,
   onOpenChange,
   open,
+  embedded = false,
+  onFlowBack,
 }: {
   dataSource: DataSourceSettings;
   onCreated: (input: { datasetId: string; caseId: string }) => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  embedded?: boolean;
+  onFlowBack?: () => void;
 }) {
   const navigate = useNavigate();
   const dataset = useMemo(() => getSystemDataset(dataSource.activeDatasetId), [dataSource.activeDatasetId]);
@@ -135,10 +140,10 @@ export function CreateCaseModal({
     navigate(`/cases/${result.record.id}`);
   };
 
-  return (
-    <Dialog modal={false} open={open} onOpenChange={handleOpenChange}>
-      {open ? <CreationModalBackdrop /> : null}
-      <DialogContent className="z-[1110] flex max-h-[min(860px,calc(100vh-2rem))] w-[min(1080px,calc(100vw-2rem))] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1080px]">
+  if (!open) return null;
+
+  const form = (
+    <>
         <DialogHeader className={CREATION_MODAL_HEADER_CLASS}>
           <DialogTitle>Create case</DialogTitle>
           <DialogDescription>
@@ -285,10 +290,23 @@ export function CreateCaseModal({
           canSubmit={canSubmit}
           isFirstStep
           isLastStep
+          onFlowBack={onFlowBack}
           onCancel={() => handleOpenChange(false)}
           onSubmit={submit}
           submitLabel="Create case"
         />
+    </>
+  );
+
+  if (embedded) {
+    return <div className="flex min-h-0 flex-1 flex-col">{form}</div>;
+  }
+
+  return (
+    <Dialog modal={false} open={open} onOpenChange={handleOpenChange}>
+      {open ? <CreationModalBackdrop /> : null}
+      <DialogContent layout="auto" className={RESPONSIVE_FORM_DIALOG_CLASS}>
+        {form}
       </DialogContent>
     </Dialog>
   );

@@ -8,10 +8,11 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Briefcase, CalendarDays, Check, ChevronLeft, ChevronRight, ClipboardCheck, Database, FileText, Maximize2, UserRound, ZoomIn, ZoomOut } from 'lucide-react';
+import { Briefcase, CalendarDays, Check, ChevronLeft, ChevronRight, ClipboardCheck, Database, FileText, Maximize2, UserRound, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Link } from 'react-router';
 import { formatDocumentFileInfo } from '../data/documentMetadata';
 import { normalizeDocumentHighlight } from '../utils/document-evidence-highlights';
+import { useViewportLayout } from '../hooks/useViewportLayout';
 import { CollapsibleDetailSection } from './CollapsibleDetailSection';
 
 export type DynamicDocumentPage = {
@@ -112,6 +113,7 @@ export function DynamicDocumentSidePanel({
   const [pendingAnchorId, setPendingAnchorId] = useState<string | null>(null);
   const [isRendered, setIsRendered] = useState(open);
   const [isClosing, setIsClosing] = useState(false);
+  const { isCompactShell } = useViewportLayout();
   const documentDragRef = useRef<{ pointerId: number; startX: number; startY: number; panX: number; panY: number } | null>(null);
   const documentPanRef = useRef(documentPan);
   const documentPanFrameRef = useRef<number | null>(null);
@@ -219,7 +221,10 @@ export function DynamicDocumentSidePanel({
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setMobilePreviewOpen(false);
+      return;
+    }
     const firstInsight = document.evidence[0];
     if (!firstInsight) return;
     setDocumentZoom(0.9);
@@ -338,15 +343,55 @@ export function DynamicDocumentSidePanel({
 
   if (!isRendered || !activePage) return null;
   const isCompactPanel = panelWidth < 760;
+  const isMobileDocLayout = isCompactShell || isCompactPanel;
   const insightColumnWidth = isCompactPanel ? 240 : 320;
 
   const panelContent = (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      {!hideHeader ? <DynamicDocumentHeader document={document} onClose={() => onOpenChange(false)} /> : null}
+      {!hideHeader ? (
+        <DynamicDocumentHeader
+          document={document}
+          mobileLayout={isMobileDocLayout}
+          onClose={embedded ? undefined : () => onOpenChange(false)}
+        />
+      ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col bg-surface-primary">
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {isMobileDocLayout ? (
+              <DocumentMobileLayout
+                actions={document.actions}
+                activeHighlightRef={activeHighlightRef}
+                activeInsightId={activeInsightId}
+                activeInsightRef={activeInsightRef}
+                activePage={activePage}
+                activePageIndex={activePageIndex}
+                activePageNumber={activePage.number}
+                document={document}
+                documentPan={documentPan}
+                documentZoom={documentZoom}
+                hasNextPage={hasNextPage}
+                hasPreviousPage={hasPreviousPage}
+                isAnchorNavigating={isAnchorNavigating}
+                isDocumentPanning={isDocumentPanning}
+                onInsightChange={onInsightChange}
+                onInsightSelect={selectInsight}
+                onNextPage={() => setActivePageNumber(document.pages[activePageIndex + 1].number)}
+                onPreviousPage={() => setActivePageNumber(document.pages[activePageIndex - 1].number)}
+                onPointerCancel={stopDocumentPan}
+                onPointerDown={startDocumentPan}
+                onPointerMove={moveDocumentPan}
+                onPointerUp={stopDocumentPan}
+                onReset={resetDocumentView}
+                onWheel={handleDocumentWheel}
+                onZoomIn={zoomIn}
+                onZoomOut={zoomOut}
+                onPageChange={setActivePageNumber}
+                scoringContext={document.scoringContext}
+                visibleEvidence={visibleEvidence}
+              />
+            ) : (
             <div
               ref={connectorRootRef}
               className="relative grid min-h-0 flex-1 bg-white"
@@ -402,7 +447,8 @@ export function DynamicDocumentSidePanel({
                 </svg>
               ) : null}
             </div>
-            {document.scoringContext ? (
+            )}
+            {!isMobileDocLayout && document.scoringContext ? (
               <div className="mt-3 rounded-[6px] border border-brand-blue/25 bg-surface-selected p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -483,9 +529,17 @@ export function DynamicDocumentSidePanel({
   );
 }
 
-function DynamicDocumentHeader({ document }: { document: DynamicDocumentData; onClose?: () => void }) {
+function DynamicDocumentHeader({
+  document,
+  mobileLayout = false,
+  onClose,
+}: {
+  document: DynamicDocumentData;
+  mobileLayout?: boolean;
+  onClose?: () => void;
+}) {
   return (
-    <div className="shrink-0 border-b border-border-default bg-white px-6 py-4">
+    <div className={`shrink-0 border-b border-border-default bg-white ${mobileLayout ? 'px-4 py-3' : 'px-6 py-4'}`}>
       <div className="relative rounded-t-lg">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -508,27 +562,80 @@ function DynamicDocumentHeader({ document }: { document: DynamicDocumentData; on
             </div>
           </div>
         </div>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-muted"
+            aria-label="Close document"
+          >
+            <X className="size-5" />
+          </button>
+        ) : null}
       </div>
-      <dl className="mt-3 ml-6 grid w-[calc(100%-1.5rem)] overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px] sm:grid-cols-5">
-        <MetaItem icon={<ClipboardCheck className="size-3.5" />} label="Requirement" value={<Link to={document.linkedRequirementHref || '/cases'} data-keep-sidepanel="link" className="text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover">{document.linkedRequirement}</Link>} />
-        <MetaItem icon={<Briefcase className="size-3.5" />} label="Case" value={<Link to={`/cases/${document.caseId}#tab=requirements`} data-keep-sidepanel="link" className="text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover">{document.caseId}</Link>} />
-        <MetaItem icon={<CalendarDays className="size-3.5" />} label="Uploaded" value={document.received} />
-        <MetaItem icon={<Database className="size-3.5" />} label="Source" value={document.source} />
-        <MetaItem icon={<UserRound className="size-3.5" />} label="Claimant" value={<Link to={`/cases/${document.caseId}`} data-keep-sidepanel="link" className="text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover">{document.claimant}</Link>} />
+      <dl
+        className={
+          mobileLayout
+            ? 'mt-3 grid grid-cols-2 divide-x divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px]'
+            : 'mt-3 ml-6 grid w-[calc(100%-1.5rem)] overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px] sm:grid-cols-5'
+        }
+      >
+        <MetaItem mobileGrid={mobileLayout} icon={<ClipboardCheck className="size-3.5" />} label="Requirement" value={<Link to={document.linkedRequirementHref || '/cases'} data-keep-sidepanel="link" className="text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover">{document.linkedRequirement}</Link>} />
+        <MetaItem mobileGrid={mobileLayout} icon={<Briefcase className="size-3.5" />} label="Case" value={<Link to={`/cases/${document.caseId}#tab=requirements`} data-keep-sidepanel="link" className="text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover">{document.caseId}</Link>} />
+        <MetaItem mobileGrid={mobileLayout} icon={<CalendarDays className="size-3.5" />} label="Uploaded" value={document.received} />
+        <MetaItem mobileGrid={mobileLayout} icon={<Database className="size-3.5" />} label="Source" value={document.source} />
+        <MetaItem mobileGrid={mobileLayout} icon={<UserRound className="size-3.5" />} label="Claimant" value={<Link to={`/cases/${document.caseId}`} data-keep-sidepanel="link" className="text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover">{document.claimant}</Link>} />
+        {mobileLayout ? (
+          <MetaItem mobileGrid icon={<FileText className="size-3.5" />} label="Pages" value={`${document.totalPages} page${document.totalPages === 1 ? '' : 's'}`} />
+        ) : null}
       </dl>
       </div>
     </div>
   );
 }
 
-function MetaItem({ icon, label, value }: { icon: ReactNode; label: string; value: ReactNode }) {
+function MetaItem({
+  icon,
+  label,
+  mobileGrid = false,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  mobileGrid?: boolean;
+  value: ReactNode;
+}) {
   return (
-    <div className="min-w-0 border-b border-border-soft px-3 py-2 sm:border-b-0 sm:border-r sm:last:border-r-0">
+    <div
+      className={
+        mobileGrid
+          ? 'min-w-0 px-3 py-2.5'
+          : 'min-w-0 border-b border-border-soft px-3 py-2 sm:border-b-0 sm:border-r sm:last:border-r-0'
+      }
+    >
       <dt className="flex items-center gap-1.5 text-[11px] text-text-muted">
         <span className="text-text-muted">{icon}</span>
         {label}
       </dt>
-      <dd className="mt-0.5 truncate font-semibold text-text-primary">{value}</dd>
+      <dd className={`mt-0.5 font-semibold text-text-primary ${mobileGrid ? 'break-words leading-snug' : 'truncate'}`}>{value}</dd>
+    </div>
+  );
+}
+
+function DocumentFileUnavailableState({
+  compact = false,
+  document,
+}: {
+  compact?: boolean;
+  document: DynamicDocumentData;
+}) {
+  return (
+    <div className={`flex h-full w-full flex-col items-center justify-center bg-[#fbfcfd] p-6 text-center ${compact ? 'min-h-[280px]' : ''}`}>
+      <FileText className="size-8 text-text-muted" />
+      <p className="mt-3 text-sm font-semibold text-text-primary">File not available</p>
+      <p className="mt-1 max-w-xs text-xs leading-relaxed text-text-secondary">
+        {document.summary.text || 'The dataset includes this document record, but the actual file has not been provided yet.'}
+      </p>
     </div>
   );
 }
@@ -557,10 +664,12 @@ function DocumentCanvas({
   onWheel,
   onZoomIn,
   onZoomOut,
+  mobilePreview = false,
   onPageChange,
   visibleEvidence,
 }: {
   activePage: DynamicDocumentPage;
+  mobilePreview?: boolean;
   activePageIndex: number;
   activePageNumber: number;
   activeHighlightRef: RefObject<HTMLButtonElement | null>;
@@ -587,11 +696,11 @@ function DocumentCanvas({
   visibleEvidence: DynamicDocumentInsight[];
 }) {
   return (
-    <div className="relative z-10 min-h-0 overflow-visible bg-white">
+    <div className={`relative z-10 min-h-0 overflow-visible bg-white ${mobilePreview ? 'h-full' : ''}`}>
       <div
-        className={`relative flex h-full min-h-0 items-center justify-center overflow-hidden bg-[#dfe3e8] px-4 py-20 ${
-          isDocumentPanning ? 'cursor-grabbing' : 'cursor-grab'
-        }`}
+        className={`relative flex h-full min-h-0 items-center justify-center overflow-hidden bg-[#dfe3e8] ${
+          mobilePreview ? 'min-h-[min(52vh,480px)] px-3 py-6' : 'px-4 py-20'
+        } ${isDocumentPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
         onWheel={onWheel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -613,19 +722,27 @@ function DocumentCanvas({
         />
 
         <div
-          className="relative h-[660px] w-[440px] shrink-0 bg-white shadow-[0_1px_2px_rgba(27,28,30,0.08)] will-change-transform"
+          className={`relative shrink-0 bg-white shadow-[0_1px_2px_rgba(27,28,30,0.08)] will-change-transform ${
+            mobilePreview ? 'h-[min(420px,50vh)] w-[min(280px,72vw)]' : 'h-[660px] w-[440px]'
+          }`}
           style={{
-            transform: `matrix(${documentZoom}, 0, 0, ${documentZoom}, ${documentPan.x}, ${documentPan.y})`,
+            transform: activePage.image?.trim()
+              ? `matrix(${documentZoom}, 0, 0, ${documentZoom}, ${documentPan.x}, ${documentPan.y})`
+              : undefined,
             transformOrigin: 'center center',
             transition: isDocumentPanning ? 'none' : isAnchorNavigating ? 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1)' : 'transform 0.12s ease',
           }}
         >
+          {activePage.image?.trim() ? (
           <img
             src={activePage.image}
             alt={`${document.documentTitle}, page ${activePage.number}: ${activePage.label}`}
             className="block h-full w-full select-none object-fill"
             draggable={false}
           />
+          ) : (
+            <DocumentFileUnavailableState document={document} compact={mobilePreview} />
+          )}
           {visibleEvidence.map((item) => {
             const isActive = activeInsightId === item.id;
             return (
@@ -898,6 +1015,237 @@ function AiSummaryBanner({
         ) : null}
       </div>
       <p className="text-[12px] leading-relaxed text-text-primary">{text}</p>
+    </div>
+  );
+}
+
+type DocumentScoringContext = NonNullable<DynamicDocumentData['scoringContext']>;
+
+type DocumentMobileLayoutProps = {
+  actions: DynamicDocumentAction[];
+  activeHighlightRef: RefObject<HTMLButtonElement | null>;
+  activeInsightId: string;
+  activeInsightRef: RefObject<HTMLButtonElement | null>;
+  activePage: DynamicDocumentPage;
+  activePageIndex: number;
+  activePageNumber: number;
+  document: DynamicDocumentData;
+  documentPan: { x: number; y: number };
+  documentZoom: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  isAnchorNavigating: boolean;
+  isDocumentPanning: boolean;
+  onInsightChange: (id: string) => void;
+  onInsightSelect: (insight: DynamicDocumentInsight) => void;
+  onNextPage: () => void;
+  onPointerCancel: (event?: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerUp: (event?: ReactPointerEvent<HTMLDivElement>) => void;
+  onPreviousPage: () => void;
+  onReset: () => void;
+  onWheel: (event: ReactWheelEvent<HTMLDivElement>) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onPageChange: (pageNumber: number) => void;
+  scoringContext?: DocumentScoringContext;
+  visibleEvidence: DynamicDocumentInsight[];
+};
+
+function DocumentMobileLayout({
+  actions,
+  activeHighlightRef,
+  activeInsightId,
+  activeInsightRef,
+  activePage,
+  activePageIndex,
+  activePageNumber,
+  document,
+  documentPan,
+  documentZoom,
+  hasNextPage,
+  hasPreviousPage,
+  isAnchorNavigating,
+  isDocumentPanning,
+  onInsightChange,
+  onInsightSelect,
+  onNextPage,
+  onPointerCancel,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPreviousPage,
+  onReset,
+  onWheel,
+  onZoomIn,
+  onZoomOut,
+  onPageChange,
+  scoringContext,
+  visibleEvidence,
+}: DocumentMobileLayoutProps) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-white">
+      <div className="app-scrollbar min-h-0 flex-1 overflow-y-auto">
+        <div className="space-y-4 px-4 py-4">
+          <CollapsibleDetailSection
+            title={document.summary.label}
+            defaultOpen
+            headerAction={(
+              <span className="rounded-full bg-[#fff4e6] px-2 py-0.5 text-[10px] font-semibold text-[#8a5a00]">
+                {document.summary.status}
+              </span>
+            )}
+          >
+            <AiSummaryBanner meta={document.summary.status} text={document.summary.text} />
+            {document.summary.contextTitle || document.summary.contextText ? (
+              <div className="mt-3 rounded-[6px] border border-border-soft bg-[#fbfcfd] p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Requirement context</p>
+                {document.summary.contextTitle ? (
+                  <p className="mt-1 text-[13px] font-semibold text-text-primary">{document.summary.contextTitle}</p>
+                ) : null}
+                {document.summary.contextText ? (
+                  <p className="mt-1 text-[12px] leading-relaxed text-text-secondary">{document.summary.contextText}</p>
+                ) : null}
+              </div>
+            ) : null}
+          </CollapsibleDetailSection>
+
+          <section aria-label="Evidence insights">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-[13px] font-semibold text-text-primary">Evidence</h3>
+              <span className="text-[11px] font-medium text-text-muted">{document.evidence.length} anchors</span>
+            </div>
+            <DocumentInsightsCarousel
+              activeInsightId={activeInsightId}
+              activeInsightRef={activeInsightRef}
+              insights={document.evidence}
+              onInsightSelect={onInsightSelect}
+            />
+          </section>
+
+          <section aria-label="Document preview" className="overflow-hidden rounded-lg border border-border-default bg-white">
+              <DocumentCanvas
+                activePage={activePage}
+                activePageIndex={activePageIndex}
+                activePageNumber={activePageNumber}
+                activeHighlightRef={activeHighlightRef}
+                activeInsightId={activeInsightId}
+                document={document}
+                documentPan={documentPan}
+                documentZoom={documentZoom}
+                hasNextPage={hasNextPage}
+                hasPreviousPage={hasPreviousPage}
+                isAnchorNavigating={isAnchorNavigating}
+                isDocumentPanning={isDocumentPanning}
+                mobilePreview
+                onInsightChange={onInsightChange}
+                onNextPage={onNextPage}
+                onPreviousPage={onPreviousPage}
+                onPointerCancel={onPointerCancel}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onReset={onReset}
+                onWheel={onWheel}
+                onZoomIn={onZoomIn}
+                onZoomOut={onZoomOut}
+                onPageChange={onPageChange}
+                visibleEvidence={visibleEvidence}
+              />
+          </section>
+
+          {scoringContext ? <DocumentScoringImpactBlock scoringContext={scoringContext} className="!mt-0" /> : null}
+        </div>
+      </div>
+
+      <DocumentMobileActions actions={actions} />
+    </div>
+  );
+}
+
+function DocumentInsightsCarousel({
+  activeInsightId,
+  activeInsightRef,
+  insights,
+  onInsightSelect,
+}: {
+  activeInsightId: string;
+  activeInsightRef: RefObject<HTMLButtonElement | null>;
+  insights: DynamicDocumentInsight[];
+  onInsightSelect: (insight: DynamicDocumentInsight) => void;
+}) {
+  return (
+    <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1">
+      {insights.map((insight) => (
+        <div key={insight.id} className="w-[min(88vw,300px)] shrink-0 snap-center">
+          <InsightCard
+            cardRef={activeInsightId === insight.id ? activeInsightRef : undefined}
+            insight={insight}
+            isActive={activeInsightId === insight.id}
+            onSelect={() => onInsightSelect(insight)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DocumentMobileActions({ actions }: { actions: DynamicDocumentAction[] }) {
+  if (!actions.length) return null;
+
+  return (
+    <div className="shrink-0 space-y-2 border-t border-border-soft bg-white p-4">
+      {actions.map((action) => (
+        <button
+          key={action.id}
+          type="button"
+          className={
+            action.variant === 'primary'
+              ? 'inline-flex h-11 w-full items-center justify-center rounded-full bg-brand-blue px-4 text-[13px] font-semibold text-white transition-colors hover:bg-brand-blue-hover'
+              : 'inline-flex h-11 w-full items-center justify-center rounded-full border border-border-default bg-white px-4 text-[13px] font-semibold text-text-secondary transition-colors hover:border-brand-blue hover:text-brand-blue'
+          }
+        >
+          {action.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function DocumentScoringImpactBlock({
+  className = '',
+  scoringContext,
+}: {
+  className?: string;
+  scoringContext: DocumentScoringContext;
+}) {
+  return (
+    <div className={`rounded-[6px] border border-brand-blue/25 bg-surface-selected p-3 ${className}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-brand-blue">Scoring impact</p>
+          <p className="mt-1 text-[13px] font-semibold text-text-primary">
+            Net +{scoringContext.netScore} · {scoringContext.mappedDecision}
+          </p>
+        </div>
+        <Link
+          to={`/cases/${scoringContext.caseId}#tab=scoring`}
+          className="shrink-0 rounded-full border border-brand-blue bg-white px-2 py-1 text-[10px] font-semibold text-brand-blue hover:bg-surface-selected"
+        >
+          Open
+        </Link>
+      </div>
+      {scoringContext.suggestedAdjustments?.length ? (
+        <ul className="mt-2 space-y-1 text-[11px] text-text-secondary">
+          {scoringContext.suggestedAdjustments.slice(0, 3).map((item) => (
+            <li key={item} className="flex gap-2">
+              <span className="mt-[6px] size-1 rounded-full bg-brand-blue" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

@@ -5,7 +5,6 @@ This inventory supports the app cleanup refactor. It focuses on code under `src/
 ## Hardcoded Visual Values
 
 - `src/app/components/CaseView.tsx`: highest concentration of inline hex colors, arbitrary sizes, status chip colors, and one-off alert styles.
-- `src/app/components/PlatformGuideModal.tsx`: many hardcoded gradients, mock-up overlays, absolute values, and step-specific color maps.
 - `src/app/components/PlatformSettingsModal.tsx`: many arbitrary spacing, color, and text-size classes.
 - `src/app/components/DocumentModule.tsx`, `TaskModule.tsx`, `CasesModule.tsx`, `FoldersModule.tsx`: repeated table header classes, CTA shadows, status colors, sticky separators, and RAG dot colors.
 - `src/app/components/FoldersWorkspace.tsx`, `CasesWorkspace.tsx`, `CopilotFullPage.tsx`: duplicated side-panel backgrounds, RAG maps, resize/toggle chrome, and sidebar tree styling.

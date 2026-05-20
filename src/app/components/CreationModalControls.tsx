@@ -20,6 +20,7 @@ import {
 } from './ds';
 import { LozengeTag } from './LozengeTag';
 import { getStatusLozengeType, type AppStatusContext } from '../utils/status-display';
+import { useViewportLayoutOptional } from '../contexts/ViewportLayoutContext';
 
 const ROLE_FIELD_LABEL_CLASS = 'mb-1.5 block text-sm font-medium text-text-primary';
 
@@ -652,7 +653,8 @@ export const CREATION_MODAL_HEADER_CLASS =
   'shrink-0 border-b border-border-default bg-white px-6 pb-4 pt-5';
 
 export function CreationModalBackdrop() {
-  if (typeof document === 'undefined') return null;
+  const { isCompactShell } = useViewportLayoutOptional();
+  if (isCompactShell || typeof document === 'undefined') return null;
   return createPortal(
     <div className="fixed inset-0 z-[1100] bg-black/35" aria-hidden="true" />,
     document.body,
@@ -665,6 +667,7 @@ export function CreationFooter({
   isLastStep = true,
   onBack,
   onCancel,
+  onFlowBack,
   onNext,
   onSubmit,
   submitLabel,
@@ -673,6 +676,7 @@ export function CreationFooter({
   isFirstStep?: boolean;
   isLastStep?: boolean;
   onBack?: () => void;
+  onFlowBack?: () => void;
   onCancel: () => void;
   onNext?: () => void;
   onSubmit: () => void;
@@ -680,8 +684,8 @@ export function CreationFooter({
 }) {
   return (
     <div className="flex shrink-0 items-center justify-between border-t border-border-default bg-surface-primary px-6 py-4">
-      <CreationSecondaryButton onClick={isFirstStep ? onCancel : onBack}>
-        {isFirstStep ? 'Cancel' : 'Back'}
+      <CreationSecondaryButton onClick={isFirstStep ? (onFlowBack ?? onCancel) : onBack}>
+        {isFirstStep && onFlowBack ? 'Back' : isFirstStep ? 'Cancel' : 'Back'}
       </CreationSecondaryButton>
       {isLastStep ? (
         <Button

@@ -5,16 +5,9 @@ import type { CaseDocument, CaseRequirement, RequirementContextType, Requirement
 import type { UnderwritingScoring } from '../domain/objectRefs';
 import { CollapsibleDetailSection } from './CollapsibleDetailSection';
 import { isRequirementAiSourced, MiniAiSourceBadge } from './ModuleCellHelpers';
+import { getRequirementStatusLozengeType } from '../utils/status-display';
 import { LozengeTag } from './LozengeTag';
 import { ScoringMiniWidget } from './ScoringMiniWidget';
-
-function statusLozengeType(status: CaseRequirement['status']) {
-  if (status === 'Fulfilled' || status === 'Waived' || status === 'Completed' || status === 'fulfilled') return 'Success' as const;
-  if (status === 'Overdue' || status === 'overdue') return 'Alert' as const;
-  if (status === 'Pending' || status === 'pending' || status === 'in_review') return 'Warning' as const;
-  if (status === 'Ordered' || status === 'scheduled') return 'Informative' as const;
-  return 'Neutral' as const;
-}
 
 function statusLabel(status: string) {
   return status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
@@ -125,7 +118,7 @@ export function RequirementContextBody({
         <div className="mb-2 flex w-full min-w-0 items-center gap-2">
           {isRequirementAiSourced(requirement.source) ? <MiniAiSourceBadge /> : null}
           <LozengeTag label={requirement.category} type="Neutral" subtle />
-          <LozengeTag label={statusLabel(requirement.status)} type={statusLozengeType(requirement.status)} subtle />
+          <LozengeTag label={statusLabel(requirement.status)} type={getRequirementStatusLozengeType(requirement.status, 'panel')} subtle />
           <span className="ml-auto shrink-0 font-mono text-[12px] font-semibold text-text-muted/70">{requirementId}</span>
         </div>
         <h2 className="text-[18px] font-semibold leading-tight text-text-heading">{requirement.name}</h2>

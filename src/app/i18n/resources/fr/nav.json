@@ -15,15 +15,28 @@
   "globalCreate": {
     "title": "Créer",
     "ariaLabel": "Créer un enregistrement",
+    "pickDescription": "Choisissez ce que vous souhaitez créer pour commencer.",
     "case": "Dossier",
     "task": "Tâche",
-    "request": "Demande"
+    "request": "Demande",
+    "caseDescription": "Ouvrir un nouveau dossier avec parties, polices et contexte d'admission.",
+    "taskDescription": "Assigner du travail avec échéances, files et lien de dossier optionnel.",
+    "requestDescription": "Envoyer une demande de service à des clients ou des tiers."
   },
   "activityFeed": {
     "label": "Fil",
     "ariaLabel": "Fil d'activité IA",
     "popoverTitle": "Fil d'activité IA",
     "popoverBody": "Activez ce fil pour voir en temps réel ce que l'équipe IA accomplit : traitement des tâches, plans en cours et suivi de vos dossiers."
+  },
+  "mobileNav": {
+    "ariaLabel": "Navigation principale",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "menuTitle": "Menu",
+    "more": "Plus",
+    "search": "Rechercher",
+    "searchCasesOnlyHint": "La recherche complète pour les clients et les polices est disponible sur ordinateur. Passez à Dossiers ou utilisez un écran plus large."
   },
   "header": {
     "openAssistant": "Ouvrir l'Assistant Amplify",
@@ -46,13 +59,26 @@
   "userMenu": {
     "openMenu": "Ouvrir le menu utilisateur",
     "profile": "Profil",
+    "profileDescription": "Votre rôle, bande et autorité d'approbation pour cette session de démo.",
+    "profileRole": "Rôle",
+    "profileBand": "Bande",
+    "profileTeam": "Équipe",
+    "profileAuthority": "Autorité max.",
     "soonBadge": "Bientôt",
     "platformSettings": "Paramètres de la plateforme",
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "roleView": "Vue par rôle",
+    "roleAssessor": "Évaluateur",
+    "roleManager": "Gestionnaire",
+    "roleAssessorHint": "Vue évaluateur — Victor Ramon",
+    "roleManagerHint": "Vue gestionnaire — Sarah Mitchell"
   },
   "appSwitcher": {
     "switchApplication": "Changer d'application",
     "products": "Produits",
+    "clientDemo": "Démo client",
+    "clientDemoHint": "Activez un environnement de démo personnalisé.",
+    "openDemoSettings": "Paramètres de l'environnement de démo",
     "resources": "Ressources",
     "platformGuide": "Guide de la plateforme",
     "documentationSpec": "Documentation et spec",

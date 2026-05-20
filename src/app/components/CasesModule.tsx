@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { LayoutGrid, List, MoreVertical, Plus, RefreshCw } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { AiInsightInline, FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
@@ -9,14 +9,26 @@ import { moduleTableScrollContainerClass } from '../utils/module-table-scroll';
 import { useCasesNav } from '../contexts/CasesNavContext';
 import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter';
+import { useViewportLayout } from '../hooks/useViewportLayout';
 import { getWorkflowByKind } from '../domain/workflows';
 import { UI_CLASS } from '../constants/design-tokens';
 import { getRagOrder, getStatusLozengeType, getStatusShort } from '../utils/status-display';
 import type { CaseSummary, SortDirection } from '../types';
 import type { CaseKind, ClaimSubType } from '../domain/objectRefs';
 import { claimSubTypeLabel } from '../domain/claimSubTypes';
-import { isCaseAiSourced, SummaryTableColumnHeader, TABLE_CELL_ALIGN_CLASS, TABLE_LINK_CLASS, TABLE_SUBTEXT_CLASS, TABLE_TEXT_CLASS, TableFirstColumnContent, TwoLineSummaryCell } from './ModuleCellHelpers';
+import {
+  isCaseAiSourced,
+  MiniAiSourceBadge,
+  SummaryTableColumnHeader,
+  TABLE_CELL_ALIGN_CLASS,
+  TABLE_LINK_CLASS,
+  TABLE_SUBTEXT_CLASS,
+  TABLE_TEXT_CLASS,
+  TableFirstColumnContent,
+  TwoLineSummaryCell,
+} from './ModuleCellHelpers';
 import { CreateCaseModal } from './CreateCaseModal';
+import { ModuleMobileListCardShell } from './ModuleMobileListCard';
 
 type CasesSortableColumn =
   | 'id'
@@ -101,6 +113,88 @@ function sortCases(cases: CaseSummary[], column: CasesSortableColumn | null, dir
   });
 }
 
+function CaseCardMetaField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">{label}</p>
+      <div className="mt-0.5 min-w-0 text-[12px] font-semibold leading-snug text-text-primary">{children}</div>
+    </div>
+  );
+}
+
+function CaseMobileListCard({
+  item,
+  currency,
+  onOpen,
+  onCaseLink,
+}: {
+  item: CaseSummary;
+  currency: ReturnType<typeof useCurrencyFormatter>;
+  onOpen: () => void;
+  onCaseLink: () => void;
+}) {
+  const partyLabel = item.primaryPartyLabel ?? 'Claimant';
+  const showAiSourceBadge = isCaseAiSourced(item);
+
+  return (
+    <ModuleMobileListCardShell onSelect={onOpen}>
+      {(showAiSourceBadge || (item.caseKind === 'claim' && item.claimSubType)) ? (
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          {showAiSourceBadge ? <MiniAiSourceBadge /> : null}
+          {item.caseKind === 'claim' && item.claimSubType ? (
+            <LozengeTag label={claimSubTypeLabel(item.claimSubType)} type="Neutral" subtle size="compact" />
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <PriorityChip priority={item.priority} />
+          <LozengeTag label={getStatusShort(item.status)} type={getStatusLozengeType(item.status, 'case')} subtle />
+        </div>
+        <span className="shrink-0 text-[12px] font-medium text-text-muted">SLA {item.sla}</span>
+      </div>
+
+      <h3 className="mb-2 text-sm font-semibold leading-snug text-text-heading">
+        {item.title?.trim() || item.claimant}
+      </h3>
+
+      {item.aiSummary ? (
+        <div className="mb-3">
+          <AiInsightInline summary={item.aiSummary} action={item.aiRecommendation} showSourceBadge={false} />
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+        <CaseCardMetaField label="Case">
+          <Link
+            to={`/cases/${item.id}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onCaseLink();
+            }}
+            className={`${TABLE_LINK_CLASS} break-words`}
+          >
+            {item.id}
+          </Link>
+        </CaseCardMetaField>
+        <CaseCardMetaField label={partyLabel}>
+          <span className="break-words">{item.claimant || '—'}</span>
+        </CaseCardMetaField>
+        <CaseCardMetaField label="Product">
+          <span className="break-words">{item.product || '—'}</span>
+        </CaseCardMetaField>
+        <CaseCardMetaField label="Benefit">
+          <span className="break-words">{currency.localize(item.benefit) || '—'}</span>
+        </CaseCardMetaField>
+        <CaseCardMetaField label="Created">
+          <span className="break-words">{item.created || '—'}</span>
+        </CaseCardMetaField>
+      </div>
+    </ModuleMobileListCardShell>
+  );
+}
+
 export function CasesModule() {
   const navigate = useNavigate();
   const { addOpenCase } = useCasesNav();
@@ -151,7 +245,9 @@ export function CasesModule() {
   );
   const [sortColumn, setSortColumn] = useState<CasesSortableColumn | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const { isCompactShell } = useViewportLayout();
   const [viewMode, setViewMode] = useState<'table' | 'list'>('table');
+  const effectiveViewMode: 'table' | 'list' = isCompactShell ? 'list' : viewMode;
   const [casesTableScrollEl, setCasesTableScrollEl] = useState<HTMLDivElement | null>(null);
   const { showLeftStickyEdge, showRightStickyEdge, hasHorizontalOverflow } =
     useTableHorizontalScroll(casesTableScrollEl);
@@ -276,22 +372,24 @@ export function CasesModule() {
             />
           </div>
           <div className="order-2 ml-auto flex shrink-0 items-center gap-2 xl:order-3">
-            <div className="overflow-hidden rounded-md border border-border-default">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 ${viewMode === 'table' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
-                title="Table view"
-              >
-                <List className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`border-l border-border-default p-2 ${viewMode === 'list' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
-                title="List view"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-            </div>
+            {!isCompactShell ? (
+              <div className="overflow-hidden rounded-md border border-border-default">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2 ${viewMode === 'table' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
+                  title="Table view"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`border-l border-border-default p-2 ${viewMode === 'list' ? 'bg-brand-blue text-white' : 'bg-white text-text-secondary hover:bg-surface-muted'}`}
+                  title="List view"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+              </div>
+            ) : null}
             <button className="rounded-full border border-border-default p-2 text-text-secondary hover:bg-surface-muted">
               <RefreshCw className="h-4 w-4" />
             </button>
@@ -300,7 +398,7 @@ export function CasesModule() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col bg-white">
-        {viewMode === 'table' ? (
+        {effectiveViewMode === 'table' ? (
           <div
             ref={setCasesTableScrollEl}
             className={moduleTableScrollContainerClass(
@@ -467,60 +565,16 @@ export function CasesModule() {
           <div className="flex-1 overflow-y-auto p-4">
             <div className="space-y-3">
               {sortedCases.map((item) => (
-                <div
+                <CaseMobileListCard
                   key={item.id}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      addOpenCase(item.id);
-                      navigate(`/cases/${item.id}`);
-                    }
-                  }}
-                  onClick={() => {
+                  item={item}
+                  currency={currency}
+                  onOpen={() => {
                     addOpenCase(item.id);
                     navigate(`/cases/${item.id}`);
                   }}
-                  className="w-full cursor-pointer rounded-lg border border-border-default bg-white p-4 text-left transition-colors hover:bg-surface-hover"
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/cases/${item.id}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addOpenCase(item.id);
-                        }}
-                        className={TABLE_LINK_CLASS}
-                      >
-                        {item.id}
-                      </Link>
-                    </div>
-                    <span className="text-sm text-text-primary">SLA: {item.sla}</span>
-                  </div>
-                  <div className="mb-2 text-sm text-text-primary">
-                    {item.claimant}
-                    {' '}· {item.product} · {currency.localize(item.benefit)}
-                  </div>
-                  {item.caseKind === 'claim' && item.claimSubType ? (
-                    <div className="mb-2 text-xs text-text-secondary">
-                      Claim sub-type: {claimSubTypeLabel(item.claimSubType)}
-                    </div>
-                  ) : null}
-                  <div className="mb-2">
-                    <AiInsightInline summary={item.aiSummary} action={item.aiRecommendation} />
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <LozengeTag label={getStatusShort(item.status)} type={getStatusLozengeType(item.status, 'case')} subtle />
-                    </div>
-                    <span className="inline-flex items-center gap-2 text-text-primary">
-                      <PriorityChip priority={item.priority} />
-                      <span>{item.created}</span>
-                    </span>
-                  </div>
-                </div>
+                  onCaseLink={() => addOpenCase(item.id)}
+                />
               ))}
             </div>
           </div>

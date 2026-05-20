@@ -6,6 +6,8 @@ import type { CaseNavItem, CaseSummary } from '../types';
 type CasesNavContextValue = {
   openCases: CaseNavItem[];
   pinnedCases: CaseNavItem[];
+  lastActiveCaseId: string | null;
+  setLastActiveCaseId: (caseId: string | null) => void;
   addOpenCase: (caseId: string, caseSummary?: CaseSummary) => void;
   removeOpenCase: (caseId: string) => void;
   clearOpenCases: () => void;
@@ -35,6 +37,7 @@ export function CasesNavProvider({ children }: React.PropsWithChildren) {
   const caseSummaryById = useMemo(() => new Map(caseSummaries.map((item) => [item.id, item])), [caseSummaries]);
   const [openCases, setOpenCases] = useState<CaseNavItem[]>(() => caseSummaries.map(toCaseNavItem));
   const [pinnedCases] = useState<CaseNavItem[]>([]);
+  const [lastActiveCaseId, setLastActiveCaseId] = useState<string | null>(null);
 
   useEffect(() => {
     setOpenCases((prev) => {
@@ -71,8 +74,16 @@ export function CasesNavProvider({ children }: React.PropsWithChildren) {
   }, []);
 
   const value = useMemo(
-    () => ({ openCases, pinnedCases, addOpenCase, removeOpenCase, clearOpenCases }),
-    [openCases, pinnedCases, addOpenCase, removeOpenCase, clearOpenCases]
+    () => ({
+      openCases,
+      pinnedCases,
+      lastActiveCaseId,
+      setLastActiveCaseId,
+      addOpenCase,
+      removeOpenCase,
+      clearOpenCases,
+    }),
+    [openCases, pinnedCases, lastActiveCaseId, addOpenCase, removeOpenCase, clearOpenCases],
   );
 
   return <CasesNavContext.Provider value={value}>{children}</CasesNavContext.Provider>;

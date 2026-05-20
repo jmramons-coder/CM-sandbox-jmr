@@ -50,6 +50,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { AiCueSparkle } from './AiCueSparkle';
+import { BrandingHeaderPreview } from './BrandingHeaderPreview';
 import { SimpleLogo } from './SimpleLogo';
 import { ModuleTabsBar, type ModuleTabItem } from './ModuleTabsBar';
 import { SegmentedControl } from './ds';
@@ -58,6 +59,7 @@ import {
   useBranding,
   usePlatformSettings,
   type AnatomySettings,
+  type Branding,
   type ModuleId,
   type SavedDemoConfiguration,
 } from '../contexts/PlatformSettingsContext';
@@ -76,7 +78,7 @@ import { resolveBrandingLogoSrc } from '../utils/branding-logo';
 import { DATA_ADAPTER_CONTRACTS, type DatasetMetadata } from '../data/dataAdapters';
 import { runDatasetQualityChecks, validateSystemDataset } from '../data/dataQualityGuards';
 import { WORKFLOW_DEFINITIONS, getPrimaryWorkflowDefinition, type WorkflowDefinition } from '../domain/workflows';
-import type { CaseKind, WorkObjectKind } from '../domain/objectRefs';
+import { DEFAULT_DATASET_ID, type CaseKind, type WorkObjectKind } from '../domain/objectRefs';
 import {
   IMPORT_TARGETS,
   ENTITY_SCHEMA_DEFINITIONS,
@@ -106,6 +108,8 @@ import {
   resolveCaseTypeForSettings,
 } from '../domain/runtimeDataConfig';
 import { DEFAULT_LANGUAGE, LANGUAGES, SUPPORTED_LANGUAGES } from '../i18n/types';
+import { DemoConfigurationTab } from './settings/DemoConfigurationTab';
+import { ColorField } from './settings/BrandingColorField';
 
 export type PlatformSettingsTab = 'branding' | 'modules' | 'data' | 'intelligence' | 'language' | 'roles' | 'demo';
 
@@ -300,7 +304,7 @@ function SidebarFooter() {
         </button>
       </div>
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent layout="centered" className="sm:max-w-[420px]">
           <DialogHeader>
             <DialogTitle className="text-[16px]">{t('settings:saveDialog.title')}</DialogTitle>
             <DialogDescription className="text-[12px]">
@@ -571,7 +575,7 @@ function DataTab() {
   const deleteDataset = (datasetId: string) => {
     datasetRegistry.deleteDataset(datasetId);
     if (settings.dataSource.activeDatasetId === datasetId) {
-      updateDataSource({ activeDatasetId: 'multi-case-demo' });
+      updateDataSource({ activeDatasetId: DEFAULT_DATASET_ID });
     }
     refreshDataContexts();
   };
@@ -2635,7 +2639,7 @@ function DatasetPreviewPanel({
         <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Demo data</p>
         <p className="mt-1 text-[12px] leading-snug text-text-secondary">
           The built-in <span className="font-semibold text-text-primary">SBLI demo cases</span> dataset is shared by the
-          Equisoft and SBLI demo environments. Use <span className="font-semibold text-text-primary">Demo environment</span>{' '}
+          Equisoft, SBLI, and Guardian 1821 demo environments. Use <span className="font-semibold text-text-primary">Demo environment</span>{' '}
           in settings to switch branding without changing records.
         </p>
         <p className="mt-2 text-[11px] text-text-muted">
@@ -3589,15 +3593,6 @@ function DefaultLogoPreview() {
   );
 }
 
-function splitBrandingProductName(productName: string) {
-  const clean = productName.trim() || 'Amplify Case Management';
-  const [first, ...rest] = clean.split(/\s+/);
-  return {
-    first,
-    second: rest.join(' '),
-  };
-}
-
 function LogoDropzone({
   surface,
   dataUrl,
@@ -3756,7 +3751,6 @@ function BrandingTab() {
   const branding = useBranding();
   const { updateBranding, resetBranding, settings, setThemeMode } = usePlatformSettings();
   const themeMode = settings.themeMode;
-  const productNameParts = useMemo(() => splitBrandingProductName(branding.productName), [branding.productName]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -3862,59 +3856,7 @@ function BrandingTab() {
 
       <section className="flex flex-col gap-2">
         <h3 className="text-[13px] font-semibold text-text-primary">{t('branding.preview.title')}</h3>
-        <div
-          className="flex items-center justify-between rounded-md px-4 py-3 shadow-sm"
-          style={{
-            backgroundColor:
-              themeMode === 'light' ? '#f5f5f7' : branding.headerColor,
-            color: themeMode === 'light' ? '#1b1c1e' : branding.onHeaderColor,
-            border: themeMode === 'light' ? '1px solid #e0e4e8' : undefined,
-          }}
-        >
-          <div className="flex items-end gap-2">
-            {branding.logoMode === 'custom' &&
-            resolveBrandingLogoSrc(
-              themeMode === 'light' ? branding.logoLightDataUrl : branding.logoDarkDataUrl,
-            ) ? (
-              <img
-                src={
-                  resolveBrandingLogoSrc(
-                    themeMode === 'light' ? branding.logoLightDataUrl : branding.logoDarkDataUrl,
-                  )!
-                }
-                alt={t('branding.preview.customLogoAlt')}
-                className="h-[28px] max-w-[120px] object-contain"
-              />
-            ) : (
-              <SimpleLogo
-                className="h-[28px] w-[90px]"
-                textFill={themeMode === 'light' ? '#1b1c1e' : '#ffffff'}
-              />
-            )}
-            {branding.showProductName ? (
-              <span className="mb-[1px] flex flex-col items-start text-left leading-[0.95] opacity-80">
-                <span className="text-[11px] font-semibold">{productNameParts.first}</span>
-                {productNameParts.second ? (
-                  <span className="text-[11px] font-medium">{productNameParts.second}</span>
-                ) : null}
-              </span>
-            ) : null}
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className="rounded-full px-3 py-1 text-[11px] font-semibold"
-              style={{ backgroundColor: branding.primaryColor, color: '#fff' }}
-            >
-              {t('branding.preview.primaryChip')}
-            </span>
-            <span
-              className="rounded-full px-3 py-1 text-[11px] font-semibold"
-              style={{ backgroundColor: branding.accentColor, color: '#fff' }}
-            >
-              <AiCueSparkle size={12} className="mr-1 inline !text-white" /> {t('branding.preview.aiChip')}
-            </span>
-          </div>
-        </div>
+        <BrandingHeaderPreview branding={branding} themeMode={themeMode} />
       </section>
 
       <div className="flex justify-end">
@@ -3929,426 +3871,6 @@ function BrandingTab() {
 /* Suppress unused-warning when DEFAULT_BRANDING is imported only for type-side
  * documentation purposes elsewhere — kept for future re-use. */
 void DEFAULT_BRANDING;
-
-/* ─── HSV <-> HEX helpers ─── */
-
-function clamp01(n: number) {
-  return Math.max(0, Math.min(1, n));
-}
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return null;
-  let h = m[1];
-  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return { r, g, b };
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  const toHex = (n: number) =>
-    Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, '0');
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-function rgbToHsv(r: number, g: number, b: number) {
-  const rf = r / 255;
-  const gf = g / 255;
-  const bf = b / 255;
-  const max = Math.max(rf, gf, bf);
-  const min = Math.min(rf, gf, bf);
-  const d = max - min;
-  let h = 0;
-  const s = max === 0 ? 0 : d / max;
-  const v = max;
-  if (d !== 0) {
-    switch (max) {
-      case rf:
-        h = ((gf - bf) / d) % 6;
-        break;
-      case gf:
-        h = (bf - rf) / d + 2;
-        break;
-      default:
-        h = (rf - gf) / d + 4;
-    }
-    h *= 60;
-    if (h < 0) h += 360;
-  }
-  return { h, s, v };
-}
-
-function hsvToRgb(h: number, s: number, v: number) {
-  const c = v * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = v - c;
-  let rf = 0;
-  let gf = 0;
-  let bf = 0;
-  if (h < 60) [rf, gf, bf] = [c, x, 0];
-  else if (h < 120) [rf, gf, bf] = [x, c, 0];
-  else if (h < 180) [rf, gf, bf] = [0, c, x];
-  else if (h < 240) [rf, gf, bf] = [0, x, c];
-  else if (h < 300) [rf, gf, bf] = [x, 0, c];
-  else [rf, gf, bf] = [c, 0, x];
-  return { r: (rf + m) * 255, g: (gf + m) * 255, b: (bf + m) * 255 };
-}
-
-function hexToHsv(hex: string): { h: number; s: number; v: number } {
-  const rgb = hexToRgb(hex) ?? { r: 0, g: 0, b: 0 };
-  return rgbToHsv(rgb.r, rgb.g, rgb.b);
-}
-
-/* ─── Saturation/Value pad ─── */
-
-function SVPad({
-  hue,
-  s,
-  v,
-  onChange,
-}: {
-  hue: number;
-  s: number;
-  v: number;
-  onChange: (s: number, v: number) => void;
-}) {
-  const { t } = useTranslation('settings');
-  const padRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-
-  const updateFromEvent = (clientX: number, clientY: number) => {
-    const rect = padRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const nx = clamp01((clientX - rect.left) / rect.width);
-    const ny = clamp01((clientY - rect.top) / rect.height);
-    onChange(nx, 1 - ny);
-  };
-
-  useEffect(() => {
-    const move = (e: MouseEvent) => {
-      if (!dragging.current) return;
-      e.preventDefault();
-      updateFromEvent(e.clientX, e.clientY);
-    };
-    const up = () => {
-      dragging.current = false;
-    };
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
-    return () => {
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', up);
-    };
-  }, [onChange]);
-
-  return (
-    <div
-      ref={padRef}
-      role="slider"
-      aria-label={t('branding.colorPicker.saturationAria')}
-      aria-valuetext={t('branding.colorPicker.saturationValueText', {
-        s: Math.round(s * 100),
-        v: Math.round(v * 100),
-      })}
-      onMouseDown={(e) => {
-        dragging.current = true;
-        updateFromEvent(e.clientX, e.clientY);
-      }}
-      className="relative h-[140px] w-full cursor-crosshair overflow-hidden rounded-md"
-      style={{
-        background: `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(${hue}, 100%, 50%))`,
-      }}
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.3)]"
-        style={{ left: `${s * 100}%`, top: `${(1 - v) * 100}%` }}
-      />
-    </div>
-  );
-}
-
-/* ─── Color picker popover ─── */
-
-function ColorPicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-}) {
-  const { t } = useTranslation('settings');
-  const hsv = useMemo(() => hexToHsv(value), [value]);
-  const [hex, setHex] = useState(value);
-  const [hexEditing, setHexEditing] = useState(false);
-  const [eyedropperError, setEyedropperError] = useState(false);
-  const EyeDropperCtor = typeof window !== 'undefined'
-    ? (window as unknown as { EyeDropper?: new () => { open: () => Promise<{ sRGBHex: string }> } }).EyeDropper
-    : undefined;
-  const canUseEyeDropper = Boolean(EyeDropperCtor);
-
-  useEffect(() => {
-    if (!hexEditing) setHex(value);
-  }, [value, hexEditing]);
-
-  const commitHex = (raw: string) => {
-    const cleaned = raw.trim().startsWith('#') ? raw.trim() : `#${raw.trim()}`;
-    if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(cleaned)) {
-      if (cleaned.toLowerCase() !== value.toLowerCase()) onChange(cleaned);
-      setHex(cleaned);
-    } else {
-      setHex(value);
-    }
-  };
-
-  const setFromHsv = (h: number, s: number, v: number) => {
-    const rgb = hsvToRgb(h, s, v);
-    onChange(rgbToHex(rgb.r, rgb.g, rgb.b));
-  };
-
-  const pickFromScreen = async () => {
-    setEyedropperError(false);
-    if (!EyeDropperCtor) {
-      setEyedropperError(true);
-      return;
-    }
-    try {
-      const result = await new EyeDropperCtor().open();
-      if (result?.sRGBHex) onChange(result.sRGBHex);
-    } catch {
-      /* User cancelled or browser blocked access; keep current color. */
-    }
-  };
-
-  return (
-    <div className="flex w-[240px] flex-col gap-3">
-      <button
-        type="button"
-        onClick={pickFromScreen}
-        disabled={!canUseEyeDropper}
-        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border-default bg-white px-2.5 text-[12px] font-semibold text-text-secondary transition-colors hover:border-brand-blue hover:text-brand-blue disabled:cursor-not-allowed disabled:opacity-45"
-        title={canUseEyeDropper ? 'Pick a color from the logo or anywhere on screen' : 'Color sampling is not supported in this browser'}
-      >
-        <Pipette className="size-3.5" />
-        Pick from logo
-      </button>
-      {eyedropperError ? (
-        <p className="text-[11px] leading-snug text-text-muted">
-          Browser color sampling is unavailable. Use the sliders or hex field.
-        </p>
-      ) : null}
-      <SVPad
-        hue={hsv.h}
-        s={hsv.s}
-        v={hsv.v}
-        onChange={(s, v) => setFromHsv(hsv.h, s, v)}
-      />
-
-      {/* Hue slider */}
-      <div className="relative h-3 w-full">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-full"
-          style={{
-            background:
-              'linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)',
-          }}
-        />
-        <input
-          aria-label={t('branding.colorPicker.hueAria')}
-          type="range"
-          min={0}
-          max={360}
-          step={1}
-          value={Math.round(hsv.h)}
-          onChange={(e) => setFromHsv(Number(e.target.value), hsv.s, hsv.v)}
-          className="relative z-[1] h-3 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-runnable-track]:h-3 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-transparent [&::-webkit-slider-thumb]:shadow-[0_0_0_1px_rgba(0,0,0,0.3)] [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-transparent"
-        />
-      </div>
-
-      {/* Hex field */}
-      <div className="flex items-center gap-2">
-        <span
-          className="size-7 shrink-0 rounded border border-border-default"
-          style={{ backgroundColor: value }}
-        />
-        <input
-          type="text"
-          value={hexEditing ? hex : value}
-          spellCheck={false}
-          onFocus={() => {
-            setHex(value);
-            setHexEditing(true);
-          }}
-          onChange={(e) => setHex(e.target.value)}
-          onBlur={() => {
-            setHexEditing(false);
-            commitHex(hex);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              (e.target as HTMLInputElement).blur();
-            } else if (e.key === 'Escape') {
-              e.preventDefault();
-              setHex(value);
-              setHexEditing(false);
-              (e.target as HTMLInputElement).blur();
-            }
-          }}
-          className="flex-1 rounded border border-border-soft bg-white px-2 py-1 font-mono text-[12px] outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
-        />
-      </div>
-    </div>
-  );
-}
-
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const { t } = useTranslation('settings');
-  const textInputRef = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState(value);
-  const [editing, setEditing] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (!editing) setDraft(value);
-  }, [value, editing]);
-
-  const openPicker = () => setOpen(true);
-
-  /**
-   * Clicking anywhere on the container opens the color picker, unless the click
-   * landed on the text input or the copy button.
-   */
-  const onContainerClick = (e: ReactMouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    if (target.closest('[data-color-field-skip="true"]')) return;
-    openPicker();
-  };
-
-  const commitDraft = () => {
-    setEditing(false);
-    const next = draft.trim();
-    if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(next)) {
-      if (next.toLowerCase() !== value.toLowerCase()) onChange(next);
-    } else {
-      setDraft(value);
-    }
-  };
-
-  const copy = async () => {
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(value);
-      } else {
-        const el = document.createElement('textarea');
-        el.value = value;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-      }
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1200);
-    } catch {
-      /* best effort */
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
-        {label}
-      </Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={onContainerClick}
-            onKeyDown={(e) => {
-              if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
-                e.preventDefault();
-                openPicker();
-              }
-            }}
-            aria-label={t('branding.colors.fieldAria', { label })}
-            className="group flex cursor-pointer items-center gap-2 rounded-md border border-border-soft bg-white px-2 py-1.5 transition-colors hover:border-[#c4cbd2] focus-within:border-brand-blue focus-within:ring-2 focus-within:ring-brand-blue/20"
-          >
-            <span
-              aria-hidden="true"
-              className="pointer-events-none size-6 shrink-0 rounded border border-border-default"
-              style={{ backgroundColor: value }}
-            />
-            <input
-              ref={textInputRef}
-              data-color-field-skip="true"
-              type="text"
-              value={editing ? draft : value}
-              onFocus={() => setEditing(true)}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={commitDraft}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  commitDraft();
-                  textInputRef.current?.blur();
-                } else if (e.key === 'Escape') {
-                  e.preventDefault();
-                  setDraft(value);
-                  setEditing(false);
-                  textInputRef.current?.blur();
-                }
-              }}
-              onClick={(e) => e.stopPropagation()}
-              spellCheck={false}
-              className={`w-full cursor-text rounded px-1.5 py-0.5 font-mono text-[12px] text-text-primary outline-none transition-colors ${
-                editing ? 'bg-surface-muted' : 'bg-transparent hover:bg-[#f6f7f8]'
-              }`}
-            />
-            <button
-              type="button"
-              data-color-field-skip="true"
-              onClick={(e) => {
-                e.stopPropagation();
-                copy();
-              }}
-              aria-label={t('branding.colors.copyAria', { label })}
-              title={copied ? t('branding.colors.copied') : t('branding.colors.copyHex')}
-              className="shrink-0 rounded p-1 text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary"
-            >
-              {copied ? (
-                <Check className="size-3.5 text-[#1f7a5b]" />
-              ) : (
-                <Copy className="size-3.5" />
-              )}
-            </button>
-          </div>
-        </PopoverTrigger>
-        <PopoverContent
-          side="right"
-          align="start"
-          sideOffset={10}
-          collisionPadding={16}
-          className="w-auto p-3"
-        >
-          <ColorPicker value={value} onChange={onChange} />
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
 
 /* ─── Modules tab ─── */
 
@@ -4606,221 +4128,6 @@ function LanguageTab() {
       </div>
     </div>
   );
-}
-
-/* ─── Demo configuration tab ─── */
-
-function DemoConfigurationTab() {
-  const { t } = useTranslation('settings');
-  const { settings } = usePlatformSettings();
-  const savedEnvironments = settings.demoConfigurations;
-  const activeDataset = datasetRegistry.getDataset(settings.dataSource.activeDatasetId);
-  const activeAdapter = DATA_ADAPTER_CONTRACTS.find((adapter) => adapter.id === settings.dataSource.connector);
-
-  return (
-    <div className="flex flex-col gap-4">
-      <p className="text-[12px] text-text-secondary">{t('demo.intro')}</p>
-      <div className="rounded-lg border border-border-soft bg-white p-4">
-        <div className="flex items-start gap-3">
-          <Sliders className="mt-0.5 size-4 shrink-0 text-brand-blue" />
-          <div className="min-w-0 flex-1">
-            <h3 className="text-[13px] font-semibold text-text-primary">Active data source</h3>
-            <p className="mt-1 text-[12px] leading-snug text-text-secondary">
-              {activeDataset?.label ?? settings.dataSource.activeDatasetId} · {settings.dataSource.mode.replace('_', ' ')} · {settings.dataSource.connector.replace('_', ' ')}
-            </p>
-            <p className="mt-1 text-[11px] leading-snug text-text-muted">
-              {activeAdapter?.capabilitySummary ?? 'This connector is not yet registered in the adapter contract.'}
-            </p>
-            {activeAdapter?.status === 'planned' ? (
-              <span className="mt-2 inline-flex rounded-full bg-[#fff4e6] px-2 py-0.5 text-[10px] font-semibold text-[#8a5a00]">
-                Planned connector - read/write operations are gated until an adapter implementation is enabled.
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        {savedEnvironments.map((config) => (
-          <DemoConfigurationCard
-            key={config.id}
-            config={config}
-            active={settings.activeDemoConfigurationId === config.id}
-          />
-        ))}
-      </div>
-      <p className="text-[11px] leading-snug text-text-muted">
-        {t('demo.sharedDatasetNote')}
-      </p>
-    </div>
-  );
-}
-
-function DemoConfigurationCard({
-  config,
-  active,
-}: {
-  config: SavedDemoConfiguration;
-  active: boolean;
-}) {
-  const { t } = useTranslation('settings');
-  const { setActiveDemoConfiguration, deleteDemoConfiguration, exportBuiltInDemoEnvironmentForDeploy } =
-    usePlatformSettings();
-  const [expanded, setExpanded] = useState(false);
-  const [deployHint, setDeployHint] = useState<string | null>(null);
-  const builtIn = isBuiltInDemoEnvironment(config.id);
-  const enabledModules = MODULE_DEFS.filter(({ id }) => config.settings.modules[id] !== false);
-  const enabledTypes = config.settings.caseTypes.filter((caseType) => caseType.enabled);
-  const activeCaseType = config.settings.caseTypes.find(
-    (caseType) => caseType.id === config.settings.activeCaseTypeId,
-  );
-  const aiFlags = [
-    config.settings.modules.copilot !== false,
-    config.settings.preferences.aiSidePanelEnabled !== false,
-    config.settings.preferences.casesAiAssistantEnabled !== false,
-    config.settings.preferences.aiActivityVisible !== false,
-  ];
-  const aiEnabledCount = aiFlags.filter(Boolean).length;
-
-  return (
-    <article className={`overflow-hidden rounded-lg border bg-white shadow-[0_1px_2px_rgba(27,28,30,0.04)] ${
-      active ? 'border-brand-blue/40 ring-2 ring-brand-blue/10' : 'border-border-soft'
-    }`}>
-      <div className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-primary">
-        <button
-          type="button"
-          onClick={() => setExpanded((value) => !value)}
-          aria-expanded={expanded}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
-        >
-          <Laptop className={`size-4 shrink-0 ${active ? 'text-brand-blue' : 'text-text-muted'}`} />
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate text-[13px] font-semibold text-text-primary">{config.name}</h3>
-            <p className="mt-0.5 text-[11px] text-text-muted">
-              {builtIn ? t('demo.builtIn') : t('demo.savedAt', { date: formatDemoConfigurationDate(config.createdAt) })}
-            </p>
-          </div>
-          <ChevronDown
-            className={`size-4 shrink-0 text-text-muted transition-transform ${expanded ? 'rotate-180' : ''}`}
-            aria-hidden
-          />
-        </button>
-        {builtIn ? (
-          <button
-            type="button"
-            onClick={() => {
-              const filename = exportBuiltInDemoEnvironmentForDeploy(config.id);
-              if (!filename) return;
-              const repoPath = DEPLOYABLE_PRESET_REPO_PATH[config.id] ?? '';
-              setDeployHint(t('demo.exportDeployDone', { filename, path: repoPath }));
-            }}
-            className="flex size-8 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-brand-blue/10 hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30"
-            aria-label={t('demo.exportDeployAria', { name: config.name })}
-            title={t('demo.exportDeployAria', { name: config.name })}
-          >
-            <Download className="size-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => deleteDemoConfiguration(config.id)}
-            className="flex size-8 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-[#fff0ef] hover:text-brand-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/30"
-            aria-label={t('demo.deleteAria', { name: config.name })}
-          >
-            <Trash2 className="size-4" />
-          </button>
-        )}
-        <Switch
-          checked={active}
-          onCheckedChange={(checked) => setActiveDemoConfiguration(checked ? config.id : null)}
-          aria-label={t('demo.activeToggleAria', { name: config.name })}
-        />
-      </div>
-      {deployHint ? (
-        <p className="border-t border-border-soft bg-brand-blue/5 px-4 py-2 text-[11px] leading-snug text-brand-blue">
-          {deployHint}
-        </p>
-      ) : null}
-      {expanded ? (
-        <div className="border-t border-border-soft px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-semibold text-text-secondary">
-              {active ? t('demo.active') : t('demo.inactive')}
-            </span>
-            <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-semibold text-text-secondary">
-              {config.settings.themeMode === 'light' ? t('branding.appearance.light') : t('branding.appearance.dark')}
-            </span>
-          </div>
-          {config.description ? (
-            <p className="mt-2 text-[12px] leading-snug text-text-secondary">{config.description}</p>
-          ) : null}
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <DemoSummaryItem
-              label={t('demo.summary.branding')}
-              value={config.settings.branding.productName || t('branding.productNameFallback')}
-            />
-            <DemoSummaryItem
-              label={t('demo.summary.modules')}
-              value={t('demo.summary.modulesValue', {
-                enabled: enabledModules.length,
-                total: MODULE_DEFS.length,
-              })}
-            />
-            <DemoSummaryItem
-              label={t('demo.summary.caseTypes')}
-              value={
-                config.settings.mode === 'single'
-                  ? activeCaseType?.label ?? t('modules.cases.modeSummary.noActiveType')
-                  : t('modules.cases.modeSummary.enabledTypes', {
-                      enabled: enabledTypes.length,
-                      total: config.settings.caseTypes.length,
-                    })
-              }
-            />
-            <DemoSummaryItem
-              label={t('demo.summary.intelligence')}
-              value={t('demo.summary.intelligenceValue', { enabled: aiEnabledCount, total: aiFlags.length })}
-            />
-            <DemoSummaryItem
-              label="Data source"
-              value={`${config.settings.dataSource?.activeDatasetId ?? 'multi-case-demo'} · ${config.settings.dataSource?.mode ?? 'mock'}`}
-            />
-          </div>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {enabledModules.map(({ id, icon: Icon }) => (
-              <span
-                key={id}
-                className="inline-flex items-center gap-1 rounded-full bg-surface-primary px-2 py-1 text-[10px] font-semibold text-text-secondary"
-              >
-                <Icon className="size-3" />
-                {t(`modules.definitions.${id}.label` as never)}
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </article>
-  );
-}
-
-function DemoSummaryItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-surface-primary px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">{label}</p>
-      <p className="mt-0.5 truncate text-[12px] font-semibold text-text-primary">{value}</p>
-    </div>
-  );
-}
-
-function formatDemoConfigurationDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
 }
 
 /* ─── Roles tab ─── */

@@ -130,8 +130,24 @@ export function resolveDashboardTaskMetric(
   return { show: true, value: task.slaRemaining, label: 'SLA left' };
 }
 
-export function resolveDashboardTaskPrimaryAction(_task: Task): DashboardTaskAction {
+export function resolveDashboardTaskPrimaryAction(task: Task, roleView?: 'assessor' | 'manager'): DashboardTaskAction {
+  if (roleView === 'manager') return { label: 'Review & countersign' };
+  const type = task.taskType.toLowerCase();
+  if (type.includes('decision')) return { label: 'Go to decision' };
+  if (type.includes('requirement')) return { label: 'View requirements' };
+  if (type.includes('review') || type.includes('file')) return { label: 'Review file' };
   return { label: 'View task' };
+}
+
+export function resolveDashboardTaskPrimaryRoute(task: Task): string {
+  return `/tasks#task=${encodeURIComponent(task.id)}`;
+}
+
+export function resolveDashboardTaskEvidenceRoute(task: Task, dataset: SystemDataset): string | undefined {
+  const documentId = resolveTaskEvidenceDocumentId(task, dataset);
+  const caseId = task.caseId;
+  if (!documentId || !caseId) return undefined;
+  return `/cases/${caseId}#tab=documents&doc=${encodeURIComponent(documentId)}`;
 }
 
 export function resolveTaskEvidenceDocumentId(task: Task, dataset: SystemDataset): string | undefined {

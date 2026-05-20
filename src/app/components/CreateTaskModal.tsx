@@ -14,6 +14,7 @@ import {
   CreationTextarea,
   type SelectOption,
 } from './CreationModalControls';
+import { RESPONSIVE_FORM_DIALOG_CLASS } from './responsiveDialog';
 import { CreationSection } from './creation/CreationSection';
 import { CreationReviewSection } from './creation/CreationReviewSection';
 import {
@@ -36,12 +37,16 @@ export function CreateTaskModal({
   onOpenChange,
   open,
   dataSource,
+  embedded = false,
+  onFlowBack,
 }: {
   initialCaseId?: string;
   onCreated: (input: { datasetId: string; taskId: string }) => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   dataSource: DataSourceSettings;
+  embedded?: boolean;
+  onFlowBack?: () => void;
 }) {
   const dataset = useMemo(() => getSystemDataset(dataSource.activeDatasetId), [dataSource.activeDatasetId]);
   const isCaseContextCreation = Boolean(initialCaseId);
@@ -191,10 +196,10 @@ export function CreateTaskModal({
     onOpenChange(false);
   };
 
-  return (
-    <Dialog modal={false} open={open} onOpenChange={handleOpenChange}>
-      {open ? <CreationModalBackdrop /> : null}
-      <DialogContent className="z-[1110] flex max-h-[min(860px,calc(100vh-2rem))] w-[min(1080px,calc(100vw-2rem))] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1080px]">
+  if (!open) return null;
+
+  const form = (
+    <>
         <DialogHeader className={CREATION_MODAL_HEADER_CLASS}>
           <DialogTitle>Create task</DialogTitle>
           <DialogDescription>
@@ -354,10 +359,23 @@ export function CreateTaskModal({
           canSubmit={canSubmit}
           isFirstStep
           isLastStep
+          onFlowBack={onFlowBack}
           onCancel={() => handleOpenChange(false)}
           onSubmit={submit}
           submitLabel="Create task"
         />
+    </>
+  );
+
+  if (embedded) {
+    return <div className="flex min-h-0 flex-1 flex-col">{form}</div>;
+  }
+
+  return (
+    <Dialog modal={false} open={open} onOpenChange={handleOpenChange}>
+      {open ? <CreationModalBackdrop /> : null}
+      <DialogContent layout="auto" className={RESPONSIVE_FORM_DIALOG_CLASS}>
+        {form}
       </DialogContent>
     </Dialog>
   );

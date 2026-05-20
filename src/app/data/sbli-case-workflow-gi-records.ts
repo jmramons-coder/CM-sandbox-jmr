@@ -1062,6 +1062,19 @@ export const SBLI_CASE_WORKFLOW_GI_RECORDS: Record<string, SbliCaseWorkflowGiRec
               "valueType": "pill_success"
             }
           ]
+        },
+        {
+          "id": "accelerated_uw_status",
+          "title": "Accelerated underwriting status",
+          "type": "status_tile_grid",
+          "tiles": [
+            { "label": "Age eligibility", "status": "complete" },
+            { "label": "Coverage limit", "status": "complete" },
+            { "label": "MIB search", "status": "complete" },
+            { "label": "Tele-interview", "status": "pending" },
+            { "label": "Health questionnaire", "status": "pending" },
+            { "label": "Same-day issue", "status": "flagged" }
+          ]
         }
       ],
       "collapsibles": [

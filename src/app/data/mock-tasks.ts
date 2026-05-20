@@ -1,10 +1,7 @@
 import type { Task, Team, TeamMember } from '../types';
+import { DEMO_CURRENT_PERSONA, toTeamMember } from './demoPersonas';
 
-export const CURRENT_USER: TeamMember = {
-  name: 'Richard, Daniels',
-  authorityLevel: 4,
-  isManager: true,
-};
+export const CURRENT_USER: TeamMember = toTeamMember(DEMO_CURRENT_PERSONA);
 
 export const TEAMS: Team[] = [
   {
@@ -45,7 +42,7 @@ export const MY_TASKS: Task[] = [
     slaRemaining: '2h 14m',
     slaStatus: 'danger',
     status: 'Escalated',
-    assignedTo: 'Richard, Daniels',
+    assignedTo: DEMO_CURRENT_PERSONA.name,
     origin: 'Decision — Stage 5',
     createdDate: '2026-03-26 08:30',
     description:
@@ -77,7 +74,7 @@ export const MY_TASKS: Task[] = [
     slaRemaining: '6h 30m',
     slaStatus: 'normal',
     status: 'In Queue',
-    assignedTo: 'Richard, Daniels',
+    assignedTo: DEMO_CURRENT_PERSONA.name,
     origin: 'Overdue Monitoring',
     createdDate: '2026-03-26 08:00',
     description: 'Requirement due date passed without receipt. Contact responsible party.',
@@ -110,7 +107,7 @@ export const MY_TASKS: Task[] = [
     slaRemaining: '1h 59m',
     slaStatus: 'warning',
     status: 'To Do',
-    assignedTo: 'Richard, Daniels',
+    assignedTo: DEMO_CURRENT_PERSONA.name,
     origin: 'Medical Review Complete',
     createdDate: '2026-03-26 10:30',
     description: 'All 7 required documents received and validated. AI recommends approval at 94% confidence. Record a final claim decision.',
@@ -142,7 +139,7 @@ export const MY_TASKS: Task[] = [
     slaRemaining: '2d 0h',
     slaStatus: 'normal',
     status: 'To Do',
-    assignedTo: 'Richard, Daniels',
+    assignedTo: DEMO_CURRENT_PERSONA.name,
     origin: 'Completion Check',
     createdDate: '2026-03-25 14:00',
     description: 'All restoration requirements satisfied. Confirm readiness for case closure.',
@@ -172,7 +169,7 @@ export const MY_TASKS: Task[] = [
     slaRemaining: '5d 4h',
     slaStatus: 'normal',
     status: 'To Do',
-    assignedTo: 'Richard, Daniels',
+    assignedTo: DEMO_CURRENT_PERSONA.name,
     origin: 'Compliance calendar',
     createdDate: '2026-03-24 09:00',
     description: 'Stand-alone compliance task: sign off the Q1 claims handling SLA summary for the regulator pack. No linked claim file.',
@@ -197,7 +194,7 @@ export const MY_TASKS: Task[] = [
     slaRemaining: '1w 2d',
     slaStatus: 'normal',
     status: 'Completed',
-    assignedTo: 'Richard, Daniels',
+    assignedTo: DEMO_CURRENT_PERSONA.name,
     origin: 'Process improvement',
     createdDate: '2026-03-23 14:20',
     description: 'Stand-alone ops task: revise the intake routing checklist after last week’s workflow workshop. Not tied to a specific case.',
@@ -403,7 +400,7 @@ export const BILLY_POST_APPROVAL_TASK: Task = {
   slaRemaining: '1d 2h',
   slaStatus: 'warning',
   status: 'To Do',
-  assignedTo: 'Richard, Daniels',
+  assignedTo: DEMO_CURRENT_PERSONA.name,
   origin: 'Post-Approval — Restoration Plan',
   createdDate: '2026-03-26 10:15',
   description:

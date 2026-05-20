@@ -2,7 +2,7 @@ import type { DynamicDocumentData } from '../components/DynamicDocumentSidePanel
 import { resolveDocumentFindingHighlight } from '../utils/document-evidence-highlights';
 import { resolveDocumentPreviewUrl } from '../utils/sbli-document-assets';
 import type { SystemDataset } from './multi-case-dataset';
-import { getDocumentFileType } from './documentMetadata';
+import { getDocumentFileType, getDocumentSourceLabel } from './documentMetadata';
 
 export const MOCK_DOCUMENT_EVIDENCE: Record<string, DynamicDocumentData> = {
   'DOC-1001': {
@@ -98,7 +98,7 @@ function getDatasetDocumentEvidence(documentId: string, dataset?: SystemDataset)
     caseId: caseId ?? 'N/A',
     caseReference: caseId ?? 'N/A',
     claimant: caseRecord?.primaryParty.label ?? 'Dataset',
-    source: document?.source ?? 'dataset',
+    source: getDocumentSourceLabel(document?.source ?? 'dataset'),
     linkedRequirement: document?.linkedRequirement ?? 'Dataset evidence',
     linkedRequirementHref: caseId ? `/cases/${caseId}#tab=requirements` : '/cases',
     received: document?.uploaded ?? 'N/A',

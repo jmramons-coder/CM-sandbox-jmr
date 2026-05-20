@@ -36,6 +36,8 @@ import {
   SelectValue,
 } from '../ui/select';
 import { LozengeTag } from '../LozengeTag';
+import { DEMO_CASE_IDS } from '../../data/demoCaseIds';
+import { DEMO_CURRENT_PERSONA } from '../../data/demoPersonas';
 import { getCaseOverview } from '../../data/mock-cases';
 import { createRequest } from '../../data/datasetMutations';
 import { filterDatasetBySettings, getSystemDataset, listCaseSummaries } from '../../data/objectRepository';
@@ -110,8 +112,7 @@ const TASK_ASSIGNEE_OPTIONS = [
   'Auto-assign to case assignee',
   'Operations queue',
   'AI Intake',
-  'Victor Ramon',
-  'Richard, Daniels',
+  DEMO_CURRENT_PERSONA.name,
 ];
 
 const TASK_DUE_OPTIONS = [
@@ -211,7 +212,7 @@ export function CreateRequestForm() {
     if (presetSmartUpload) {
       base.mode = 'internal';
       base.title = 'Client information update — address change';
-      base.caseId = 'CD26-5546112';
+      base.caseId = DEMO_CASE_IDS.wopClaim;
       base.notes =
         'Drafted from Smart Request analysis. Detected address change for Billy Bud with proof-of-residence and missing government ID follow-ups.';
     }
@@ -302,7 +303,7 @@ export function CreateRequestForm() {
 
   const requirementOptions = useMemo(() => {
     if (!draft.caseId) return [];
-    const overview = getCaseOverview(draft.caseId, activeDataset, dataSource.legacyMockOverlayEnabled);
+    const overview = getCaseOverview(draft.caseId, activeDataset, false);
     return overview?.requirements ?? [];
   }, [activeDataset, dataSource.legacyMockOverlayEnabled, draft.caseId]);
 

@@ -1,3 +1,6 @@
+import type { SystemDataset } from './multi-case-dataset';
+import { GUARDIAN_DEMO_CASE_IDS, GUARDIAN_DATASET_ID } from './guardianDemoCaseIds';
+
 /** Canonical SBLI demo case IDs — use instead of legacy IP26-* / IP44-* fixtures. */
 export const DEMO_CASE_IDS = {
   wopClaim: 'CD26-5546112',
@@ -29,4 +32,40 @@ export function resolveSbliCaseId(caseId: string): string {
   return LEGACY_TO_SBLI_CASE_ID[caseId] ?? caseId;
 }
 
+/** Map legacy bookmark URLs (IP26-*, etc.) to canonical ids for the active dataset. */
+export function resolveDemoCaseId(caseId: string, activeDatasetId?: string | null): string {
+  if (!caseId) return caseId;
+  if (activeDatasetId === GUARDIAN_DATASET_ID) {
+    return caseId;
+  }
+  return resolveSbliCaseId(caseId);
+}
+
 export const DEFAULT_DEMO_CASE_ID = DEMO_CASE_IDS.wopClaim;
+
+export function getDefaultCaseIdForDataset(activeDatasetId?: string | null): string {
+  if (activeDatasetId === GUARDIAN_DATASET_ID) {
+    return GUARDIAN_DEMO_CASE_IDS.incomeProtectionClaim;
+  }
+  return DEFAULT_DEMO_CASE_ID;
+}
+
+/** Route-safe case id: legacy remap, then must exist in the active filtered dataset. */
+export function resolveCaseRouteId(
+  caseId: string | undefined,
+  dataset: Pick<SystemDataset, 'id' | 'cases'>,
+): string {
+  const caseIds = new Set(dataset.cases.map((row) => row.id));
+  if (!caseId) {
+    return pickExistingCaseId(caseIds, getDefaultCaseIdForDataset(dataset.id));
+  }
+  const mapped = resolveDemoCaseId(caseId, dataset.id);
+  if (caseIds.has(mapped)) return mapped;
+  return pickExistingCaseId(caseIds, getDefaultCaseIdForDataset(dataset.id));
+}
+
+function pickExistingCaseId(caseIds: Set<string>, preferredId: string): string {
+  if (caseIds.has(preferredId)) return preferredId;
+  const first = caseIds.values().next().value;
+  return first ?? preferredId;
+}

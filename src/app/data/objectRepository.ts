@@ -27,6 +27,9 @@ import { getWorkflowDefinition } from '../domain/workflows';
 import { parseCaseTypeCodeFromId } from '../domain/caseTypes';
 import { getDocumentFileType } from './documentMetadata';
 import { resolveAssigneeLabel } from './userDirectory';
+import { deriveAiActionsFromDataset } from './aiActionDerivation';
+
+export { deriveAiActionsFromDataset } from './aiActionDerivation';
 
 export interface ObjectRepository {
   dataset: SystemDataset;
@@ -135,7 +138,7 @@ export function filterDatasetBySettings(dataset: SystemDataset, settings?: DataS
 
   const filtered = {
     ...sourceDataset,
-    legacyMockOverlayEnabled: sourceDataset.legacyMockOverlayEnabled === false ? false : settings.legacyMockOverlayEnabled,
+    legacyMockOverlayEnabled: false,
     enabledBusinessLines: sourceDataset.enabledBusinessLines?.filter((kind) => enabledBusinessLines.has(kind)),
     objectDomains: sourceDataset.objectDomains.filter((kind) => enabledEntities.has(kind)),
     cases: enabledCases,
@@ -191,7 +194,7 @@ export function createObjectRepository(datasetId?: string | null, settings?: Dat
     getEntity: (kind, id) => getEntity(dataset, kind, id),
     getCaseRecord: (caseId) => dataset.cases.find((item) => item.id === caseId),
     getCaseSummary: (caseId) => listCaseSummaries(dataset).find((item) => item.id === caseId),
-    getLegacyCaseOverview: (caseId) => settings?.legacyMockOverlayEnabled === false ? undefined : CASE_OVERVIEWS[caseId],
+    getLegacyCaseOverview: () => undefined,
     listObjectRefs: (kind) => listObjectRefs(dataset, kind),
   };
 }
@@ -457,21 +460,21 @@ export function listTasks(dataset: SystemDataset = MULTI_CASE_DEMO_DATASET, filt
   if (!dataset.objectDomains.includes('task')) return [];
   const generated = dataset.tasks.map((row) => toTask(dataset, row));
   const legacy = [...MY_TASKS, ...TEAM_TASKS];
-  const rows = dataset.legacyMockOverlayEnabled === false ? generated : dedupeById([...generated, ...legacy]);
+  const rows = dataset.legacyMockOverlayEnabled === true ? dedupeById([...generated, ...legacy]) : generated;
   return filter.caseId ? rows.filter((row) => row.caseId === filter.caseId) : rows;
 }
 
 export function listDocuments(dataset: SystemDataset = MULTI_CASE_DEMO_DATASET, filter: { caseId?: string } = {}): CaseDocument[] {
   if (!dataset.objectDomains.includes('document')) return [];
   const generated = dataset.documents.map((row) => toDocument(dataset, row));
-  const rows = dataset.legacyMockOverlayEnabled === false ? generated : dedupeById([...generated, ...MOCK_DOCUMENTS]);
+  const rows = dataset.legacyMockOverlayEnabled === true ? dedupeById([...generated, ...MOCK_DOCUMENTS]) : generated;
   return filter.caseId ? rows.filter((row) => row.caseId === filter.caseId) : rows;
 }
 
 export function listRequests(dataset: SystemDataset = MULTI_CASE_DEMO_DATASET, filter: { caseId?: string } = {}): ServiceRequest[] {
   if (!dataset.objectDomains.includes('request')) return [];
   const generated = dataset.requests.map((row) => toRequest(row));
-  const rows = dataset.legacyMockOverlayEnabled === false ? generated : dedupeById([...generated, ...MOCK_REQUESTS]);
+  const rows = dataset.legacyMockOverlayEnabled === true ? dedupeById([...generated, ...MOCK_REQUESTS]) : generated;
   return filter.caseId ? rows.filter((row) => row.caseId === filter.caseId) : rows;
 }
 
@@ -489,133 +492,6 @@ export function listActivityEvents(dataset: SystemDataset = MULTI_CASE_DEMO_DATA
 
 function actionLinkedToCase(action: AiActionRecord, caseId: string): boolean {
   return (action.linkedObjects ?? []).some((ref) => ref.kind === 'case' && ref.id === caseId);
-}
-
-function buildAiAction(
-  id: string,
-  title: string,
-  summary: string,
-  sourceSurface: AiActionRecord['sourceSurface'],
-  linkedObjects: ObjectRef[],
-  patch: Partial<AiActionRecord> = {},
-): AiActionRecord {
-  return {
-    id,
-    kind: 'ai_action',
-    status: patch.status ?? 'suggested',
-    actionType: patch.actionType ?? sourceSurface,
-    title,
-    summary,
-    createdAt: patch.createdAt ?? '2026-05-08T09:00:00Z',
-    actor: patch.actor ?? 'ai',
-    sourceSurface,
-    linkedObjects,
-    ...patch,
-  };
-}
-
-export function deriveAiActionsFromDataset(dataset: SystemDataset = MULTI_CASE_DEMO_DATASET): AiActionRecord[] {
-  const actions: AiActionRecord[] = [];
-
-  dataset.activityEvents
-    .filter((event) => event.actor === 'ai')
-    .forEach((event) => {
-      actions.push(buildAiAction(
-        `AI-EVENT-${event.id}`,
-        event.label,
-        `AI activity event linked to ${event.linkedObjects.length} object(s).`,
-        'case',
-        event.linkedObjects,
-        { status: 'completed', actionType: 'activity_event', createdAt: event.timestamp, relatedActivityEventId: event.id },
-      ));
-    });
-
-  dataset.tasks
-    .filter((task) => task.hasAI || task.aiSummary || task.aiAction || task.scoringContext)
-    .forEach((task) => {
-      actions.push(buildAiAction(
-        `AI-TASK-${task.id}`,
-        task.aiAction ?? task.label,
-        task.aiSummary ?? task.description ?? `AI assisted task ${task.label}.`,
-        task.scoringContext ? 'scoring' : 'task',
-        [{ kind: 'task', id: task.id, label: task.label }, ...task.linkedObjects],
-        {
-          status: task.status === 'Completed' ? 'completed' : 'suggested',
-          actionType: task.scoringContext ? 'review_scoring' : 'task_suggestion',
-          payload: task.scoringContext ? { scoringContext: task.scoringContext } : undefined,
-        },
-      ));
-    });
-
-  dataset.documents
-    .filter((document) => document.aiSummary || document.aiAction || document.scoringContext)
-    .forEach((document) => {
-      actions.push(buildAiAction(
-        `AI-DOC-${document.id}`,
-        document.aiAction ?? `Review ${document.label}`,
-        document.aiSummary ?? `AI reviewed ${document.label}.`,
-        document.scoringContext ? 'scoring' : 'document',
-        [{ kind: 'document', id: document.id, label: document.label }, ...document.linkedObjects],
-        {
-          status: document.status === 'Validated' ? 'completed' : 'suggested',
-          actionType: document.scoringContext ? 'scoring_evidence' : 'document_review',
-          payload: document.scoringContext ? { scoringContext: document.scoringContext } : undefined,
-        },
-      ));
-    });
-
-  dataset.requests.forEach((request) => {
-    request.systemSteps?.forEach((step) => {
-      actions.push(buildAiAction(
-        `AI-REQ-${request.id}-${step.id}`,
-        step.title,
-        step.description ?? request.aiSummary ?? `System step ${step.title} for request ${request.label}.`,
-        'request',
-        [{ kind: 'request', id: request.id, label: request.label }, ...request.linkedObjects],
-        {
-          status: step.status === 'completed' ? 'completed' : step.status === 'blocked' ? 'failed' : 'in_progress',
-          actor: step.kind === 'review_required' ? 'system' : 'ai',
-          actionType: step.kind,
-          steps: [{ id: step.id, label: step.title, status: step.status }],
-        },
-      ));
-    });
-  });
-
-  dataset.documentEvidence.forEach((evidence) => {
-    evidence.findings.forEach((finding) => {
-      actions.push(buildAiAction(
-        `AI-EVD-${evidence.id}-${finding.id}`,
-        finding.title,
-        finding.reasoning,
-        'document',
-        [{ kind: 'document', id: evidence.documentId, label: evidence.title }, ...evidence.linkedObjects],
-        {
-          status: finding.severity === 'High' ? 'suggested' : 'completed',
-          actionType: 'evidence_finding',
-          rationale: finding.impact,
-        },
-      ));
-    });
-  });
-
-  dataset.assistantResponses.forEach((response) => {
-    actions.push(buildAiAction(
-      `AI-COPILOT-${response.id}`,
-      response.prompt,
-      response.response,
-      'copilot',
-      response.linkedObjects,
-      {
-        status: 'completed',
-        actionType: 'assistant_response',
-        workflowTemplateId: response.workflowTemplateId,
-        relatedAssistantResponseId: response.id,
-      },
-    ));
-  });
-
-  return actions;
 }
 
 export function listAiActions(
@@ -767,7 +643,7 @@ export function getEntity(dataset: SystemDataset, kind: WorkObjectKind, id: stri
 
 export function listCaseSummaries(dataset: SystemDataset = MULTI_CASE_DEMO_DATASET): CaseSummary[] {
   if (!dataset.objectDomains.includes('case')) return [];
-  const includeLegacyClaims = dataset.legacyMockOverlayEnabled !== false && (dataset.enabledBusinessLines?.includes('claim') ?? true);
+  const includeLegacyClaims = dataset.legacyMockOverlayEnabled === true && (dataset.enabledBusinessLines?.includes('claim') ?? true);
   const generated = dataset.cases.map((record) => caseRecordToLegacySummary(record, dataset));
   const generatedIds = new Set(generated.map((item) => item.id));
   return [

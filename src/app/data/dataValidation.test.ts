@@ -12,6 +12,8 @@ import { buildDataSettingsViewModel } from '../domain/dataSettingsViewModel';
 import { buildSchemaGraph, getDatasetRowsForKind } from '../domain/schemaGraph';
 import { createCase, createRequest, createTask, deleteEntity, linkObject } from './datasetMutations';
 import { datasetRegistry } from './datasetRegistry';
+import { SEEDED_DEMO_ENVIRONMENTS } from './demo-environment-presets';
+import { DEMO_ENV_GUARDIAN_ID } from './demo-environment-deploy';
 import {
   resolveContextSupportCards,
   type TaskContextCardKind,
@@ -106,6 +108,29 @@ describe('dataset validation gates', () => {
       expect(roundtrip.assistantResponses.length).toBe(dataset.assistantResponses.length);
       expect(roundtrip.aiActions.length).toBe(dataset.aiActions.length);
     });
+  });
+
+  it('validates Guardian 1821 UK dataset', () => {
+    const dataset = SYSTEM_DATASETS.find((row) => row.id === 'guardian-uk-demo');
+    expect(dataset).toBeDefined();
+    expect(validateSystemDataset(dataset!).errors).toEqual([]);
+    expect(dataset!.cases).toHaveLength(5);
+    expect(dataset!.displayCurrency).toBe('GBP');
+    expect(dataset!.documents.length).toBeGreaterThanOrEqual(20);
+    expect(dataset!.requirements.length).toBeGreaterThanOrEqual(20);
+    expect(dataset!.requests).toHaveLength(5);
+    expect(dataset!.documents.every((doc) => doc.fileAvailable === false)).toBe(true);
+    expect(dataset!.documents.filter((doc) => doc.insights?.length).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('seeds Guardian 1821 demo environment with UK dataset and branding', () => {
+    const env = SEEDED_DEMO_ENVIRONMENTS.find((row) => row.id === DEMO_ENV_GUARDIAN_ID);
+    expect(env).toBeDefined();
+    expect(env!.name).toBe('Guardian 1821');
+    expect(env!.settings.dataSource.activeDatasetId).toBe('guardian-uk-demo');
+    expect(env!.settings.dataSource.displayCurrency).toBe('GBP');
+    expect(env!.settings.branding.productName).toBe('Guardian Case Management');
+    expect(env!.settings.dataSource.legacyMockOverlayEnabled).toBe(false);
   });
 
   it('keeps SBLI assistant responses linked to real case ids', () => {
@@ -224,7 +249,7 @@ describe('dataset validation gates', () => {
     expect(dataset.policies.length).toBeGreaterThan(0);
     expect(dataset.agents.length).toBeGreaterThan(0);
     expect(dataset.applications.length).toBeGreaterThan(0);
-    expect(deferredArrays.filter((rows) => rows.length > 0).length).toBe(4);
+    expect(deferredArrays.filter((rows) => rows.length > 0).length).toBe(5);
     expect(dataset.objectDomains).toEqual([
       'case',
       'client',

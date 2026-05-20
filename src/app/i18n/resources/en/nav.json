@@ -15,15 +15,28 @@
   "globalCreate": {
     "title": "Create",
     "ariaLabel": "Create new record",
+    "pickDescription": "Choose what you want to create to get started.",
     "case": "Case",
     "task": "Task",
-    "request": "Request"
+    "request": "Request",
+    "caseDescription": "Open a new case file with parties, policies, and intake context.",
+    "taskDescription": "Assign work with due dates, queues, and optional case links.",
+    "requestDescription": "Send a templated service request to clients or external parties."
   },
   "activityFeed": {
     "label": "Feed",
     "ariaLabel": "AI activity feed",
     "popoverTitle": "AI Activity Feed",
     "popoverBody": "Activate to see real-time updates from the agentic crew as they process tasks, build plans, and manage your cases."
+  },
+  "mobileNav": {
+    "ariaLabel": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "menuTitle": "Menu",
+    "more": "More",
+    "search": "Search",
+    "searchCasesOnlyHint": "Full search for clients and policies is available on desktop. Switch to Cases or use a larger screen."
   },
   "header": {
     "openAssistant": "Open Amplify Assistant",
@@ -46,13 +59,26 @@
   "userMenu": {
     "openMenu": "Open user menu",
     "profile": "Profile",
+    "profileDescription": "Your role, band, and approval authority for this demo session.",
+    "profileRole": "Role",
+    "profileBand": "Band",
+    "profileTeam": "Team",
+    "profileAuthority": "Max authority",
     "soonBadge": "Soon",
     "platformSettings": "Platform settings",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "roleView": "Role view",
+    "roleAssessor": "Assessor",
+    "roleManager": "Manager",
+    "roleAssessorHint": "Assessor view — Victor Ramon",
+    "roleManagerHint": "Manager view — Sarah Mitchell"
   },
   "appSwitcher": {
     "switchApplication": "Switch application",
     "products": "Products",
+    "clientDemo": "Client demo",
+    "clientDemoHint": "Activate a branded demo environment.",
+    "openDemoSettings": "Demo environment settings",
     "resources": "Resources",
     "platformGuide": "Platform guide",
     "documentationSpec": "Documentation & spec",

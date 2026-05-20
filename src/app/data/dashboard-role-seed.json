@@ -1,0 +1,640 @@
+{
+  "_meta": {
+    "description": "Amplify Case Management — Dashboard role seed data for assessor and manager views",
+    "version": "1.0",
+    "generated": "2026-05-20",
+    "architecture_ref": "amplify_dashboard_role_architecture.md",
+    "roles": ["assessor", "manager"],
+    "state_variables": {
+      "dshRole": { "type": "string", "values": ["assessor", "manager"], "default": "assessor" },
+      "dshCaseFilter": { "type": "string", "values": ["all", "pending", "active", "recovery"], "default": "all" },
+      "dshActTab": { "type": "string", "values": ["24h", "week"], "default": "24h" }
+    },
+    "toggle_placement": "App header user avatar dropdown — 'Role view' section with pill toggle",
+    "toggle_function": "toggleDshRole()",
+    "render_function": "renderDashboard()",
+    "render_target": "#dshWrap"
+  },
+
+  "users": {
+    "assessor": {
+      "name": "Victor Ramon",
+      "initials": "VR",
+      "email": "victor.ramon@sbli.com",
+      "role": "assessor",
+      "band": 3,
+      "team": "Life Claims",
+      "maxAuthority": 300000
+    },
+    "manager": {
+      "name": "Sarah Mitchell",
+      "initials": "SM",
+      "email": "sarah.mitchell@sbli.com",
+      "role": "manager",
+      "band": 5,
+      "team": "Life Claims",
+      "maxAuthority": null
+    }
+  },
+
+  "teamAssessors": [
+    {
+      "name": "Victor Ramon",
+      "initials": "VR",
+      "avCls": "",
+      "tasks": 17,
+      "overdue": 2,
+      "cases": 3,
+      "sla": "At risk",
+      "slaCls": "red",
+      "conf": 91,
+      "barPct": 91
+    },
+    {
+      "name": "Richard Daniels",
+      "initials": "RD",
+      "avCls": "amber",
+      "tasks": 12,
+      "overdue": 0,
+      "cases": 1,
+      "sla": "OK",
+      "slaCls": "ok",
+      "conf": 95,
+      "barPct": 95
+    },
+    {
+      "name": "Sarah Mitchell",
+      "initials": "SM",
+      "avCls": "green",
+      "tasks": 8,
+      "overdue": 0,
+      "cases": 0,
+      "sla": "OK",
+      "slaCls": "ok",
+      "conf": 0,
+      "barPct": 0
+    }
+  ],
+
+  "aiConfidenceBars": [
+    { "label": "Victor Ramon",    "pct": 91, "cls": "" },
+    { "label": "Richard Daniels", "pct": 95, "cls": "" },
+    { "label": "Portfolio avg.",  "pct": 88, "cls": "" }
+  ],
+
+  "dashData": {
+
+    "assessor": {
+      "eyebrow": "MISSION CONTROL",
+      "headline": "Today's control priorities",
+      "sub": "Unblock review, protect SLA, and move decisions forward.",
+
+      "kpis": [
+        { "val": "$500K", "label": "Blocked exposure",  "cls": "red"  },
+        { "val": "5",     "label": "Ready decisions",   "cls": "blue" },
+        { "val": "$700K", "label": "Today's release",   "cls": "grn"  }
+      ],
+
+      "cards": [
+        {
+          "icon": "ti-checkbox",
+          "iconBg": "var(--blue-bg)",
+          "iconColor": "var(--blue-t)",
+          "val": "17",
+          "valCls": "",
+          "title": "Assigned to me",
+          "sub": "1 overdue · 5 ready"
+        },
+        {
+          "icon": "ti-alert-triangle",
+          "iconBg": "var(--amber-bg)",
+          "iconColor": "var(--amber-t)",
+          "val": "4",
+          "valCls": "amber",
+          "title": "Attention required",
+          "sub": "Controls or missing evidence"
+        },
+        {
+          "icon": "ti-clock",
+          "iconBg": "var(--red-bg)",
+          "iconColor": "var(--red-t)",
+          "val": "At risk",
+          "valCls": "red",
+          "title": "SLA health",
+          "sub": "Next breach 2026-05-15"
+        }
+      ],
+
+      "cases": [
+        {
+          "key": "bb",
+          "name": "Billy Bud",
+          "id": "CD26-5546112",
+          "type": "CD",
+          "status": "Pending decision",
+          "dot": "#E24B4A",
+          "val": "$500,000",
+          "sla": "SLA Today",
+          "slaCls": "red",
+          "assignee": "Victor Ramon"
+        },
+        {
+          "key": "sd",
+          "name": "Thomas Dupont",
+          "id": "CD44-6679812",
+          "type": "CD",
+          "status": "Pending decision",
+          "dot": "#E24B4A",
+          "val": "$500,000",
+          "sla": "SLA Today",
+          "slaCls": "red",
+          "assignee": "Victor Ramon"
+        },
+        {
+          "key": "mt",
+          "name": "Marc Tremblay",
+          "id": "NB66-7622343",
+          "type": "NB",
+          "status": "Active",
+          "dot": "#3B6D11",
+          "val": "$625,000",
+          "sla": "SLA 2d",
+          "slaCls": "amber",
+          "assignee": "Victor Ramon"
+        },
+        {
+          "key": "er",
+          "name": "Elena Rossi",
+          "id": "NB98-9989870",
+          "type": "NB",
+          "status": "Active",
+          "dot": "#185FA5",
+          "val": "$350,000",
+          "sla": "SLA 2d",
+          "slaCls": "amber",
+          "assignee": "Richard Daniels"
+        }
+      ],
+
+      "_casesNote": "Assessor sees all 4 cases but assignee field is hidden in the row. All are effectively 'my portfolio' in the assessor view.",
+
+      "tasks": [
+        {
+          "tid": "CD-5221",
+          "prio": "High",
+          "val": "$500K",
+          "meta": "Monthly waiver",
+          "title": "Approve WOP rider — waive premiums",
+          "link": "Billy Bud · CD26-5546112",
+          "caseKey": "bb",
+          "ai": "Total disability confirmed. Own-occupation and unable-to-work-for-profit definitions both satisfied. Pre-existing T2D — no exclusion applies. WOP rider conditions met. Recommend approval.",
+          "actions": [
+            { "label": "View task",  "taskKey": "CD-5221" },
+            { "label": "View APS",   "icon": "ti-file-text" }
+          ]
+        },
+        {
+          "tid": "CD-5203",
+          "prio": "High",
+          "val": "2026-05-15",
+          "meta": "Overdue",
+          "title": "Chase FCE — overdue",
+          "link": "Billy Bud · CD26-5546112",
+          "caseKey": "bb",
+          "ai": "FCE from Boston Functional Rehabilitation Center is 35 days overdue. Disability decision cannot be finalised without it. Second chase sent May 1 — no response.",
+          "actions": [
+            { "label": "View task",      "taskKey": "CD-5203" },
+            { "label": "Chase provider", "icon": "ti-send" }
+          ]
+        },
+        {
+          "tid": "CD-6130",
+          "prio": "High",
+          "val": "$500K",
+          "meta": "Decision ready",
+          "title": "Approve $500K death benefit payout to Marie Dupont",
+          "link": "Thomas Dupont · CD44-6679812",
+          "caseKey": "sd",
+          "ai": "All requirements met. MIB comparison complete — no discrepancies. Contestability lapsed. ACH routing verified. Recommend approval.",
+          "actions": [
+            { "label": "View task",     "taskKey": "CD-6130" },
+            { "label": "View decision", "icon": "ti-gavel" }
+          ]
+        }
+      ],
+
+      "docs": [
+        {
+          "icon": "ti-file-text",
+          "title": "Functional Capacity Evaluation ...",
+          "sub": "Overdue 35 days — critical for total di...",
+          "date": "2026-03-10",
+          "dateCls": "red",
+          "caseKey": "bb"
+        },
+        {
+          "icon": "ti-file-text",
+          "title": "Pre-disability Earnings Verifica...",
+          "sub": "Required to confirm monthly premium...",
+          "date": "2026-05-01",
+          "dateCls": "red",
+          "caseKey": "bb"
+        },
+        {
+          "icon": "ti-file-text",
+          "title": "Attending Physician Statement...",
+          "sub": "APS to validate T2D management hist...",
+          "date": "2026-05-16",
+          "dateCls": "amber",
+          "caseKey": "mt"
+        },
+        {
+          "icon": "ti-file-text",
+          "title": "Prior decline explanation letter",
+          "sub": "Applicant must explain 2022 MIB prior...",
+          "date": "2026-05-18",
+          "dateCls": "amber",
+          "caseKey": "mt"
+        },
+        {
+          "icon": "ti-shield-check",
+          "title": "No discrepancies found",
+          "sub": "Under Review — CD44-6679812",
+          "date": "2026-05-10",
+          "dateCls": "amber",
+          "caseKey": "sd"
+        }
+      ],
+
+      "activity24h": [],
+
+      "_activity24hNote": "Assessor has no activity in the last 24h — renders the empty state illustration",
+
+      "activityWeek": [
+        {
+          "ts": "May 14",
+          "actor": "You",
+          "action": "APS ordered from Dr. Kowalski",
+          "case": "NB66-7622343"
+        },
+        {
+          "ts": "May 14",
+          "actor": "AI Agent",
+          "action": "Preliminary scoring generated — +75 debits",
+          "case": "NB66-7622343"
+        },
+        {
+          "ts": "May 13",
+          "actor": "You",
+          "action": "Tele-interview scheduled for Elena Rossi",
+          "case": "NB98-9989870"
+        },
+        {
+          "ts": "May 13",
+          "actor": "AI Agent",
+          "action": "Accelerated UW eligibility confirmed — 95%",
+          "case": "NB98-9989870"
+        }
+      ],
+
+      "_activityNote": "Assessor activity uses 'You' as actor label for own actions (first-person framing). AI Agent actions are attributed to 'AI Agent'."
+    },
+
+    "manager": {
+      "eyebrow": "TEAM OVERVIEW",
+      "headline": "Portfolio health & team priorities",
+      "sub": "Monitor team workload, SLA risk, and escalations across all cases.",
+
+      "kpis": [
+        { "val": "$2.1M", "label": "Portfolio exposure",     "cls": "red"   },
+        { "val": "12",    "label": "Team ready decisions",   "cls": "blue"  },
+        { "val": "3",     "label": "SLA breaches this week", "cls": "amber" },
+        { "val": "88%",   "label": "Avg AI confidence",      "cls": "grn"   }
+      ],
+
+      "_kpisNote": "Manager has 4 KPI chips vs 3 for assessor. The 4th (Avg AI confidence) is a portfolio-level metric not meaningful for individual assessors.",
+
+      "cards": [
+        {
+          "icon": "ti-users",
+          "iconBg": "var(--blue-bg)",
+          "iconColor": "var(--blue-t)",
+          "val": "3",
+          "valCls": "",
+          "title": "Active assessors",
+          "sub": "Victor (17 tasks) · Richard (12) · Sarah (8)"
+        },
+        {
+          "icon": "ti-escalator-up",
+          "iconBg": "var(--red-bg)",
+          "iconColor": "var(--red-t)",
+          "val": "3",
+          "valCls": "red",
+          "title": "Pending escalations",
+          "sub": "Awaiting manager review or approval"
+        },
+        {
+          "icon": "ti-clock",
+          "iconBg": "var(--amber-bg)",
+          "iconColor": "var(--amber-t)",
+          "val": "2",
+          "valCls": "amber",
+          "title": "SLA at risk",
+          "sub": "CD26 & CD44 both breach today"
+        }
+      ],
+
+      "cases": [
+        {
+          "key": "bb",
+          "name": "Billy Bud",
+          "id": "CD26-5546112",
+          "type": "CD",
+          "status": "Pending decision",
+          "dot": "#E24B4A",
+          "val": "$500,000",
+          "sla": "SLA Today",
+          "slaCls": "red",
+          "assignee": "Victor Ramon"
+        },
+        {
+          "key": "sd",
+          "name": "Thomas Dupont",
+          "id": "CD44-6679812",
+          "type": "CD",
+          "status": "Pending decision",
+          "dot": "#E24B4A",
+          "val": "$500,000",
+          "sla": "SLA Today",
+          "slaCls": "red",
+          "assignee": "Victor Ramon"
+        },
+        {
+          "key": "mt",
+          "name": "Marc Tremblay",
+          "id": "NB66-7622343",
+          "type": "NB",
+          "status": "Active",
+          "dot": "#3B6D11",
+          "val": "$625,000",
+          "sla": "SLA 2d",
+          "slaCls": "amber",
+          "assignee": "Victor Ramon"
+        },
+        {
+          "key": "er",
+          "name": "Elena Rossi",
+          "id": "NB98-9989870",
+          "type": "NB",
+          "status": "Active",
+          "dot": "#185FA5",
+          "val": "$350,000",
+          "sla": "SLA 2d",
+          "slaCls": "amber",
+          "assignee": "Richard Daniels"
+        }
+      ],
+
+      "_casesNote": "Manager sees same 4 cases but assignee name is shown under status in each row.",
+
+      "tasks": [
+        {
+          "tid": "CD-5221",
+          "prio": "High",
+          "val": "$500K",
+          "meta": "Approval needed",
+          "title": "Approve WOP rider — Victor Ramon awaiting authority sign-off",
+          "link": "Billy Bud · CD26-5546112",
+          "caseKey": "bb",
+          "ai": "AI confidence 91%. All disability criteria met. Victor Ramon recommends approval. Decision exceeds Band 3 authority — requires manager countersign.",
+          "actions": [
+            { "label": "Review & approve", "icon": "ti-check"  },
+            { "label": "View case",        "taskKey": "CD-5221" }
+          ]
+        },
+        {
+          "tid": "CD-6130",
+          "prio": "High",
+          "val": "$500K",
+          "meta": "Approval needed",
+          "title": "Approve $500K ACH payout — death benefit, Marie Dupont",
+          "link": "Thomas Dupont · CD44-6679812",
+          "caseKey": "sd",
+          "ai": "AI confidence 96%. No MIB discrepancies. Contestability lapsed. Victor Ramon ready to release. ACH routing confirmed. High-value payout requires manager countersign.",
+          "actions": [
+            { "label": "Review & approve", "icon": "ti-check"  },
+            { "label": "View case",        "taskKey": "CD-6130" }
+          ]
+        },
+        {
+          "tid": "NB-4030",
+          "prio": "High",
+          "val": "SLA 2d",
+          "meta": "Intervention needed",
+          "title": "APS overdue — Marc Tremblay case stalled",
+          "link": "Marc Tremblay · NB66-7622343",
+          "caseKey": "mt",
+          "ai": "APS from Dr. Kowalski is 2 days overdue. Victor Ramon has chased twice. Consider escalation to medical director or APS waiver for preliminary offer.",
+          "actions": [
+            { "label": "Reassign",  "icon": "ti-user"       },
+            { "label": "Escalate",  "icon": "ti-arrow-up"   }
+          ]
+        }
+      ],
+
+      "_tasksNote": "Manager task panel is titled 'Escalations & approvals'. Tasks are framed around delegating authority or intervening, not direct execution.",
+
+      "docs": [
+        {
+          "icon": "ti-file-text",
+          "title": "FCE — Billy Bud overdue 35 days",
+          "sub": "Victor Ramon — CD26-5546112",
+          "date": "2026-03-10",
+          "dateCls": "red",
+          "caseKey": "bb"
+        },
+        {
+          "icon": "ti-file-text",
+          "title": "APS — Marc Tremblay overdue",
+          "sub": "Victor Ramon — NB66-7622343",
+          "date": "2026-05-16",
+          "dateCls": "red",
+          "caseKey": "mt"
+        },
+        {
+          "icon": "ti-file-text",
+          "title": "Prior decline letter — Tremblay",
+          "sub": "Victor Ramon — NB66-7622343",
+          "date": "2026-05-18",
+          "dateCls": "amber",
+          "caseKey": "mt"
+        },
+        {
+          "icon": "ti-file-text",
+          "title": "Earnings verification — Bud",
+          "sub": "Victor Ramon — CD26-5546112",
+          "date": "2026-05-01",
+          "dateCls": "red",
+          "caseKey": "bb"
+        },
+        {
+          "icon": "ti-calendar",
+          "title": "Tele-interview — Elena Rossi",
+          "sub": "Richard Daniels — NB98-9989870",
+          "date": "2026-05-17",
+          "dateCls": "amber",
+          "caseKey": "er"
+        }
+      ],
+
+      "_docsNote": "Manager doc rows include 'Assessor Name — Case ID' in the sub line so the manager sees who is responsible for each outstanding item.",
+
+      "activity24h": [
+        {
+          "ts": "10:22",
+          "actor": "Victor Ramon",
+          "action": "APS chase sent to Dr. Kowalski (2nd request)",
+          "case": "NB66-7622343"
+        },
+        {
+          "ts": "09:45",
+          "actor": "AI Agent",
+          "action": "Scoring updated: +75 debits confirmed (paramedical pending)",
+          "case": "NB66-7622343"
+        },
+        {
+          "ts": "09:12",
+          "actor": "Richard Daniels",
+          "action": "Tele-interview confirmed for Elena Rossi May 17",
+          "case": "NB98-9989870"
+        },
+        {
+          "ts": "Yesterday",
+          "actor": "Victor Ramon",
+          "action": "FCE escalation flag raised — 35 days overdue",
+          "case": "CD26-5546112"
+        }
+      ],
+
+      "activityWeek": [
+        {
+          "ts": "May 14",
+          "actor": "Victor Ramon",
+          "action": "APS ordered from Dr. Kowalski",
+          "case": "NB66-7622343"
+        },
+        {
+          "ts": "May 14",
+          "actor": "AI Agent",
+          "action": "Scoring generated — +75 debits, rated offer likely",
+          "case": "NB66-7622343"
+        },
+        {
+          "ts": "May 13",
+          "actor": "Richard Daniels",
+          "action": "Tele-interview scheduled for Elena Rossi",
+          "case": "NB98-9989870"
+        },
+        {
+          "ts": "May 13",
+          "actor": "AI Agent",
+          "action": "Accelerated UW eligibility confirmed — 95%",
+          "case": "NB98-9989870"
+        },
+        {
+          "ts": "May 12",
+          "actor": "Victor Ramon",
+          "action": "MIB hit reviewed — traditional UW path confirmed",
+          "case": "NB66-7622343"
+        },
+        {
+          "ts": "May 10",
+          "actor": "AI Agent",
+          "action": "MIB comparison complete — no discrepancies (96%)",
+          "case": "CD44-6679812"
+        }
+      ],
+
+      "_activityNote": "Manager activity uses real names for all actors (including own actions). Shows full team attribution — who did what across all assessors."
+    }
+  },
+
+  "headerDropdown": {
+    "_description": "Structure of the user avatar dropdown in the app header. The role toggle lives in this dropdown.",
+    "sections": [
+      {
+        "type": "identity",
+        "fields": ["name", "email"]
+      },
+      {
+        "type": "roleToggle",
+        "label": "Role view",
+        "options": [
+          { "value": "assessor", "label": "Assessor" },
+          { "value": "manager",  "label": "Manager"  }
+        ],
+        "currentValue": "dshRole",
+        "onChange": "toggleDshRole()"
+      },
+      {
+        "type": "divider"
+      },
+      {
+        "type": "menuItem",
+        "label": "Profile settings",
+        "icon": "ti-settings",
+        "action": "openProfileSettings()"
+      },
+      {
+        "type": "menuItem",
+        "label": "Sign out",
+        "icon": "ti-logout",
+        "action": "signOut()"
+      }
+    ]
+  },
+
+  "appHeader": {
+    "_description": "Global app header that needs to be added above the app-shell div. Currently not in the HTML.",
+    "_status": "not yet implemented",
+    "height": "48px",
+    "elements": [
+      { "slot": "left",   "content": "SBLI logo + 'Amplify Case Management' wordmark" },
+      { "slot": "center-left", "content": "Module dropdown (Cases ▾) + global search input" },
+      { "slot": "right",  "content": "Notification bell (badge count) + user avatar button (initials + name + chevron)" }
+    ],
+    "avatarButton": {
+      "initials": "VR (assessor) | SM (manager)",
+      "name": "Victor Ramon (assessor) | Sarah Mitchell (manager)",
+      "onclick": "toggleHeaderDropdown()"
+    }
+  },
+
+  "cssClasses": {
+    "toggle": {
+      ".dsh-role-toggle": "flex container for label + track",
+      ".dsh-role-label": "text label showing current role",
+      ".dsh-toggle-track": "gray pill track (assessor state)",
+      ".dsh-toggle-track.mgr": "blue pill track (manager state)",
+      ".dsh-toggle-thumb": "white circular knob, transforms translateX(18px) in .mgr state"
+    },
+    "kpi": {
+      ".dsh-kpis": "flex row, bordered, rounded, overflow hidden",
+      ".dsh-kpi": "individual chip, border-right, min-width 120px",
+      ".dsh-kpi-val": "18px bold value",
+      ".dsh-kpi-val.red": "var(--red-t)",
+      ".dsh-kpi-val.grn": "var(--green-t)",
+      ".dsh-kpi-val.blue": "var(--blue-t)",
+      ".dsh-kpi-val.amber": "var(--amber-t)",
+      ".dsh-kpi-label": "9px uppercase muted label"
+    },
+    "cards": {
+      ".dsh-cards": "3-column grid, 12px gap, 14px horizontal padding",
+      ".dsh-card": "white bg, border, border-radius, 14px padding",
+      ".dsh-card-icon": "28x28px rounded square with iconBg/iconColor",
+      ".dsh-card-val": "28px bold, optionally .red/.amber/.grn",
+      ".dsh-card-title": "12px weight 500",
+      ".dsh-card-sub": "11px muted"
+    }
+  }
+}

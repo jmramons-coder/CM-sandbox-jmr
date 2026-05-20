@@ -11,12 +11,12 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { PlatformSettingsModal, type PlatformSettingsTab } from './PlatformSettingsModal';
+import { ProfileViewModal } from './ProfileViewModal';
+import { RoleViewToggle } from './RoleViewToggle';
 import { useDemoAccess } from '../contexts/DemoAccessContext';
 import { useThemeMode } from '../contexts/PlatformSettingsContext';
-
-const USER_NAME = 'Victor Ramon';
-const USER_EMAIL = 'victor.ramon@guardian.co.uk';
-const USER_INITIALS = 'VR';
+import { useActiveUser } from '../contexts/ActiveUserContext';
+import { APP_EVENTS } from '../constants/storage-keys';
 
 /**
  * Header avatar button + dropdown. Replaces the decorative placeholder.
@@ -25,6 +25,10 @@ const USER_INITIALS = 'VR';
 export function UserMenu() {
   const { t } = useTranslation('nav');
   const { signOut } = useDemoAccess();
+  const { profile, roleView, setRoleView } = useActiveUser();
+  const USER_NAME = profile.name;
+  const USER_EMAIL = profile.email;
+  const USER_INITIALS = profile.initials;
   /**
    * Platform-guide hooks. When the app is embedded in the Platform Guide
    * iframe, two query flags are supported:
@@ -41,6 +45,7 @@ export function UserMenu() {
   const initiallyModalOpen = guideValue === 'settings-modal';
   const [open, setOpen] = useState(initiallyMenuOpen);
   const [modalOpen, setModalOpen] = useState(initiallyModalOpen);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [modalTab, setModalTab] = useState<PlatformSettingsTab>('branding');
   const themeMode = useThemeMode();
 
@@ -103,6 +108,16 @@ export function UserMenu() {
     setOpen(false);
   };
 
+  useEffect(() => {
+    const onOpenPlatformSettings = (event: Event) => {
+      const tab = (event as CustomEvent<{ tab?: PlatformSettingsTab }>).detail?.tab ?? 'branding';
+      openModal(tab);
+    };
+    window.addEventListener(APP_EVENTS.openPlatformSettings, onOpenPlatformSettings);
+    return () => window.removeEventListener(APP_EVENTS.openPlatformSettings, onOpenPlatformSettings);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -117,7 +132,7 @@ export function UserMenu() {
             aria-label={t('userMenu.openMenu')}
           >
             <div className="flex flex-row items-center justify-center overflow-clip rounded-[inherit] size-full">
-              <div className="content-stretch flex gap-[8px] items-center justify-center pl-[4px] pr-[16px] py-[4px] relative">
+              <div className="content-stretch flex gap-[8px] items-center justify-center p-[4px] lg:pl-[4px] lg:pr-[16px] lg:py-[4px] relative">
                 <div className="relative shrink-0 size-[24px]">
                   <div className="content-stretch flex flex-col items-start relative size-full">
                     <div className={`${themeMode === 'light' ? 'bg-[#eef2f6] ring-1 ring-[#d7dde3]' : 'bg-surface-muted'} relative rounded-[9999px] shrink-0 size-[24px]`}>
@@ -135,12 +150,12 @@ export function UserMenu() {
                   </div>
                 </div>
                 <div
-                  className="flex flex-col font-['Open_Sans:SemiBold',sans-serif] font-semibold justify-center leading-[0] relative shrink-0 text-[14px] whitespace-nowrap"
+                  className="hidden lg:flex flex-col font-['Open_Sans:SemiBold',sans-serif] font-semibold justify-center leading-[0] relative shrink-0 text-[14px] whitespace-nowrap"
                   style={{ fontVariationSettings: "'wdth' 100", color: 'var(--brand-on-header)' }}
                 >
                   <p className="leading-[20px]">{USER_NAME}</p>
                 </div>
-                <div className="content-stretch flex items-center justify-center relative shrink-0">
+                <div className="hidden lg:content-stretch lg:flex items-center justify-center relative shrink-0">
                   <div className="overflow-clip relative shrink-0 size-[16px]">
                     <div className="absolute inset-[34.38%_21.88%]">
                       <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 9 5">
@@ -161,10 +176,13 @@ export function UserMenu() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>
+          <div className="px-2 py-2">
+            <RoleViewToggle roleView={roleView} onChange={setRoleView} />
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => { setProfileOpen(true); setOpen(false); }}>
             <User className="size-4" />
             <span>{t('userMenu.profile')}</span>
-            <span className="ml-auto text-[10px] uppercase tracking-wide text-[#a9aeb5]">{t('userMenu.soonBadge')}</span>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => openModal('branding')}>
             <Settings className="size-4" />
@@ -177,11 +195,20 @@ export function UserMenu() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <PlatformSettingsModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        initialTab={modalTab}
-      />
+      {profileOpen ? (
+        <ProfileViewModal
+          open={profileOpen}
+          onOpenChange={setProfileOpen}
+          profile={profile}
+        />
+      ) : null}
+      {modalOpen ? (
+        <PlatformSettingsModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          initialTab={modalTab}
+        />
+      ) : null}
     </>
   );
 }

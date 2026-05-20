@@ -3,7 +3,7 @@ import { CASE_TYPE_ANATOMY_DEFINITIONS } from '../domain/entityAnatomy';
 import type { CaseKind, WorkObjectKind } from '../domain/objectRefs';
 import type { SystemDataset } from './multi-case-dataset';
 import type { DatasetValidationSummary } from './datasetPackageSchema';
-import { deriveAiActionsFromDataset } from './objectRepository';
+import { deriveAiActionsFromDataset } from './aiActionDerivation';
 import {
   isSimpleServiceRequestCategory,
   isSimpleServiceTask,

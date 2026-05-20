@@ -2,18 +2,25 @@ import type { SavedDemoConfiguration } from '../contexts/PlatformSettingsContext
 import { generatedDatasetRepository } from './generatedDatasetRepository';
 import equisoftPreset from './demo-environments/equisoft.preset.json';
 import sbliPreset from './demo-environments/sbli.preset.json';
+import guardianPreset from './demo-environments/guardian.preset.json';
 import {
   DEMO_ENV_EQUISOFT_ID,
+  DEMO_ENV_GUARDIAN_ID,
   DEMO_ENV_SBLI_ID,
   SHARED_DEMO_DATASET_ID,
   hydrateDeployablePreset,
   type DeployableDemoPresetFile,
 } from './demo-environment-deploy';
 import { DEFAULT_DATA_SOURCE_SETTINGS } from '../domain/objectRefs';
+import { GUARDIAN_DATASET_ID } from './guardianDemoCaseIds';
 
-export { DEMO_ENV_EQUISOFT_ID, DEMO_ENV_SBLI_ID, SHARED_DEMO_DATASET_ID };
+export { DEMO_ENV_EQUISOFT_ID, DEMO_ENV_SBLI_ID, DEMO_ENV_GUARDIAN_ID, SHARED_DEMO_DATASET_ID };
 
-const BUILT_IN_DEMO_ENVIRONMENT_IDS = new Set([DEMO_ENV_EQUISOFT_ID, DEMO_ENV_SBLI_ID]);
+const BUILT_IN_DEMO_ENVIRONMENT_IDS = new Set([
+  DEMO_ENV_EQUISOFT_ID,
+  DEMO_ENV_SBLI_ID,
+  DEMO_ENV_GUARDIAN_ID,
+]);
 
 export function isBuiltInDemoEnvironment(id: string): boolean {
   return BUILT_IN_DEMO_ENVIRONMENT_IDS.has(id);
@@ -22,6 +29,7 @@ export function isBuiltInDemoEnvironment(id: string): boolean {
 export const SEEDED_DEMO_ENVIRONMENTS: SavedDemoConfiguration[] = [
   hydrateDeployablePreset(equisoftPreset as DeployableDemoPresetFile),
   hydrateDeployablePreset(sbliPreset as DeployableDemoPresetFile),
+  hydrateDeployablePreset(guardianPreset as DeployableDemoPresetFile),
 ];
 
 const STALE_DEMO_NAME_PATTERN =
@@ -56,6 +64,13 @@ export function applyActiveDemoEnvironment(
       activeDemoConfigurationId: resolveDefaultDemoEnvironmentId(),
     };
   }
+  const activeDatasetId =
+    target.settings.dataSource?.activeDatasetId ??
+    (activeId === DEMO_ENV_GUARDIAN_ID ? GUARDIAN_DATASET_ID : SHARED_DEMO_DATASET_ID);
+  const displayCurrency =
+    target.settings.dataSource?.displayCurrency ??
+    (activeDatasetId === GUARDIAN_DATASET_ID ? 'GBP' : 'USD');
+
   return {
     ...target.settings,
     version: 5,
@@ -64,8 +79,8 @@ export function applyActiveDemoEnvironment(
     dataSource: {
       ...DEFAULT_DATA_SOURCE_SETTINGS,
       ...(target.settings.dataSource ?? {}),
-      activeDatasetId: SHARED_DEMO_DATASET_ID,
-      displayCurrency: 'USD',
+      activeDatasetId,
+      displayCurrency,
       legacyMockOverlayEnabled: false,
     },
   };
