@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { getDocumentSourceLabel } from '../data/documentMetadata';
 import { stripSummaryTitleDecorators } from '../utils/summaryText';
 import { getStatusLozengeType } from '../utils/status-display';
 import { AiCueSparkle } from './AiCueSparkle';
@@ -206,7 +207,7 @@ export function TaskAssigneeAvatarStack({ names }: { names: string[] }) {
   );
 }
 
-export { getDocumentSourceLabel } from '../data/documentMetadata';
+export { getDocumentSourceLabel };
 
 export function resolveDocumentSourceVariant(source: string): ModuleSourceTagVariant {
   const key = source.trim().toLowerCase().replace(/\s+/g, '_');

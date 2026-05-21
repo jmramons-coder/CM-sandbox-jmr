@@ -221,10 +221,7 @@ export function DynamicDocumentSidePanel({
   };
 
   useEffect(() => {
-    if (!open) {
-      setMobilePreviewOpen(false);
-      return;
-    }
+    if (!open) return;
     const firstInsight = document.evidence[0];
     if (!firstInsight) return;
     setDocumentZoom(0.9);

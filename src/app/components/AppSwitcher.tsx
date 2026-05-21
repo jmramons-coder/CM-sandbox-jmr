@@ -50,7 +50,7 @@ export function AppSwitcher() {
         side="bottom"
         align="end"
         sideOffset={12}
-        className="w-[300px] p-0"
+        className="w-[400px] max-w-[calc(100vw-24px)] p-0"
       >
         <div className="px-4 pt-3 pb-1">
           <p className="text-[12px] font-semibold text-text-primary">{t('appSwitcher.products')}</p>

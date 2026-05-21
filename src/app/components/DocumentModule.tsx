@@ -381,7 +381,7 @@ export function DocumentModule() {
 
   const documentPanel = selectedDocumentData && panelContexts.length > 0 && selectedDocument ? (
     <WorkspaceObjectSidePanel
-      portal={false}
+      portal={!isCompactShell}
       closeOnOutsideClick={!isCompactShell}
       showResizeHandle={!isCompactShell}
       zIndexClassName={isCompactShell ? 'z-[1110]' : 'z-[190]'}

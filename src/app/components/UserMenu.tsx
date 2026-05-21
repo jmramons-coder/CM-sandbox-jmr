@@ -150,10 +150,13 @@ export function UserMenu() {
                   </div>
                 </div>
                 <div
-                  className="hidden lg:flex flex-col font-['Open_Sans:SemiBold',sans-serif] font-semibold justify-center leading-[0] relative shrink-0 text-[14px] whitespace-nowrap"
+                  className="hidden lg:flex flex-col items-start text-left font-['Open_Sans:SemiBold',sans-serif] justify-center relative shrink-0"
                   style={{ fontVariationSettings: "'wdth' 100", color: 'var(--brand-on-header)' }}
                 >
-                  <p className="leading-[20px]">{USER_NAME}</p>
+                  <p className="text-[14px] font-semibold leading-[18px] whitespace-nowrap">{USER_NAME}</p>
+                  <p className="text-[11px] font-medium leading-[14px] whitespace-nowrap opacity-80">
+                    {roleView === 'manager' ? t('userMenu.roleManager') : t('userMenu.roleAssessor')}
+                  </p>
                 </div>
                 <div className="hidden lg:content-stretch lg:flex items-center justify-center relative shrink-0">
                   <div className="overflow-clip relative shrink-0 size-[16px]">
