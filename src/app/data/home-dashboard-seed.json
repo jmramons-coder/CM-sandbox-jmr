@@ -226,7 +226,7 @@
         "link":     "Thomas Dupont · CD44-6679812",
         "caseKey":  "sd",
         "ai":       "All requirements met. MIB comparison complete — no discrepancies. Contestability lapsed (6y 11m). ACH routing verified. Recommend approval.",
-        "ctaLabel": "Go to decision",
+        "ctaLabel": "View task",
         "ctaFn":    "switchModule('cases');go('sd')"
       },
       "manager": {
@@ -243,8 +243,7 @@
     },
 
     "velData": {
-      "_purpose": "Team velocity rows in the manager right column. Shows queue trend per assessor with sparklines.",
-      "_sparkNote": "spark[] is a 5-point array — last 5 working days of task queue count. Rendered as bar sparkline.",
+      "_purpose": "Team velocity rows in the manager right column. Queue trend per assessor via trendLabel badge.",
       "assessors": [
         {
           "name":       "Victor Ramon",
@@ -253,8 +252,7 @@
           "tasks":      17,
           "overdue":    2,
           "trend":      "warn",
-          "trendLabel": "↑ queue growing",
-          "spark":      [10, 11, 13, 15, 17]
+          "trendLabel": "↑ queue growing"
         },
         {
           "name":       "Richard Daniels",
@@ -263,8 +261,7 @@
           "tasks":      12,
           "overdue":    0,
           "trend":      "ok",
-          "trendLabel": "↓ clearing well",
-          "spark":      [14, 13, 13, 12, 12]
+          "trendLabel": "↓ clearing well"
         },
         {
           "name":       "Sarah Mitchell",
@@ -273,12 +270,10 @@
           "tasks":      8,
           "overdue":    0,
           "trend":      "flat",
-          "trendLabel": "→ steady",
-          "spark":      [8, 8, 9, 8, 8]
+          "trendLabel": "→ steady"
         }
       ],
-      "_trendValues":  "warn=red badge, ok=green badge, flat=gray badge",
-      "_sparkRendering": "bar height = (v/max)*16 + 4px. Last bar (.hi class) uses full opacity."
+      "_trendValues": "warn=red badge, ok=green badge, flat=gray badge"
     },
 
     "metricBars": {

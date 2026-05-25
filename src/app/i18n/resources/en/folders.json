@@ -312,6 +312,15 @@
         "relatedDetails": "Related details"
       }
     },
+    "identityDocuments": {
+      "empty": "There are no identity documents associated to {{name}}.",
+      "addTitle": "Add identity documents",
+      "addDescription": "Add one or more identity documents for {{name}}.",
+      "editTitle": "Edit identity document",
+      "editDescription": "Update additional information for {{name}}.",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
     "table": {
       "empty": "No entries.",
       "rowActions": "Row actions",

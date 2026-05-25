@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { markDashboardIntroMotionPlayed, prefersReducedMotion } from './dashboard/dashboardMotion';
 import { useActiveUser } from '../contexts/ActiveUserContext';
 import { useDataSourceSettings } from '../contexts/PlatformSettingsContext';
 import { filterDatasetBySettings, getSystemDataset } from '../data/objectRepository';
@@ -23,6 +24,18 @@ export function Dashboard() {
     [activeDataset, roleView],
   );
   const isManager = roleView === 'manager';
+
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      markDashboardIntroMotionPlayed();
+      return;
+    }
+    const timer = window.setTimeout(markDashboardIntroMotionPlayed, 800);
+    return () => {
+      window.clearTimeout(timer);
+      markDashboardIntroMotionPlayed();
+    };
+  }, []);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-surface-primary">

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { AiCueSparkle } from './AiCueSparkle';
+import { MiniAiSourceBadge } from './ModuleCellHelpers';
 import type {
   DailyBriefContent,
   DailyBriefHighlightIcon,
@@ -135,11 +136,12 @@ export function DailyBriefCard({ content, className = '' }: DailyBriefCardProps)
       </div>
 
       <div className="daily-brief-banner__body px-5 py-4 sm:px-6 sm:py-[1.125rem]">
-        <div className="mb-2.5">
+        <div className="mb-2.5 flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/65 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.32px] text-brand-accent shadow-[0_1px_3px_rgba(27,28,30,0.05)] backdrop-blur-md transition-[background-color,box-shadow] duration-300 group-hover:bg-white/75 group-hover:shadow-[0_2px_8px_color-mix(in_srgb,var(--brand-accent)_12%,transparent)]">
             <AiCueSparkle size={12} className="!text-brand-accent" spinOnParentHover />
             {content.title}
           </span>
+          <MiniAiSourceBadge />
         </div>
 
         <BriefSentence segments={segments} onNavigate={navigate} />

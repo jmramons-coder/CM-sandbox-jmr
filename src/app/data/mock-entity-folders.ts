@@ -6,6 +6,7 @@
  */
 
 import type { EntityFolderDef } from '../domain/entityFolders';
+import { withIdentityDocumentsSection } from '../domain/entityInformationLayout';
 
 /**
  * Entity folder fixtures are authored in English here. Translated views are
@@ -208,7 +209,7 @@ const AGENT_BEAULIEU: EntityFolderDef = {
       { label: 'Agent', tone: 'default' },
       { label: 'ACTIVE', tone: 'Informative' },
     ],
-    avatar: { initials: 'NB', color: '#5b8abf' },
+    avatar: { initials: 'NB', color: '#E8EEF7' },
     actions: [
       { id: 'add' },
       { id: 'message' },
@@ -223,7 +224,7 @@ const AGENT_BEAULIEU: EntityFolderDef = {
     { id: 'notes', label: 'Notes', disabled: true },
     { id: 'relationship', label: 'Relationship' },
   ],
-  information: [
+  information: withIdentityDocumentsSection([
     {
       kind: 'fieldGrid',
       id: 'identification',
@@ -301,7 +302,7 @@ const AGENT_BEAULIEU: EntityFolderDef = {
           'There is no additional information on this entity.\nOnce added additional information will be displayed here.',
       },
     },
-  ],
+  ]),
 };
 
 /* ─── Coverage: Term 10 - Gold (full overview) ─── */
@@ -389,7 +390,7 @@ const PARTICIPANT_MARC: EntityFolderDef = {
       { label: 'Participant', tone: 'default' },
       { label: 'ACTIVE', tone: 'Informative' },
     ],
-    avatar: { initials: 'MT', color: '#5b8abf' },
+    avatar: { initials: 'MT', color: '#F7E8DF' },
     actions: [
       { id: 'add' },
       { id: 'message' },
@@ -404,7 +405,7 @@ const PARTICIPANT_MARC: EntityFolderDef = {
     { id: 'notes', label: 'Notes', disabled: true },
     { id: 'relationship', label: 'Relationship' },
   ],
-  information: [
+  information: withIdentityDocumentsSection([
     {
       kind: 'fieldGrid',
       id: 'identification',
@@ -457,7 +458,7 @@ const PARTICIPANT_MARC: EntityFolderDef = {
           'There is no additional information on this entity.\nOnce added additional information will be displayed here.',
       },
     },
-  ],
+  ]),
 };
 
 /* ─── Client: Tremblay, Marc (top-level main entity) ─── */
@@ -489,7 +490,7 @@ const CLIENT_MARC: EntityFolderDef = {
     { id: 'activity-history', label: 'Activity History', disabled: true },
     { id: 'relationship', label: 'Relationship' },
   ],
-  information: [
+  information: withIdentityDocumentsSection([
     {
       kind: 'fieldGrid',
       id: 'identification',
@@ -568,7 +569,7 @@ const CLIENT_MARC: EntityFolderDef = {
         { id: 'ai-2', cells: { name: 'Source policy', value: 'POL-9847231' } },
       ],
     },
-  ],
+  ]),
   subFolderGroups: [],
 };
 
@@ -708,52 +709,52 @@ export type MockClient = {
 };
 
 export const MOCK_CLIENTS: MockClient[] = [
-  { id: 'CLI-MARC', name: 'Tremblay, Marc', initials: 'MT', status: 'active', category: 'policyholder', gender: 'Male', dob: '1982-11-03', age: 43, email: 'marc.tremblay@bell.ca', phone: '+1 (876) 555-0198', address: '12 Hope Road, Kingston', parish: 'Kingston', avatarColor: '#F7E8DF', avatarTextColor: '#5B230F' },
+  { id: 'CLI-MARC', name: 'Tremblay, Marc', initials: 'MT', status: 'active', category: 'policyholder', gender: 'Male', dob: '1982-11-03', age: 43, email: 'marc.tremblay@bell.ca', phone: '+1 (876) 555-0198', address: '12 Hope Road, Kingston', parish: 'Kingston', avatarColor: '#F7E8DF', avatarTextColor: '#1B1C1E' },
   { id: 'CLI-SOPHIE', name: 'Tremblay, Sophie', initials: 'ST', status: 'active', category: 'policyholder', gender: 'Female', dob: '1985-07-22', age: 40, email: 'sophie.tremblay@bell.ca', phone: '+1 (876) 555-0199', address: '12 Hope Road, Kingston', parish: 'Kingston', avatarColor: '#EEE9F1', avatarTextColor: '#1A1739' },
-  { id: 'CLI-LUCAS', name: 'Tremblay, Lucas', initials: 'LT', status: 'active', category: 'dependent', gender: 'Male', dob: '2008-02-14', age: 18, email: '', phone: '', address: '12 Hope Road, Kingston', parish: 'Kingston', avatarColor: '#F5F1E6', avatarTextColor: '#78520F' },
-  { id: 'CLI-EMMA', name: 'Tremblay, Emma', initials: 'ET', status: 'active', category: 'dependent', gender: 'Female', dob: '2011-09-03', age: 14, email: '', phone: '', address: '12 Hope Road, Kingston', parish: 'Kingston', avatarColor: '#E5F2F4', avatarTextColor: '#17494A' },
-  { id: 'CLI-ROBERT', name: 'Gagnon, Robert', initials: 'RG', status: 'inactive', category: 'relatedParty', gender: 'Male', dob: '1955-04-18', age: 71, email: 'robert.gagnon@videotron.ca', phone: '+1 (876) 555-0301', address: '7 Orchid Close, St. Andrew', parish: 'St. Andrew', avatarColor: '#F0F4E8', avatarTextColor: '#405B17' },
-  { id: 'CLI-MONIQUE', name: 'Gagnon, Monique', initials: 'MG', status: 'inactive', category: 'relatedParty', gender: 'Female', dob: '1957-12-05', age: 68, email: '', phone: '+1 (876) 555-0302', address: '7 Orchid Close, St. Andrew', parish: 'St. Andrew', avatarColor: '#E8EEF7', avatarTextColor: '#173D6F' },
-  { id: 'CLI-ANDERSON-KAREN', name: 'Anderson, Karen', initials: 'KA', status: 'active', category: 'policyholder', gender: 'Female', dob: '1979-06-12', age: 46, email: 'karen.anderson@gmail.com', phone: '+1 (876) 555-0410', address: '24 Barbican Road, Kingston', parish: 'St. Andrew', taxId: '101-224-883', avatarColor: '#F7E8DF', avatarTextColor: '#5B230F' },
+  { id: 'CLI-LUCAS', name: 'Tremblay, Lucas', initials: 'LT', status: 'active', category: 'dependent', gender: 'Male', dob: '2008-02-14', age: 18, email: '', phone: '', address: '12 Hope Road, Kingston', parish: 'Kingston', avatarColor: '#F5F1E6', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-EMMA', name: 'Tremblay, Emma', initials: 'ET', status: 'active', category: 'dependent', gender: 'Female', dob: '2011-09-03', age: 14, email: '', phone: '', address: '12 Hope Road, Kingston', parish: 'Kingston', avatarColor: '#E5F2F4', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-ROBERT', name: 'Gagnon, Robert', initials: 'RG', status: 'inactive', category: 'relatedParty', gender: 'Male', dob: '1955-04-18', age: 71, email: 'robert.gagnon@videotron.ca', phone: '+1 (876) 555-0301', address: '7 Orchid Close, St. Andrew', parish: 'St. Andrew', avatarColor: '#F0F4E8', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-MONIQUE', name: 'Gagnon, Monique', initials: 'MG', status: 'inactive', category: 'relatedParty', gender: 'Female', dob: '1957-12-05', age: 68, email: '', phone: '+1 (876) 555-0302', address: '7 Orchid Close, St. Andrew', parish: 'St. Andrew', avatarColor: '#E8EEF7', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-ANDERSON-KAREN', name: 'Anderson, Karen', initials: 'KA', status: 'active', category: 'policyholder', gender: 'Female', dob: '1979-06-12', age: 46, email: 'karen.anderson@gmail.com', phone: '+1 (876) 555-0410', address: '24 Barbican Road, Kingston', parish: 'St. Andrew', taxId: '101-224-883', avatarColor: '#F7E8DF', avatarTextColor: '#1B1C1E' },
   { id: 'CLI-BROWN-MICHAEL', name: 'Brown, Michael', initials: 'MB', status: 'active', category: 'policyholder', gender: 'Male', dob: '1974-01-28', age: 52, email: 'michael.brown@outlook.com', phone: '+1 (876) 555-0411', address: '88 Constant Spring Road, Kingston', parish: 'St. Andrew', taxId: '113-490-272', avatarColor: '#EEE9F1', avatarTextColor: '#1A1739' },
-  { id: 'CLI-CAMPBELL-ALICIA', name: 'Campbell, Alicia', initials: 'AC', status: 'active', category: 'relatedParty', gender: 'Female', dob: '1990-08-19', age: 35, email: 'alicia.campbell@yahoo.com', phone: '+1 (876) 555-0412', address: '15 Seaview Avenue, Montego Bay', parish: 'St. James', taxId: '118-703-551', avatarColor: '#F5F1E6', avatarTextColor: '#78520F' },
-  { id: 'CLI-CLARKE-DAVID', name: 'Clarke, David', initials: 'DC', status: 'inactive', category: 'policyholder', gender: 'Male', dob: '1968-03-07', age: 58, email: 'david.clarke@proton.me', phone: '+1 (876) 555-0413', address: '3 Queen Street, Morant Bay', parish: 'St. Thomas', taxId: '120-811-337', avatarColor: '#E5F2F4', avatarTextColor: '#17494A' },
-  { id: 'CLI-DAVIS-NADINE', name: 'Davis, Nadine', initials: 'ND', status: 'active', category: 'policyholder', gender: 'Female', dob: '1983-10-30', age: 42, email: 'nadine.davis@icloud.com', phone: '+1 (876) 555-0414', address: '41 Manchester Road, Mandeville', parish: 'Manchester', taxId: '130-219-604', avatarColor: '#F0F4E8', avatarTextColor: '#405B17' },
-  { id: 'CLI-EDWARDS-PAUL', name: 'Edwards, Paul', initials: 'PE', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1959-12-14', age: 66, email: 'paul.edwards@outlook.com', phone: '+1 (876) 555-0415', address: '9 Red Hills Road, Kingston', parish: 'St. Andrew', taxId: '145-600-912', avatarColor: '#E8EEF7', avatarTextColor: '#173D6F' },
-  { id: 'CLI-FOSTER-MELISSA', name: 'Foster, Melissa', initials: 'MF', status: 'active', category: 'policyholder', gender: 'Female', dob: '1988-05-24', age: 37, email: 'melissa.foster@gmail.com', phone: '+1 (876) 555-0416', address: '62 Main Street, Ocho Rios', parish: 'St. Ann', taxId: '151-934-008', avatarColor: '#F7E8DF', avatarTextColor: '#5B230F' },
+  { id: 'CLI-CAMPBELL-ALICIA', name: 'Campbell, Alicia', initials: 'AC', status: 'active', category: 'relatedParty', gender: 'Female', dob: '1990-08-19', age: 35, email: 'alicia.campbell@yahoo.com', phone: '+1 (876) 555-0412', address: '15 Seaview Avenue, Montego Bay', parish: 'St. James', taxId: '118-703-551', avatarColor: '#F5F1E6', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-CLARKE-DAVID', name: 'Clarke, David', initials: 'DC', status: 'inactive', category: 'policyholder', gender: 'Male', dob: '1968-03-07', age: 58, email: 'david.clarke@proton.me', phone: '+1 (876) 555-0413', address: '3 Queen Street, Morant Bay', parish: 'St. Thomas', taxId: '120-811-337', avatarColor: '#E5F2F4', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-DAVIS-NADINE', name: 'Davis, Nadine', initials: 'ND', status: 'active', category: 'policyholder', gender: 'Female', dob: '1983-10-30', age: 42, email: 'nadine.davis@icloud.com', phone: '+1 (876) 555-0414', address: '41 Manchester Road, Mandeville', parish: 'Manchester', taxId: '130-219-604', avatarColor: '#F0F4E8', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-EDWARDS-PAUL', name: 'Edwards, Paul', initials: 'PE', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1959-12-14', age: 66, email: 'paul.edwards@outlook.com', phone: '+1 (876) 555-0415', address: '9 Red Hills Road, Kingston', parish: 'St. Andrew', taxId: '145-600-912', avatarColor: '#E8EEF7', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-FOSTER-MELISSA', name: 'Foster, Melissa', initials: 'MF', status: 'active', category: 'policyholder', gender: 'Female', dob: '1988-05-24', age: 37, email: 'melissa.foster@gmail.com', phone: '+1 (876) 555-0416', address: '62 Main Street, Ocho Rios', parish: 'St. Ann', taxId: '151-934-008', avatarColor: '#F7E8DF', avatarTextColor: '#1B1C1E' },
   { id: 'CLI-GRANT-OMAR', name: 'Grant, Omar', initials: 'OG', status: 'inactive', category: 'relatedParty', gender: 'Male', dob: '1971-09-02', age: 54, email: '', phone: '+1 (876) 555-0417', address: '10 West Street, Port Antonio', parish: 'Portland', taxId: '162-500-319', avatarColor: '#EEE9F1', avatarTextColor: '#1A1739' },
-  { id: 'CLI-HALL-SIMONE', name: 'Hall, Simone', initials: 'SH', status: 'active', category: 'policyholder', gender: 'Female', dob: '1992-02-11', age: 34, email: 'simone.hall@live.com', phone: '+1 (876) 555-0418', address: '5 Market Street, Falmouth', parish: 'Trelawny', taxId: '174-782-406', avatarColor: '#F5F1E6', avatarTextColor: '#78520F' },
-  { id: 'CLI-HENRY-KEVIN', name: 'Henry, Kevin', initials: 'KH', status: 'active', category: 'dependent', gender: 'Male', dob: '2006-11-25', age: 19, email: 'kevin.henry@gmail.com', phone: '', address: '5 Market Street, Falmouth', parish: 'Trelawny', taxId: '181-604-227', avatarColor: '#E5F2F4', avatarTextColor: '#17494A' },
-  { id: 'CLI-JOHNSON-PATRICIA', name: 'Johnson, Patricia', initials: 'PJ', status: 'inactive', category: 'policyholder', gender: 'Female', dob: '1962-07-18', age: 63, email: 'patricia.johnson@outlook.com', phone: '+1 (876) 555-0420', address: '17 Hospital Road, Savanna-la-Mar', parish: 'Westmoreland', taxId: '199-214-730', avatarColor: '#F0F4E8', avatarTextColor: '#405B17' },
-  { id: 'CLI-KING-TREVOR', name: 'King, Trevor', initials: 'TK', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1980-04-04', age: 46, email: 'trevor.king@yahoo.com', phone: '+1 (876) 555-0421', address: '27 Spanish Town Road, Spanish Town', parish: 'St. Catherine', taxId: '207-810-659', avatarColor: '#E8EEF7', avatarTextColor: '#173D6F' },
-  { id: 'CLI-LEWIS-CHANTAL', name: 'Lewis, Chantal', initials: 'CL', status: 'active', category: 'policyholder', gender: 'Female', dob: '1986-12-09', age: 39, email: 'chantal.lewis@gmail.com', phone: '+1 (876) 555-0422', address: '36 East Queen Street, Kingston', parish: 'Kingston', taxId: '219-673-884', avatarColor: '#F7E8DF', avatarTextColor: '#5B230F' },
+  { id: 'CLI-HALL-SIMONE', name: 'Hall, Simone', initials: 'SH', status: 'active', category: 'policyholder', gender: 'Female', dob: '1992-02-11', age: 34, email: 'simone.hall@live.com', phone: '+1 (876) 555-0418', address: '5 Market Street, Falmouth', parish: 'Trelawny', taxId: '174-782-406', avatarColor: '#F5F1E6', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-HENRY-KEVIN', name: 'Henry, Kevin', initials: 'KH', status: 'active', category: 'dependent', gender: 'Male', dob: '2006-11-25', age: 19, email: 'kevin.henry@gmail.com', phone: '', address: '5 Market Street, Falmouth', parish: 'Trelawny', taxId: '181-604-227', avatarColor: '#E5F2F4', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-JOHNSON-PATRICIA', name: 'Johnson, Patricia', initials: 'PJ', status: 'inactive', category: 'policyholder', gender: 'Female', dob: '1962-07-18', age: 63, email: 'patricia.johnson@outlook.com', phone: '+1 (876) 555-0420', address: '17 Hospital Road, Savanna-la-Mar', parish: 'Westmoreland', taxId: '199-214-730', avatarColor: '#F0F4E8', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-KING-TREVOR', name: 'King, Trevor', initials: 'TK', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1980-04-04', age: 46, email: 'trevor.king@yahoo.com', phone: '+1 (876) 555-0421', address: '27 Spanish Town Road, Spanish Town', parish: 'St. Catherine', taxId: '207-810-659', avatarColor: '#E8EEF7', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-LEWIS-CHANTAL', name: 'Lewis, Chantal', initials: 'CL', status: 'active', category: 'policyholder', gender: 'Female', dob: '1986-12-09', age: 39, email: 'chantal.lewis@gmail.com', phone: '+1 (876) 555-0422', address: '36 East Queen Street, Kingston', parish: 'Kingston', taxId: '219-673-884', avatarColor: '#F7E8DF', avatarTextColor: '#1B1C1E' },
   { id: 'CLI-MILLER-DWAYNE', name: 'Miller, Dwayne', initials: 'DM', status: 'inactive', category: 'relatedParty', gender: 'Male', dob: '1976-06-21', age: 49, email: 'dwayne.miller@icloud.com', phone: '+1 (876) 555-0423', address: '14 High Street, Black River', parish: 'St. Elizabeth', taxId: '225-490-150', avatarColor: '#EEE9F1', avatarTextColor: '#1A1739' },
-  { id: 'CLI-MORGAN-SASHA', name: 'Morgan, Sasha', initials: 'SM', status: 'active', category: 'policyholder', gender: 'Female', dob: '1994-01-16', age: 32, email: 'sasha.morgan@gmail.com', phone: '+1 (876) 555-0424', address: '53 Knutsford Boulevard, Kingston', parish: 'Kingston', taxId: '237-815-902', avatarColor: '#F5F1E6', avatarTextColor: '#78520F' },
-  { id: 'CLI-NELSON-BRIAN', name: 'Nelson, Brian', initials: 'BN', status: 'active', category: 'policyholder', gender: 'Male', dob: '1969-08-27', age: 56, email: 'brian.nelson@bell.ca', phone: '+1 (876) 555-0425', address: '11 Harbour Street, Kingston', parish: 'Kingston', taxId: '246-103-587', avatarColor: '#E5F2F4', avatarTextColor: '#17494A' },
-  { id: 'CLI-PALMER-RENEE', name: 'Palmer, Renee', initials: 'RP', status: 'inactive', category: 'dependent', gender: 'Female', dob: '2003-05-06', age: 22, email: '', phone: '', address: '11 Harbour Street, Kingston', parish: 'Kingston', taxId: '251-900-476', avatarColor: '#F0F4E8', avatarTextColor: '#405B17' },
-  { id: 'CLI-REID-ANTHONY', name: 'Reid, Anthony', initials: 'AR', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1951-11-13', age: 74, email: 'anthony.reid@videotron.ca', phone: '+1 (876) 555-0427', address: '8 Church Street, Lucea', parish: 'Hanover', taxId: '269-382-107', avatarColor: '#E8EEF7', avatarTextColor: '#173D6F' },
-  { id: 'CLI-ROBINSON-TANYA', name: 'Robinson, Tanya', initials: 'TR', status: 'active', category: 'policyholder', gender: 'Female', dob: '1981-03-22', age: 45, email: 'tanya.robinson@outlook.com', phone: '+1 (876) 555-0428', address: '72 Main Street, May Pen', parish: 'Clarendon', taxId: '273-661-904', avatarColor: '#F7E8DF', avatarTextColor: '#5B230F' },
+  { id: 'CLI-MORGAN-SASHA', name: 'Morgan, Sasha', initials: 'SM', status: 'active', category: 'policyholder', gender: 'Female', dob: '1994-01-16', age: 32, email: 'sasha.morgan@gmail.com', phone: '+1 (876) 555-0424', address: '53 Knutsford Boulevard, Kingston', parish: 'Kingston', taxId: '237-815-902', avatarColor: '#F5F1E6', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-NELSON-BRIAN', name: 'Nelson, Brian', initials: 'BN', status: 'active', category: 'policyholder', gender: 'Male', dob: '1969-08-27', age: 56, email: 'brian.nelson@bell.ca', phone: '+1 (876) 555-0425', address: '11 Harbour Street, Kingston', parish: 'Kingston', taxId: '246-103-587', avatarColor: '#E5F2F4', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-PALMER-RENEE', name: 'Palmer, Renee', initials: 'RP', status: 'inactive', category: 'dependent', gender: 'Female', dob: '2003-05-06', age: 22, email: '', phone: '', address: '11 Harbour Street, Kingston', parish: 'Kingston', taxId: '251-900-476', avatarColor: '#F0F4E8', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-REID-ANTHONY', name: 'Reid, Anthony', initials: 'AR', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1951-11-13', age: 74, email: 'anthony.reid@videotron.ca', phone: '+1 (876) 555-0427', address: '8 Church Street, Lucea', parish: 'Hanover', taxId: '269-382-107', avatarColor: '#E8EEF7', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-ROBINSON-TANYA', name: 'Robinson, Tanya', initials: 'TR', status: 'active', category: 'policyholder', gender: 'Female', dob: '1981-03-22', age: 45, email: 'tanya.robinson@outlook.com', phone: '+1 (876) 555-0428', address: '72 Main Street, May Pen', parish: 'Clarendon', taxId: '273-661-904', avatarColor: '#F7E8DF', avatarTextColor: '#1B1C1E' },
   { id: 'CLI-SCOTT-GABRIEL', name: 'Scott, Gabriel', initials: 'GS', status: 'inactive', category: 'relatedParty', gender: 'Male', dob: '1991-09-29', age: 34, email: 'gabriel.scott@gmail.com', phone: '+1 (876) 555-0429', address: '19 Ward Avenue, Mandeville', parish: 'Manchester', taxId: '284-771-330', avatarColor: '#EEE9F1', avatarTextColor: '#1A1739' },
-  { id: 'CLI-SMITH-DENISE', name: 'Smith, Denise', initials: 'DS', status: 'active', category: 'policyholder', gender: 'Female', dob: '1977-02-02', age: 49, email: 'denise.smith@yahoo.com', phone: '+1 (876) 555-0430', address: '4 Trafalgar Road, Kingston', parish: 'St. Andrew', taxId: '291-542-086', avatarColor: '#F5F1E6', avatarTextColor: '#78520F' },
-  { id: 'CLI-STEWART-ANDRE', name: 'Stewart, Andre', initials: 'AS', status: 'active', category: 'policyholder', gender: 'Male', dob: '1984-10-17', age: 41, email: 'andre.stewart@icloud.com', phone: '+1 (876) 555-0431', address: '31 Brunswick Avenue, Spanish Town', parish: 'St. Catherine', taxId: '308-461-755', avatarColor: '#E5F2F4', avatarTextColor: '#17494A' },
-  { id: 'CLI-THOMAS-ERICA', name: 'Thomas, Erica', initials: 'ET', status: 'inactive', category: 'dependent', gender: 'Female', dob: '2001-07-08', age: 24, email: 'erica.thomas@gmail.com', phone: '', address: '31 Brunswick Avenue, Spanish Town', parish: 'St. Catherine', taxId: '315-204-668', avatarColor: '#F0F4E8', avatarTextColor: '#405B17' },
-  { id: 'CLI-WALKER-MARLON', name: 'Walker, Marlon', initials: 'MW', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1972-12-31', age: 53, email: 'marlon.walker@outlook.com', phone: '+1 (876) 555-0433', address: '44 Main Road, Annotto Bay', parish: 'St. Mary', taxId: '327-803-009', avatarColor: '#E8EEF7', avatarTextColor: '#173D6F' },
-  { id: 'CLI-WILLIAMS-JANICE', name: 'Williams, Janice', initials: 'JW', status: 'active', category: 'policyholder', gender: 'Female', dob: '1965-04-26', age: 60, email: 'janice.williams@live.com', phone: '+1 (876) 555-0434', address: '28 Duke Street, Kingston', parish: 'Kingston', taxId: '336-280-194', avatarColor: '#F7E8DF', avatarTextColor: '#5B230F' },
+  { id: 'CLI-SMITH-DENISE', name: 'Smith, Denise', initials: 'DS', status: 'active', category: 'policyholder', gender: 'Female', dob: '1977-02-02', age: 49, email: 'denise.smith@yahoo.com', phone: '+1 (876) 555-0430', address: '4 Trafalgar Road, Kingston', parish: 'St. Andrew', taxId: '291-542-086', avatarColor: '#F5F1E6', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-STEWART-ANDRE', name: 'Stewart, Andre', initials: 'AS', status: 'active', category: 'policyholder', gender: 'Male', dob: '1984-10-17', age: 41, email: 'andre.stewart@icloud.com', phone: '+1 (876) 555-0431', address: '31 Brunswick Avenue, Spanish Town', parish: 'St. Catherine', taxId: '308-461-755', avatarColor: '#E5F2F4', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-THOMAS-ERICA', name: 'Thomas, Erica', initials: 'ET', status: 'inactive', category: 'dependent', gender: 'Female', dob: '2001-07-08', age: 24, email: 'erica.thomas@gmail.com', phone: '', address: '31 Brunswick Avenue, Spanish Town', parish: 'St. Catherine', taxId: '315-204-668', avatarColor: '#F0F4E8', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-WALKER-MARLON', name: 'Walker, Marlon', initials: 'MW', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1972-12-31', age: 53, email: 'marlon.walker@outlook.com', phone: '+1 (876) 555-0433', address: '44 Main Road, Annotto Bay', parish: 'St. Mary', taxId: '327-803-009', avatarColor: '#E8EEF7', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-WILLIAMS-JANICE', name: 'Williams, Janice', initials: 'JW', status: 'active', category: 'policyholder', gender: 'Female', dob: '1965-04-26', age: 60, email: 'janice.williams@live.com', phone: '+1 (876) 555-0434', address: '28 Duke Street, Kingston', parish: 'Kingston', taxId: '336-280-194', avatarColor: '#F7E8DF', avatarTextColor: '#1B1C1E' },
   { id: 'CLI-WRIGHT-DONOVAN', name: 'Wright, Donovan', initials: 'DW', status: 'inactive', category: 'relatedParty', gender: 'Male', dob: '1958-06-15', age: 67, email: '', phone: '+1 (876) 555-0435', address: '6 Ocean View Drive, Negril', parish: 'Westmoreland', taxId: '349-611-742', avatarColor: '#EEE9F1', avatarTextColor: '#1A1739' },
-  { id: 'CLI-YOUNG-ISABELLE', name: 'Young, Isabelle', initials: 'IY', status: 'active', category: 'policyholder', gender: 'Female', dob: '1989-11-05', age: 36, email: 'isabelle.young@gmail.com', phone: '+1 (876) 555-0436', address: '90 Hope Road, Kingston', parish: 'St. Andrew', taxId: '358-772-600', avatarColor: '#F5F1E6', avatarTextColor: '#78520F' },
-  { id: 'CLI-BAKER-SEAN', name: 'Baker, Sean', initials: 'SB', status: 'active', category: 'policyholder', gender: 'Male', dob: '1978-08-01', age: 47, email: 'sean.baker@proton.me', phone: '+1 (876) 555-0437', address: '13 Molynes Road, Kingston', parish: 'St. Andrew', taxId: '366-390-285', avatarColor: '#E5F2F4', avatarTextColor: '#17494A' },
-  { id: 'CLI-COOPER-LEAH', name: 'Cooper, Leah', initials: 'LC', status: 'inactive', category: 'dependent', gender: 'Female', dob: '2009-03-15', age: 17, email: '', phone: '', address: '13 Molynes Road, Kingston', parish: 'St. Andrew', taxId: '372-815-943', avatarColor: '#F0F4E8', avatarTextColor: '#405B17' },
-  { id: 'CLI-DIXON-JEROME', name: 'Dixon, Jerome', initials: 'JD', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1987-05-20', age: 38, email: 'jerome.dixon@yahoo.com', phone: '+1 (876) 555-0439', address: '22 Bay Street, Port Maria', parish: 'St. Mary', taxId: '381-506-200', avatarColor: '#E8EEF7', avatarTextColor: '#173D6F' },
-  { id: 'CLI-EVANS-MARIE', name: 'Evans, Marie', initials: 'ME', status: 'active', category: 'policyholder', gender: 'Female', dob: '1973-09-10', age: 52, email: 'marie.evans@icloud.com', phone: '+1 (876) 555-0440', address: '16 South Camp Road, Kingston', parish: 'Kingston', taxId: '397-160-814', avatarColor: '#F7E8DF', avatarTextColor: '#5B230F' },
+  { id: 'CLI-YOUNG-ISABELLE', name: 'Young, Isabelle', initials: 'IY', status: 'active', category: 'policyholder', gender: 'Female', dob: '1989-11-05', age: 36, email: 'isabelle.young@gmail.com', phone: '+1 (876) 555-0436', address: '90 Hope Road, Kingston', parish: 'St. Andrew', taxId: '358-772-600', avatarColor: '#F5F1E6', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-BAKER-SEAN', name: 'Baker, Sean', initials: 'SB', status: 'active', category: 'policyholder', gender: 'Male', dob: '1978-08-01', age: 47, email: 'sean.baker@proton.me', phone: '+1 (876) 555-0437', address: '13 Molynes Road, Kingston', parish: 'St. Andrew', taxId: '366-390-285', avatarColor: '#E5F2F4', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-COOPER-LEAH', name: 'Cooper, Leah', initials: 'LC', status: 'inactive', category: 'dependent', gender: 'Female', dob: '2009-03-15', age: 17, email: '', phone: '', address: '13 Molynes Road, Kingston', parish: 'St. Andrew', taxId: '372-815-943', avatarColor: '#F0F4E8', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-DIXON-JEROME', name: 'Dixon, Jerome', initials: 'JD', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1987-05-20', age: 38, email: 'jerome.dixon@yahoo.com', phone: '+1 (876) 555-0439', address: '22 Bay Street, Port Maria', parish: 'St. Mary', taxId: '381-506-200', avatarColor: '#E8EEF7', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-EVANS-MARIE', name: 'Evans, Marie', initials: 'ME', status: 'active', category: 'policyholder', gender: 'Female', dob: '1973-09-10', age: 52, email: 'marie.evans@icloud.com', phone: '+1 (876) 555-0440', address: '16 South Camp Road, Kingston', parish: 'Kingston', taxId: '397-160-814', avatarColor: '#F7E8DF', avatarTextColor: '#1B1C1E' },
   { id: 'CLI-FRANCIS-LEON', name: 'Francis, Leon', initials: 'LF', status: 'inactive', category: 'policyholder', gender: 'Male', dob: '1960-01-09', age: 66, email: 'leon.francis@gmail.com', phone: '+1 (876) 555-0441', address: '45 St. James Street, Montego Bay', parish: 'St. James', taxId: '405-927-310', avatarColor: '#EEE9F1', avatarTextColor: '#1A1739' },
-  { id: 'CLI-GRAHAM-CELESTE', name: 'Graham, Celeste', initials: 'CG', status: 'active', category: 'policyholder', gender: 'Female', dob: '1993-04-13', age: 33, email: 'celeste.graham@outlook.com', phone: '+1 (876) 555-0442', address: '2 Fairview Avenue, Montego Bay', parish: 'St. James', taxId: '413-680-077', avatarColor: '#F5F1E6', avatarTextColor: '#78520F' },
-  { id: 'CLI-HARRIS-NOEL', name: 'Harris, Noel', initials: 'NH', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1949-12-23', age: 76, email: '', phone: '+1 (876) 555-0443', address: '70 Gordon Town Road, Kingston', parish: 'St. Andrew', taxId: '424-718-966', avatarColor: '#E5F2F4', avatarTextColor: '#17494A' },
-  { id: 'CLI-IRVING-ROXANNE', name: 'Irving, Roxanne', initials: 'RI', status: 'inactive', category: 'policyholder', gender: 'Female', dob: '1982-06-06', age: 43, email: 'roxanne.irving@yahoo.com', phone: '+1 (876) 555-0444', address: '34 Main Street, Old Harbour', parish: 'St. Catherine', taxId: '431-650-412', avatarColor: '#F0F4E8', avatarTextColor: '#405B17' },
-  { id: 'CLI-JAMES-ERIC', name: 'James, Eric', initials: 'EJ', status: 'active', category: 'policyholder', gender: 'Male', dob: '1975-07-30', age: 50, email: 'eric.james@live.com', phone: '+1 (876) 555-0445', address: '21 Market Road, Linstead', parish: 'St. Catherine', taxId: '449-203-158', avatarColor: '#E8EEF7', avatarTextColor: '#173D6F' },
-  { id: 'CLI-KNIGHT-VERONICA', name: 'Knight, Veronica', initials: 'VK', status: 'active', category: 'relatedParty', gender: 'Female', dob: '1954-02-18', age: 72, email: 'veronica.knight@gmail.com', phone: '+1 (876) 555-0446', address: '12 Church Street, Port Maria', parish: 'St. Mary', taxId: '455-902-700', avatarColor: '#F7E8DF', avatarTextColor: '#5B230F' },
+  { id: 'CLI-GRAHAM-CELESTE', name: 'Graham, Celeste', initials: 'CG', status: 'active', category: 'policyholder', gender: 'Female', dob: '1993-04-13', age: 33, email: 'celeste.graham@outlook.com', phone: '+1 (876) 555-0442', address: '2 Fairview Avenue, Montego Bay', parish: 'St. James', taxId: '413-680-077', avatarColor: '#F5F1E6', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-HARRIS-NOEL', name: 'Harris, Noel', initials: 'NH', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1949-12-23', age: 76, email: '', phone: '+1 (876) 555-0443', address: '70 Gordon Town Road, Kingston', parish: 'St. Andrew', taxId: '424-718-966', avatarColor: '#E5F2F4', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-IRVING-ROXANNE', name: 'Irving, Roxanne', initials: 'RI', status: 'inactive', category: 'policyholder', gender: 'Female', dob: '1982-06-06', age: 43, email: 'roxanne.irving@yahoo.com', phone: '+1 (876) 555-0444', address: '34 Main Street, Old Harbour', parish: 'St. Catherine', taxId: '431-650-412', avatarColor: '#F0F4E8', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-JAMES-ERIC', name: 'James, Eric', initials: 'EJ', status: 'active', category: 'policyholder', gender: 'Male', dob: '1975-07-30', age: 50, email: 'eric.james@live.com', phone: '+1 (876) 555-0445', address: '21 Market Road, Linstead', parish: 'St. Catherine', taxId: '449-203-158', avatarColor: '#E8EEF7', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-KNIGHT-VERONICA', name: 'Knight, Veronica', initials: 'VK', status: 'active', category: 'relatedParty', gender: 'Female', dob: '1954-02-18', age: 72, email: 'veronica.knight@gmail.com', phone: '+1 (876) 555-0446', address: '12 Church Street, Port Maria', parish: 'St. Mary', taxId: '455-902-700', avatarColor: '#F7E8DF', avatarTextColor: '#1B1C1E' },
   { id: 'CLI-LAWRENCE-ISAAC', name: 'Lawrence, Isaac', initials: 'IL', status: 'inactive', category: 'dependent', gender: 'Male', dob: '2012-10-03', age: 13, email: '', phone: '', address: '21 Market Road, Linstead', parish: 'St. Catherine', taxId: '462-801-330', avatarColor: '#EEE9F1', avatarTextColor: '#1A1739' },
-  { id: 'CLI-MCKENZIE-JANELLE', name: 'McKenzie, Janelle', initials: 'JM', status: 'active', category: 'policyholder', gender: 'Female', dob: '1985-01-21', age: 41, email: 'janelle.mckenzie@icloud.com', phone: '+1 (876) 555-0448', address: '3 Fort Street, Montego Bay', parish: 'St. James', taxId: '470-391-651', avatarColor: '#F5F1E6', avatarTextColor: '#78520F' },
-  { id: 'CLI-POWELL-MATTHEW', name: 'Powell, Matthew', initials: 'MP', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1996-05-12', age: 29, email: 'matthew.powell@gmail.com', phone: '+1 (876) 555-0449', address: '18 Norman Manley Boulevard, Negril', parish: 'Westmoreland', taxId: '488-617-059', avatarColor: '#E5F2F4', avatarTextColor: '#17494A' },
+  { id: 'CLI-MCKENZIE-JANELLE', name: 'McKenzie, Janelle', initials: 'JM', status: 'active', category: 'policyholder', gender: 'Female', dob: '1985-01-21', age: 41, email: 'janelle.mckenzie@icloud.com', phone: '+1 (876) 555-0448', address: '3 Fort Street, Montego Bay', parish: 'St. James', taxId: '470-391-651', avatarColor: '#F5F1E6', avatarTextColor: '#1B1C1E' },
+  { id: 'CLI-POWELL-MATTHEW', name: 'Powell, Matthew', initials: 'MP', status: 'active', category: 'relatedParty', gender: 'Male', dob: '1996-05-12', age: 29, email: 'matthew.powell@gmail.com', phone: '+1 (876) 555-0449', address: '18 Norman Manley Boulevard, Negril', parish: 'Westmoreland', taxId: '488-617-059', avatarColor: '#E5F2F4', avatarTextColor: '#1B1C1E' },
 ];
 
 export const PARTICIPANT_ROLE_OPTIONS = [
@@ -769,6 +770,7 @@ export const MOCK_ENTITY_FOLDERS: Record<string, EntityFolderDef> = {
   [POLICY_123.id]: POLICY_123,
   [CLIENT_MARC.id]: CLIENT_MARC,
   [AGENT_BEAULIEU.id]: AGENT_BEAULIEU,
+  [PARTICIPANT_MARC.id]: PARTICIPANT_MARC,
   [COVERAGE_TERM10.id]: COVERAGE_TERM10,
   ...Object.fromEntries(COVERAGE_STUB_DEFS.filter((def) => def.id !== COVERAGE_TERM10.id).map((def) => [def.id, def])),
 };

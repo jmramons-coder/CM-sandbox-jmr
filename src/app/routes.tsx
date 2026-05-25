@@ -14,8 +14,10 @@ import { ComingSoonModule } from "./components/ComingSoonModule";
 import { FoldersWorkspace } from "./components/FoldersWorkspace";
 import { FoldersModule } from "./components/FoldersModule";
 import {
+  AddIdentityDocumentForm,
   AddParticipantForm,
   AddRelationshipForm,
+  EditIdentityDocumentForm,
   EntityFolderOverview,
   EntitySubFolderListView,
   FolderRouter,
@@ -65,14 +67,20 @@ export const router = createBrowserRouter([
           /* IP keeps using :folderId/:subCaseId; entity sub-folders share the
            * same slot via IpOrEntitySubRouter. */
           { path: ":folderId/relationship/add", Component: AddRelationshipForm, ErrorBoundary: RouteErrorBoundary },
+          { path: ":folderId/identity-documents/add", Component: AddIdentityDocumentForm, ErrorBoundary: RouteErrorBoundary },
+          { path: ":folderId/identity-documents/:documentId/edit", Component: EditIdentityDocumentForm, ErrorBoundary: RouteErrorBoundary },
           { path: ":folderId/:childType/add", Component: AddParticipantForm, ErrorBoundary: RouteErrorBoundary },
           { path: ":folderId/:childType", Component: IpOrEntitySubRouter, ErrorBoundary: RouteErrorBoundary },
           { path: ":folderId/:childType/:childId", Component: EntityFolderOverview, ErrorBoundary: RouteErrorBoundary },
           { path: ":folderId/:childType/:childId/relationship/add", Component: AddRelationshipForm, ErrorBoundary: RouteErrorBoundary },
+          { path: ":folderId/:childType/:childId/identity-documents/add", Component: AddIdentityDocumentForm, ErrorBoundary: RouteErrorBoundary },
+          { path: ":folderId/:childType/:childId/identity-documents/:documentId/edit", Component: EditIdentityDocumentForm, ErrorBoundary: RouteErrorBoundary },
           { path: ":folderId/:childType/:childId/:nestedType/add", Component: AddParticipantForm, ErrorBoundary: RouteErrorBoundary },
           { path: ":folderId/:childType/:childId/:nestedType", Component: EntitySubFolderListView, ErrorBoundary: RouteErrorBoundary },
           { path: ":folderId/:childType/:childId/:nestedType/:nestedId", Component: EntityFolderOverview, ErrorBoundary: RouteErrorBoundary },
           { path: ":folderId/:childType/:childId/:nestedType/:nestedId/relationship/add", Component: AddRelationshipForm, ErrorBoundary: RouteErrorBoundary },
+          { path: ":folderId/:childType/:childId/:nestedType/:nestedId/identity-documents/add", Component: AddIdentityDocumentForm, ErrorBoundary: RouteErrorBoundary },
+          { path: ":folderId/:childType/:childId/:nestedType/:nestedId/identity-documents/:documentId/edit", Component: EditIdentityDocumentForm, ErrorBoundary: RouteErrorBoundary },
         ],
       },
       {

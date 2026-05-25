@@ -1,4 +1,6 @@
 import type { EntityFolderDef, EntitySubFolderGroup } from '../domain/entityFolders';
+import { withIdentityDocumentsSection } from '../domain/entityInformationLayout';
+import { getPersonAvatarColors } from '../utils/person-avatar';
 import type { AgentRecord, ClientRecord, PolicyRecord, SystemDataset } from './multi-case-dataset';
 import {
   formatParticipantRoles,
@@ -231,7 +233,7 @@ export function getClientEntityView(dataset: SystemDataset, client: ClientRecord
       actions: [{ id: 'add' }, { id: 'message' }, { id: 'more' }],
     },
     tabs: baseTabs(),
-    information: [
+    information: withIdentityDocumentsSection([
       {
         kind: 'fieldGrid',
         id: 'identification',
@@ -277,7 +279,7 @@ export function getClientEntityView(dataset: SystemDataset, client: ClientRecord
         rows: policyRows,
         emptyState: { message: 'No policy relationships found in the active dataset.' },
       },
-    ],
+    ]),
   };
 }
 
@@ -309,7 +311,7 @@ export function getAgentEntityView(dataset: SystemDataset, agent: AgentRecord): 
           .map((part) => part[0])
           .join('')
           .toUpperCase(),
-        color: '#5b8abf',
+        color: getPersonAvatarColors(agent.id).background,
       },
       badges: [
         { label: 'Agent', tone: 'default' },
@@ -318,7 +320,7 @@ export function getAgentEntityView(dataset: SystemDataset, agent: AgentRecord): 
       actions: [{ id: 'add' }, { id: 'message' }, { id: 'more' }],
     },
     tabs: baseTabs(),
-    information: [
+    information: withIdentityDocumentsSection([
       {
         kind: 'fieldGrid',
         id: 'identification',
@@ -355,16 +357,18 @@ export function getAgentEntityView(dataset: SystemDataset, agent: AgentRecord): 
           { key: 'status', label: 'Status' },
           { key: 'effectiveDate', label: 'Effective date' },
         ],
-        rows: agent.licenses.map((license) => ({
-          id: license.id,
-          cells: {
-            jurisdiction: license.jurisdiction,
-            status: license.status,
-            effectiveDate: license.effectiveDate ?? '-',
-          },
-        })),
+        rows: (agent.licenses ?? [])
+          .filter((license) => Boolean(license?.id))
+          .map((license) => ({
+            id: license.id,
+            cells: {
+              jurisdiction: license.jurisdiction,
+              status: license.status,
+              effectiveDate: license.effectiveDate ?? '-',
+            },
+          })),
       },
-    ],
+    ]),
   };
 }
 

@@ -169,7 +169,8 @@ function translateSection(
   t: (k: string) => string,
   base: string,
 ): InfoSection {
-  const sectionBase = `${base}.sections.${section.id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())}`;
+  const sectionKey = section.id.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+  const sectionBase = `${base}.sections.${sectionKey}`;
   const title = tIfPresent(t, `${sectionBase}.title`) ?? section.title;
   if (section.kind === 'fieldGrid') {
     return {

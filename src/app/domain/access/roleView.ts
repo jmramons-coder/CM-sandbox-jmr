@@ -108,6 +108,9 @@ export type DashboardFocusData = {
   metric: DashboardTaskMetric;
   evidenceLabel?: string;
   evidenceRoute?: string;
+  evidenceDocumentId?: string;
+  evidencePreviewUrl?: string;
+  evidencePreviewTitle?: string;
 };
 
 export type DashboardProgressData = {
@@ -134,7 +137,6 @@ export type DashboardVelocityRow = {
   overdue: number;
   trend: 'warn' | 'ok' | 'flat' | string;
   trendLabel: string;
-  spark: number[];
 };
 
 export type DashboardActivityRow = {

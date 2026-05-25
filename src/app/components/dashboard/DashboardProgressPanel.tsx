@@ -1,6 +1,7 @@
 import { ArrowRight, CircleGauge, Flame, TrendingDown, TrendingUp } from 'lucide-react';
 import { SurfaceCard } from '../ds';
 import type { DashboardViewModel } from '../../domain/access/roleView';
+import { AnimatedDisplayValue, useMountProgress } from './dashboardMotion';
 import { MetricBarList, progressRingColor } from './dashboardWidgetUtils';
 
 const RING_RADIUS = 28;
@@ -18,7 +19,9 @@ type DashboardProgressPanelProps = {
 
 export function DashboardProgressPanel({ viewModel }: DashboardProgressPanelProps) {
   const { progress } = viewModel;
-  const dashOffset = RING_CIRCUMFERENCE - (progress.pct / 100) * RING_CIRCUMFERENCE;
+  const motion = useMountProgress(560);
+  const animatedPct = Math.round(progress.pct * motion);
+  const dashOffset = RING_CIRCUMFERENCE - (animatedPct / 100) * RING_CIRCUMFERENCE;
   const ringColor = progressRingColor(progress.pct);
 
   return (
@@ -43,12 +46,12 @@ export function DashboardProgressPanel({ viewModel }: DashboardProgressPanelProp
             transform="rotate(-90 34 34)"
           />
           <text x="34" y="38" textAnchor="middle" fill="currentColor" fontSize="14" fontWeight="600">
-            {progress.pct}%
+            {animatedPct}%
           </text>
         </svg>
         <div className="min-w-0">
           <p className="text-[22px] font-semibold leading-none text-text-primary">
-            {progress.done}
+            <AnimatedDisplayValue value={String(progress.done)} progress={motion} className="inline" />
             <span className="text-[14px] font-medium text-text-muted"> / {progress.target}</span>
           </p>
           <p className="mt-1 text-[11px] text-text-secondary">{viewModel.progressLabel}</p>
@@ -67,7 +70,7 @@ export function DashboardProgressPanel({ viewModel }: DashboardProgressPanelProp
         </div>
       </div>
       <div className="mt-4 border-t border-border-default pt-3">
-        <MetricBarList bars={viewModel.metricBars} />
+        <MetricBarList bars={viewModel.metricBars} sharedProgress={motion} />
       </div>
     </SurfaceCard>
   );

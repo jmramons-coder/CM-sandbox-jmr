@@ -1,4 +1,5 @@
 import type { DashboardMetricBar } from '../../domain/access/roleView';
+import { AnimatedDisplayValue, AnimatedFillBar, useMountProgress } from './dashboardMotion';
 
 const BAR_FILL_CLASS: Record<string, string> = {
   '': 'bg-brand-blue',
@@ -6,25 +7,47 @@ const BAR_FILL_CLASS: Record<string, string> = {
   red: 'bg-brand-red',
 };
 
+type MetricBarRowProps = {
+  bar: DashboardMetricBar;
+  index: number;
+  sharedProgress?: number;
+};
+
+function MetricBarRow({ bar, index, sharedProgress }: MetricBarRowProps) {
+  const ownProgress = useMountProgress(480, index * 70);
+  const progress = sharedProgress ?? ownProgress;
+
+  return (
+    <div className="grid grid-cols-[100px_minmax(0,1fr)_auto] items-center gap-2">
+      <span className="truncate text-[11px] text-text-secondary">{bar.label}</span>
+      <div className="h-1.5 overflow-hidden rounded-full bg-surface-muted">
+        <AnimatedFillBar
+          percent={bar.bar}
+          progress={progress}
+          className={`block h-full rounded-full ${BAR_FILL_CLASS[bar.cls] ?? BAR_FILL_CLASS['']}`}
+        />
+      </div>
+      <AnimatedDisplayValue
+        value={bar.val}
+        progress={progress}
+        className="text-[11px] font-semibold text-text-primary"
+      />
+    </div>
+  );
+}
+
 type MetricBarListProps = {
   bars: DashboardMetricBar[];
   className?: string;
+  /** When set, all bars share one progress (e.g. synced with a ring). */
+  sharedProgress?: number;
 };
 
-export function MetricBarList({ bars, className = '' }: MetricBarListProps) {
+export function MetricBarList({ bars, className = '', sharedProgress }: MetricBarListProps) {
   return (
     <div className={`space-y-2.5 ${className}`}>
-      {bars.map((bar) => (
-        <div key={bar.label} className="grid grid-cols-[100px_minmax(0,1fr)_auto] items-center gap-2">
-          <span className="truncate text-[11px] text-text-secondary">{bar.label}</span>
-          <div className="h-1.5 overflow-hidden rounded-full bg-surface-muted">
-            <span
-              className={`block h-full rounded-full ${BAR_FILL_CLASS[bar.cls] ?? BAR_FILL_CLASS['']}`}
-              style={{ width: `${bar.bar}%` }}
-            />
-          </div>
-          <span className="text-[11px] font-semibold text-text-primary">{bar.val}</span>
-        </div>
+      {bars.map((bar, index) => (
+        <MetricBarRow key={bar.label} bar={bar} index={index} sharedProgress={sharedProgress} />
       ))}
     </div>
   );
@@ -61,8 +84,12 @@ export const VELOCITY_TREND_CLASS: Record<string, string> = {
 };
 
 export const VELOCITY_AVATAR_CLASS: Record<string, string> = {
-  '': 'bg-[#eef2f6] text-text-primary ring-1 ring-[#d7dde3]',
-  amber: 'bg-[#fff4e6] text-[#a36d00] ring-2 ring-[#f5a200]/40',
-  green: 'bg-[#e5f5ea] text-brand-green ring-2 ring-brand-green/35',
+  '': 'bg-[#eef2f6] text-[#1B1C1E]',
+  amber: 'bg-[#F7E8DF] text-[#1B1C1E]',
+  green: 'bg-[#E5F2F4] text-[#1B1C1E]',
 };
+
+/** Shared interactive row hover for dashboard list widgets (inset within card padding). */
+export const DASHBOARD_LIST_ROW_HOVER =
+  'rounded-xl transition-colors hover:bg-surface-muted active:bg-surface-muted/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/25';
 

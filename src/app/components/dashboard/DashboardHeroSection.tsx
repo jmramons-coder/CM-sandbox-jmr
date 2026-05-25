@@ -6,6 +6,7 @@ import {
   Users,
 } from 'lucide-react';
 import type { DashboardKpi, DashboardKpiTrend, DashboardSummaryCard, DashboardViewModel } from '../../domain/access/roleView';
+import { AnimatedDisplayValue } from './dashboardMotion';
 import { KPI_TREND_TEXT_CLASS } from './dashboardWidgetUtils';
 
 const KPI_VALUE_CLASS: Record<string, string> = {
@@ -35,7 +36,10 @@ function KpiChip({ kpi, trend }: { kpi: DashboardKpi; trend?: DashboardKpiTrend 
 
   return (
     <div className="flex min-w-0 flex-col items-center justify-center px-2 py-2.5 text-center sm:min-w-[120px] sm:items-start sm:px-4 sm:py-2 sm:text-left lg:min-w-[130px]">
-      <p className={`text-[14px] font-semibold leading-tight sm:text-[16px] ${valueClass}`}>{kpi.val}</p>
+      <AnimatedDisplayValue
+        value={kpi.val}
+        className={`text-[14px] font-semibold leading-tight sm:text-[16px] ${valueClass}`}
+      />
       <p className="mt-0.5 text-[8px] font-semibold uppercase leading-tight tracking-[0.2px] text-text-muted sm:text-[9px] sm:tracking-[0.35px]">
         {kpi.label}
       </p>
@@ -59,9 +63,10 @@ function SummaryCard({ card }: { card: DashboardSummaryCard }) {
         <div className="min-w-0">
           <p className="text-[10px] font-semibold leading-tight text-text-heading sm:text-[13px]">{card.title}</p>
           <div className="mt-0.5 sm:mt-1">
-            <p className={`text-[12px] font-semibold leading-tight sm:text-[22px] sm:leading-none ${valueClass}`}>
-              {card.val}
-            </p>
+            <AnimatedDisplayValue
+              value={card.val}
+              className={`text-[12px] font-semibold leading-tight sm:text-[22px] sm:leading-none ${valueClass}`}
+            />
           </div>
           <p className="mt-0.5 hidden text-[11px] text-text-secondary sm:block">{card.sub}</p>
         </div>

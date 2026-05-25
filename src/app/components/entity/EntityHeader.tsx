@@ -2,6 +2,7 @@ import { MoreVertical, Plus, Settings, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { normalizeEntityHeaderBadges, type EntityFolderHeader, type EntityHeaderAction } from '../../domain/entityFolders';
 import { InitialsAvatar } from '../ds';
+import { resolvePersonAvatar } from '../../utils/person-avatar';
 import { LozengeTag } from '../LozengeTag';
 import {
   DropdownMenu,
@@ -16,17 +17,33 @@ import {
  * lives in `EntityHeaderActions` so it can be rendered on the breadcrumb row
  * for top-right alignment, instead of next to the title.
  */
-export function EntityHeader({ header }: { header: EntityFolderHeader }) {
+export function EntityHeader({
+  header,
+  entityId,
+}: {
+  header: EntityFolderHeader;
+  /** Stable seed for pastel color (defaults to title). */
+  entityId?: string;
+}) {
   const { t } = useTranslation('folders');
   const badges = normalizeEntityHeaderBadges(header);
+  const avatarResolved = header.avatar
+    ? resolvePersonAvatar(header.title, {
+        initials: header.avatar.initials ?? t('entity.header.fallbackInitial'),
+        seed: entityId ?? header.title,
+        backgroundColor: header.avatar.color,
+      })
+    : null;
+
   return (
     <div className="flex min-w-0 items-start gap-3">
-      {header.avatar ? (
+      {avatarResolved ? (
         <InitialsAvatar
           name={header.title}
-          initials={header.avatar.initials ?? t('entity.header.fallbackInitial')}
-          seed={header.title}
-          backgroundColor={header.avatar.color}
+          initials={avatarResolved.initials}
+          seed={entityId ?? header.title}
+          backgroundColor={avatarResolved.colors.background}
+          textColor={avatarResolved.colors.foreground}
           size="lg"
           aria-label={header.title}
         />

@@ -12,6 +12,7 @@ import {
   resolveDashboardTaskPrimaryAction,
   resolveDashboardTaskPrimaryRoute,
   resolveTaskEvidenceButtonLabel,
+  resolveTaskEvidenceDocumentId,
   resolveTaskEvidencePreview,
 } from '../utils/dashboard-task-widget';
 import { formatCurrencyAmount, parseCurrencyAmount } from '../utils/currency';
@@ -235,9 +236,10 @@ function mapSeedPriority(prio: string): string {
 
 function normalizeSeedFocus(fallback: DashboardFocusData, roleView: RoleView): DashboardFocusData {
   const [claimantName] = fallback.link.split(' · ');
-  const primaryRoute = fallback.caseId
-    ? (roleView === 'manager' ? `/cases/${fallback.caseId}` : `/cases/${fallback.caseId}#tab=decision`)
-    : '/tasks';
+  const primaryRoute = fallback.primaryRoute
+    ?? (fallback.taskId
+      ? `/tasks#task=${encodeURIComponent(fallback.taskId)}`
+      : '/tasks');
   return {
     ...fallback,
     priority: fallback.priority || mapSeedPriority(fallback.prio),
@@ -294,6 +296,9 @@ export function buildLiveFocusData(
       ? resolveTaskEvidenceButtonLabel(task, evidencePreview)
       : undefined,
     evidenceRoute: dataset ? resolveDashboardTaskEvidenceRoute(task, dataset) : undefined,
+    evidenceDocumentId: dataset ? resolveTaskEvidenceDocumentId(task, dataset) : undefined,
+    evidencePreviewUrl: evidencePreview?.pages[0]?.image,
+    evidencePreviewTitle: evidencePreview?.documentTitle,
   };
 }
 

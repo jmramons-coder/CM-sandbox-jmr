@@ -1,8 +1,9 @@
-import { Eye, ListTodo } from 'lucide-react';
+import { ArrowRight, ListTodo } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { PriorityChip, SurfaceCard } from '../ds';
 import type { DashboardViewModel } from '../../domain/access/roleView';
 import { DASHBOARD_TASK_CASE_LINK_CLASS } from '../../utils/dashboard-task-widget';
+import { DashboardEvidencePreviewButton } from './DashboardEvidencePreviewButton';
 
 type DashboardFocusCardProps = {
   viewModel: DashboardViewModel;
@@ -13,7 +14,7 @@ export function DashboardFocusCard({ viewModel }: DashboardFocusCardProps) {
   const { focus } = viewModel;
 
   return (
-    <SurfaceCard className="overflow-hidden">
+    <SurfaceCard className="overflow-visible">
       <div className="flex items-start justify-between gap-3 px-4 py-3">
         <div className="flex items-center gap-2">
           <ListTodo className="size-4 text-text-heading" />
@@ -24,7 +25,7 @@ export function DashboardFocusCard({ viewModel }: DashboardFocusCardProps) {
           onClick={() => navigate('/tasks')}
           className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-brand-blue hover:text-brand-blue-hover"
         >
-          All tasks
+          All tasks <ArrowRight className="size-3" />
         </button>
       </div>
 
@@ -72,14 +73,13 @@ export function DashboardFocusCard({ viewModel }: DashboardFocusCardProps) {
               {focus.ctaLabel}
             </button>
             {focus.evidenceRoute && focus.evidenceLabel ? (
-              <button
-                type="button"
-                onClick={() => navigate(focus.evidenceRoute!)}
-                className="inline-flex max-w-full items-center gap-1 rounded-full border border-border-default bg-white px-2.5 py-1 text-[11px] font-semibold text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary"
-              >
-                <Eye className="size-3 shrink-0" />
-                {focus.evidenceLabel}
-              </button>
+              <DashboardEvidencePreviewButton
+                label={focus.evidenceLabel}
+                route={focus.evidenceRoute}
+                previewUrl={focus.evidencePreviewUrl}
+                previewTitle={focus.evidencePreviewTitle}
+                onNavigate={navigate}
+              />
             ) : null}
           </div>
         </div>

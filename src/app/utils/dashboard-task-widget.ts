@@ -133,7 +133,7 @@ export function resolveDashboardTaskMetric(
 export function resolveDashboardTaskPrimaryAction(task: Task, roleView?: 'assessor' | 'manager'): DashboardTaskAction {
   if (roleView === 'manager') return { label: 'Review & countersign' };
   const type = task.taskType.toLowerCase();
-  if (type.includes('decision')) return { label: 'Go to decision' };
+  if (type.includes('decision')) return { label: 'View task' };
   if (type.includes('requirement')) return { label: 'View requirements' };
   if (type.includes('review') || type.includes('file')) return { label: 'Review file' };
   return { label: 'View task' };

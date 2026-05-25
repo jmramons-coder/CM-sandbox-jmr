@@ -10,6 +10,7 @@ import {
   type EntityTableSection,
   type InfoSection,
 } from '../../domain/entityFolders';
+import { partyContextFromFolder } from '../../domain/identityDocuments';
 import { useTranslatedEntityFolder } from '../../data/useFolders';
 import { getEntityRelationships } from '../../data/mock-entity-folders';
 import { filterDatasetBySettings, getSystemDataset, listRelationships } from '../../data/objectRepository';
@@ -25,6 +26,7 @@ import { EntityContactPanel } from './EntityContactPanel';
 import { EntityFieldGridCard } from './EntityFieldGridCard';
 import { EntityHeader, EntityHeaderActions } from './EntityHeader';
 import { EntityTableSectionCard } from './EntityTableSectionCard';
+import { IdentityDocumentsSectionCard } from './identityDocuments/IdentityDocumentsSectionCard';
 import { EntityRelationshipTab } from './EntityRelationshipTab';
 import { ModuleTabsBar } from '../ModuleTabsBar';
 import {
@@ -91,19 +93,24 @@ function EntityFolderOverviewView({
     const sourceRef = { kind: folder.type as 'policy' | 'client' | 'agent', id: folder.id, label: folder.header.title };
     return listRelationships(activeDataset, sourceRef).filter((row) =>
       ['policy', 'client', 'agent'].includes(row.source.kind) || ['policy', 'client', 'agent'].includes(row.target.kind),
-    ).map((row) => {
-      const target = row.source.id === folder.id && row.source.kind === folder.type ? row.target : row.source;
-      return {
-        id: row.id,
-        folderId: target.id,
-        folderName: target.label ?? target.id,
-        folderType: toRelationshipFolderType(target.kind),
-        relationship: row.relationship,
-        effectiveDate: row.effectiveDate ?? '',
-        expirationDate: row.expirationDate ?? '',
-        status: row.status?.toUpperCase() === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
-      };
-    }).filter((row) => row.folderType !== 'Participant');
+    )
+      .map((row) => {
+        if (!row.source?.id || !row.target?.id) return null;
+        const target =
+          row.source.id === folder.id && row.source.kind === folder.type ? row.target : row.source;
+        if (!target?.id) return null;
+        return {
+          id: row.id,
+          folderId: target.id,
+          folderName: target.label ?? target.id,
+          folderType: toRelationshipFolderType(target.kind),
+          relationship: row.relationship,
+          effectiveDate: row.effectiveDate ?? '',
+          expirationDate: row.expirationDate ?? '',
+          status: row.status?.toUpperCase() === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+        };
+      })
+      .filter((row): row is EntityRelationshipRow => row !== null && row.folderType !== 'Participant');
   }, [activeDataset, folder.header.title, folder.id, folder.type]);
   const effectiveRelationshipRows = datasetRelationshipRows.length ? datasetRelationshipRows : relationshipRows;
   const activeTab = folder.tabs.find((tab) => tab.id === activeTabId) ?? folder.tabs[0];
@@ -135,7 +142,7 @@ function EntityFolderOverviewView({
             />
           </div>
 
-          <EntityHeader header={folder.header} />
+          <EntityHeader header={folder.header} entityId={folder.id} />
 
           <ModuleTabsBar
             tabs={folder.tabs}
@@ -154,7 +161,7 @@ function EntityFolderOverviewView({
               <EntityBanner banner={folder.header.banner} />
             ) : null}
             {visibleInformation.map((section) => (
-              <SectionRenderer key={section.id} section={section} />
+              <SectionRenderer key={section.id} section={section} folder={folder} />
             ))}
           </div>
         ) : activeTab?.id === 'relationship' ? (
@@ -221,10 +228,24 @@ function toVisibleInfoSection(entry: ConfigurableInfoSection): InfoSection {
   return entry.section;
 }
 
-function SectionRenderer({ section }: { section: InfoSection }) {
+function SectionRenderer({
+  section,
+  folder,
+}: {
+  section: InfoSection;
+  folder: EntityFolderDef;
+}) {
   if (section.kind === 'fieldGrid') return <EntityFieldGridCard section={section} />;
   if (section.kind === 'tableSection') return <EntityTableSectionCard section={section} />;
   if (section.kind === 'contact') return <EntityContactPanel section={section} />;
+  if (section.kind === 'identityDocuments') {
+    return (
+      <IdentityDocumentsSectionCard
+        party={partyContextFromFolder(folder)}
+        title={section.title}
+      />
+    );
+  }
   return null;
 }
 

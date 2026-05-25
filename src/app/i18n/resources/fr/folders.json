@@ -312,6 +312,15 @@
         "relatedDetails": "Détails associés"
       }
     },
+    "identityDocuments": {
+      "empty": "Aucun document d'identité n'est associé à {{name}}.",
+      "addTitle": "Ajouter des documents d'identité",
+      "addDescription": "Ajoutez un ou plusieurs documents d'identité pour {{name}}.",
+      "editTitle": "Modifier le document d'identité",
+      "editDescription": "Mettre à jour les informations supplémentaires pour {{name}}.",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
     "table": {
       "empty": "Aucune entrée.",
       "rowActions": "Actions de ligne",

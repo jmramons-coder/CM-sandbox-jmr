@@ -145,10 +145,18 @@ export type EntityContactSection = {
   addresses?: { kind: 'Business' | 'Residence'; address: string }[];
 };
 
+/** Interactive identity documents section (Client / Agent / Participant). */
+export type EntityIdentityDocumentsSection = {
+  kind: 'identityDocuments';
+  id: string;
+  title: string;
+};
+
 export type InfoSection =
   | EntityFieldGridSection
   | EntityTableSection
-  | EntityContactSection;
+  | EntityContactSection
+  | EntityIdentityDocumentsSection;
 
 /* ─── Sub-folder grouping ─── */
 

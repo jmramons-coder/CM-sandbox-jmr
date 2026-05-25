@@ -3,7 +3,7 @@ import { History } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { EmptyState, SurfaceCard } from '../ds';
 import { classifyActivityDot, type DashboardViewModel } from '../../domain/access/roleView';
-import { ACTIVITY_DOT_CLASS } from './dashboardWidgetUtils';
+import { ACTIVITY_DOT_CLASS, DASHBOARD_LIST_ROW_HOVER } from './dashboardWidgetUtils';
 
 type ActivityPeriod = 'day' | 'week';
 
@@ -47,7 +47,7 @@ export function DashboardActivityPanel({ viewModel }: DashboardActivityPanelProp
       </div>
 
       <div className="max-h-[280px] min-h-0 overflow-y-auto">
-        <div className="divide-y divide-border-divider">
+        <div className="flex flex-col gap-1 pb-1">
           {visibleActivity.length === 0 ? (
             <EmptyState
               message={
@@ -65,7 +65,7 @@ export function DashboardActivityPanel({ viewModel }: DashboardActivityPanelProp
                 type="button"
                 onClick={() => item.case && item.case !== '-' && navigate(`/cases/${item.case}`)}
                 disabled={!item.case || item.case === '-'}
-                className="flex w-full gap-2 py-2.5 text-left transition-colors hover:bg-surface-muted disabled:cursor-default disabled:hover:bg-transparent"
+                className={`flex w-full gap-2.5 px-3 py-2.5 text-left ${DASHBOARD_LIST_ROW_HOVER} disabled:cursor-default disabled:hover:bg-transparent disabled:active:bg-transparent`}
               >
                 <span className={`mt-[5px] size-[7px] shrink-0 rounded-full ${dotClass}`} aria-hidden />
                 <span className="min-w-0 flex-1">

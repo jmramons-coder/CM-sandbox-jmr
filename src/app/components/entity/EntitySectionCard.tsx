@@ -11,6 +11,7 @@ import type { EntitySectionAction } from '../../domain/entityFolders';
 export function EntitySectionCard({
   title,
   actions,
+  onActionClick,
   showKebab = true,
   bodyClassName,
   footer,
@@ -18,6 +19,7 @@ export function EntitySectionCard({
 }: {
   title: string;
   actions?: EntitySectionAction[];
+  onActionClick?: (actionId: string) => void;
   showKebab?: boolean;
   bodyClassName?: string;
   footer?: ReactNode;
@@ -33,7 +35,7 @@ export function EntitySectionCard({
         </h3>
         <div className="flex shrink-0 items-center gap-1">
           {actions?.map((a) => (
-            <SectionActionButton key={a.id} action={a} />
+            <SectionActionButton key={a.id} action={a} onClick={onActionClick} />
           ))}
           {showKebab && !hasExplicitActions ? (
             <button
@@ -52,11 +54,18 @@ export function EntitySectionCard({
   );
 }
 
-function SectionActionButton({ action }: { action: EntitySectionAction }) {
+function SectionActionButton({
+  action,
+  onClick,
+}: {
+  action: EntitySectionAction;
+  onClick?: (actionId: string) => void;
+}) {
   const Icon = action.icon === 'edit' ? Pencil : Plus;
   return (
     <button
       type="button"
+      onClick={() => onClick?.(action.id)}
       className="inline-flex h-7 items-center gap-2 rounded px-2 text-[11px] font-bold uppercase tracking-[0.4px] text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary"
     >
       <Icon className="size-4 shrink-0" strokeWidth={2} />

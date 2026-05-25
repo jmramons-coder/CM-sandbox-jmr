@@ -2,29 +2,44 @@ import { Activity, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { EmptyState, SurfaceCard } from '../ds';
 import type { DashboardCaseHealthRow, DashboardViewModel } from '../../domain/access/roleView';
-import { SLA_TEXT_CLASS } from './dashboardWidgetUtils';
+import { AnimatedDisplayValue, useMountProgress } from './dashboardMotion';
+import { DASHBOARD_LIST_ROW_HOVER, SLA_TEXT_CLASS } from './dashboardWidgetUtils';
 
-function StageTrack({ stages }: { stages: DashboardCaseHealthRow['stages'] }) {
+function StageTrack({
+  stages,
+  rowIndex,
+}: {
+  stages: DashboardCaseHealthRow['stages'];
+  rowIndex: number;
+}) {
   const segments = Array.from({ length: stages.total }, (_, index) => {
     if (index < stages.done) return 'done';
     if (index === stages.done && stages.active > 0) return 'active';
     return 'pending';
   });
+  const rowProgress = useMountProgress(480, rowIndex * 90);
 
   return (
     <div className="mt-2 flex h-1.5 gap-[3px]">
-      {segments.map((state, index) => (
-        <span
-          key={index}
-          className={`h-full flex-1 rounded-[3px] ${
-            state === 'done'
-              ? 'bg-brand-green'
-              : state === 'active'
-                ? 'bg-brand-blue'
-                : 'bg-surface-muted'
-          }`}
-        />
-      ))}
+      {segments.map((state, index) => {
+        if (state === 'pending') {
+          return (
+            <span key={index} className="h-full flex-1 rounded-[3px] bg-border-default" />
+          );
+        }
+
+        const fillClass = state === 'done' ? 'bg-brand-green' : 'bg-brand-blue';
+        const segmentProgress = Math.min(1, Math.max(0, rowProgress * segments.length - index));
+
+        return (
+          <span key={index} className="h-full flex-1 overflow-hidden rounded-[3px] bg-border-default">
+            <span
+              className={`block h-full w-full origin-left ${fillClass}`}
+              style={{ transform: `scaleX(${segmentProgress})` }}
+            />
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -53,20 +68,20 @@ export function DashboardCaseHealthPanel({ viewModel }: DashboardCaseHealthPanel
           onClick={() => navigate('/cases')}
           className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-brand-blue hover:text-brand-blue-hover"
         >
-          Cases <ArrowRight className="size-3" />
+          All cases <ArrowRight className="size-3" />
         </button>
       </div>
 
-      <div className="divide-y divide-border-divider">
+      <div className="flex flex-col gap-1 px-4 pb-3">
         {viewModel.cases.length === 0 ? (
           <EmptyState message="No cases to display." />
         ) : null}
-        {viewModel.cases.map((row) => (
+        {viewModel.cases.map((row, rowIndex) => (
           <button
             key={row.key}
             type="button"
             onClick={() => navigate(`/cases/${row.id}`)}
-            className="block w-full px-4 py-2.5 text-left transition-colors hover:bg-surface-muted"
+            className={`block w-full px-3 py-2.5 text-left ${DASHBOARD_LIST_ROW_HOVER}`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -82,9 +97,14 @@ export function DashboardCaseHealthPanel({ viewModel }: DashboardCaseHealthPanel
                 {row.sla}
               </span>
             </div>
-            <StageTrack stages={row.stages} />
+            <StageTrack stages={row.stages} rowIndex={rowIndex} />
             <p className="mt-1.5 text-[11px] text-text-muted">
-              {row.status} · {row.stages.done}/{row.stages.total} stages complete
+              {row.status} ·{' '}
+              <AnimatedDisplayValue
+                value={String(row.stages.done)}
+                className="inline"
+              />
+              /{row.stages.total} stages complete
             </p>
           </button>
         ))}
@@ -96,7 +116,8 @@ export function DashboardCaseHealthPanel({ viewModel }: DashboardCaseHealthPanel
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[12px] font-semibold text-[#7a1d1a]">
-            {viewModel.blocker.count} items holding {viewModel.blocker.val} in decisions
+            <AnimatedDisplayValue value={String(viewModel.blocker.count)} className="inline" /> items holding{' '}
+            {viewModel.blocker.val} in decisions
           </p>
           <p className="mt-0.5 truncate text-[11px] text-[#7a1d1a]/80">{viewModel.blocker.items}</p>
         </div>

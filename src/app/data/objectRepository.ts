@@ -539,6 +539,7 @@ function toRef(ref: ObjectRef): ObjectRef {
 }
 
 function pushRelationship(rows: ObjectRelationshipRow[], source: ObjectRef, target: ObjectRef, relationship: string, status?: string, effectiveDate?: string) {
+  if (!source?.id || !target?.id) return;
   const sourceRef = toRef(source);
   const targetRef = toRef(target);
   const id = relationshipId(sourceRef, targetRef, relationship);
@@ -558,7 +559,9 @@ export function listRelationships(dataset: SystemDataset, ref?: ObjectRef): Obje
   const rows: ObjectRelationshipRow[] = [];
   dataset.cases.forEach((item) => {
     const source: ObjectRef = { kind: 'case', id: item.id, label: item.title, summary: item.status };
-    pushRelationship(rows, source, item.primaryParty, item.primaryParty.role ?? 'primary party', item.status);
+    if (item.primaryParty?.id) {
+      pushRelationship(rows, source, item.primaryParty, item.primaryParty.role ?? 'primary party', item.status);
+    }
     item.participants.forEach((participant) => pushRelationship(rows, source, participant, participant.role ?? 'participant', item.status));
     (item.linkedObjects ?? []).forEach((target) => pushRelationship(rows, source, target, target.role ?? 'linked entity', item.status));
   });

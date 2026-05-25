@@ -1,3 +1,5 @@
+export { AddIdentityDocumentForm } from './identityDocuments/AddIdentityDocumentForm';
+export { EditIdentityDocumentForm } from './identityDocuments/EditIdentityDocumentForm';
 export { AddParticipantForm } from './AddParticipantForm';
 export { AddRelationshipForm } from './AddRelationshipForm';
 export { SubFolderFormShell, ClientSearchCombobox, RolesNav, RoleDetailPanel } from './SubFolderFormShell';

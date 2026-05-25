@@ -47,9 +47,7 @@ export function buildSeedFocus(roleView: RoleView): DashboardFocusData {
     priority,
     claimantName: claimantName ?? '',
     reason: focus.ai,
-    primaryRoute: caseId
-      ? (roleView === 'manager' ? `/cases/${caseId}` : `/cases/${caseId}#tab=decision`)
-      : '/tasks',
+    primaryRoute: roleView === 'manager' && caseId ? `/cases/${caseId}` : '/tasks',
     metric: { show: false, value: '', label: '' },
   };
 }

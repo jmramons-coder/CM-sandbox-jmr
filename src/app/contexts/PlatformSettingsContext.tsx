@@ -37,6 +37,7 @@ import {
   snapshotToDeployablePreset,
 } from '../data/demo-environment-deploy';
 import { getWorkflowDefinition } from '../domain/workflows';
+import type { IdentityDocumentPermissionOverrides } from '../domain/identityDocumentPermissions';
 
 /* ─── Defaults ─── */
 
@@ -97,6 +98,20 @@ export const DEFAULT_MODULES: ModuleSettings = {
   copilot: true,
 };
 
+export type IdentityDocumentPreferences = {
+  documentTypes?: string[];
+  unmaskTimeoutMs?: number;
+  permissionOverrides?: IdentityDocumentPermissionOverrides;
+};
+
+export type PlatformPreferences = {
+  aiActivityEnabled: boolean;
+  aiSidePanelEnabled: boolean;
+  casesAiAssistantEnabled: boolean;
+  aiActivityVisible: boolean;
+  identityDocuments?: IdentityDocumentPreferences;
+};
+
 export type DemoConfigurationSnapshot = {
   version: 4;
   mode: 'single' | 'multi';
@@ -107,12 +122,7 @@ export type DemoConfigurationSnapshot = {
   branding: Branding;
   themeMode: ThemeMode;
   language: SupportedLanguage;
-  preferences: {
-    aiActivityEnabled: boolean;
-    aiSidePanelEnabled: boolean;
-    casesAiAssistantEnabled: boolean;
-    aiActivityVisible: boolean;
-  };
+  preferences: PlatformPreferences;
   modules: ModuleSettings;
   roles: { enabled: false };
 };
@@ -180,12 +190,7 @@ export type PlatformSettings = {
    * shell re-renders the moment the user picks a new language.
    */
   language: SupportedLanguage;
-  preferences: {
-    aiActivityEnabled: boolean;
-    aiSidePanelEnabled: boolean;
-    casesAiAssistantEnabled: boolean;
-    aiActivityVisible: boolean;
-  };
+  preferences: PlatformPreferences;
   modules: ModuleSettings;
   roles: { enabled: false };
   demoConfigurations: SavedDemoConfiguration[];

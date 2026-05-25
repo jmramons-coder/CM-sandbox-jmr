@@ -1,12 +1,17 @@
-/** Pastel avatar pairs used across person / client list rows (bg + initials color). */
+/** Pastel avatar backgrounds for person / entity headers (initials always black). */
+export const ENTITY_AVATAR_INITIALS_COLOR = '#1B1C1E';
+
 export const PERSON_AVATAR_PALETTE = [
-  { background: '#F7E8DF', foreground: '#5B230F' },
-  { background: '#EEE9F1', foreground: '#1A1739' },
-  { background: '#F5F1E6', foreground: '#78520F' },
-  { background: '#E5F2F4', foreground: '#17494A' },
-  { background: '#F0F4E8', foreground: '#405B17' },
-  { background: '#E8EEF7', foreground: '#173D6F' },
+  { background: '#F7E8DF', foreground: ENTITY_AVATAR_INITIALS_COLOR },
+  { background: '#EEE9F1', foreground: ENTITY_AVATAR_INITIALS_COLOR },
+  { background: '#F5F1E6', foreground: ENTITY_AVATAR_INITIALS_COLOR },
+  { background: '#E5F2F4', foreground: ENTITY_AVATAR_INITIALS_COLOR },
+  { background: '#F0F4E8', foreground: ENTITY_AVATAR_INITIALS_COLOR },
+  { background: '#E8EEF7', foreground: ENTITY_AVATAR_INITIALS_COLOR },
 ] as const;
+
+/** Legacy saturated header colors — replaced with seed-based pastels. */
+const LEGACY_ENTITY_AVATAR_BACKGROUNDS = new Set(['#5b8abf', '#4a7aad', '#3d6d9e']);
 
 export type PersonAvatarColors = {
   background: string;
@@ -42,10 +47,27 @@ function hashString(value: string): number {
   return Math.abs(hash);
 }
 
-/** Stable pastel colors from a seed (id or name). */
+function isPastelPaletteBackground(color: string): boolean {
+  const normalized = color.trim().toLowerCase();
+  return PERSON_AVATAR_PALETTE.some((entry) => entry.background.toLowerCase() === normalized);
+}
+
+/** Stable pastel background from a seed (id or name). */
 export function getPersonAvatarColors(seed: string): PersonAvatarColors {
   const index = hashString(seed.trim().toLowerCase() || 'default') % PERSON_AVATAR_PALETTE.length;
   return PERSON_AVATAR_PALETTE[index];
+}
+
+function resolveBackgroundColor(seed: string, backgroundColor?: string): string {
+  if (!backgroundColor) return getPersonAvatarColors(seed).background;
+  const normalized = backgroundColor.trim().toLowerCase();
+  if (LEGACY_ENTITY_AVATAR_BACKGROUNDS.has(normalized)) {
+    return getPersonAvatarColors(seed).background;
+  }
+  if (isPastelPaletteBackground(backgroundColor)) {
+    return backgroundColor;
+  }
+  return getPersonAvatarColors(seed).background;
 }
 
 export function resolvePersonAvatar(
@@ -58,15 +80,12 @@ export function resolvePersonAvatar(
   },
 ): { initials: string; colors: PersonAvatarColors } {
   const initials = (options?.initials ?? getPersonInitials(name)).slice(0, 2).toUpperCase() || '?';
-  const palette = getPersonAvatarColors(options?.seed ?? name);
-  const colors = options?.backgroundColor
-    ? {
-        background: options.backgroundColor,
-        foreground:
-          options.textColor ??
-          PERSON_AVATAR_PALETTE.find((entry) => entry.background === options.backgroundColor)?.foreground ??
-          palette.foreground,
-      }
-    : palette;
-  return { initials, colors };
+  const seed = options?.seed ?? name;
+  const background = resolveBackgroundColor(seed, options?.backgroundColor);
+  const foreground = options?.textColor ?? ENTITY_AVATAR_INITIALS_COLOR;
+
+  return {
+    initials,
+    colors: { background, foreground },
+  };
 }
