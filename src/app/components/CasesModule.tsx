@@ -5,7 +5,11 @@ import { AiInsightInline, FilterDropdown, LozengeTag, ModuleTablePaginationFoote
 import { PriorityChip, SearchBar } from './ds';
 import { filterDatasetBySettings, getSystemDataset, listCaseSummaries } from '../data/objectRepository';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
-import { moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import {
+  MODULE_TABLE_ROW_INTERACTIVE_CLASS,
+  moduleTableRowSurface,
+  moduleTableScrollContainerClass,
+} from '../utils/module-table-scroll';
 import { useCasesNav } from '../contexts/CasesNavContext';
 import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter';
@@ -463,10 +467,12 @@ export function CasesModule() {
               </tr>
             </thead>
             <tbody>
-              {sortedCases.map((item) => (
+              {sortedCases.map((item) => {
+                const cellSurface = moduleTableRowSurface();
+                return (
                 <tr
                   key={item.id}
-                  className="group cursor-pointer bg-white transition-colors hover:bg-surface-hover"
+                  className={MODULE_TABLE_ROW_INTERACTIVE_CLASS}
                   onClick={() => {
                     addOpenCase(item.id);
                     navigate(`/cases/${item.id}`);
@@ -474,7 +480,7 @@ export function CasesModule() {
                 >
                   <td
                     style={{ minWidth: CASE_TABLE_CASE_COL_WIDTH, width: CASE_TABLE_CASE_COL_WIDTH }}
-                    className={`sticky left-0 z-[6] relative border-b border-border-default bg-white pl-6 pr-3 py-3 ${TABLE_CELL_ALIGN_CLASS} transition-colors group-hover:bg-surface-hover ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                    className={`sticky left-0 z-[6] relative border-b border-border-default pl-6 pr-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                   >
                     {showLeftStickyEdge ? (
                       <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
@@ -498,10 +504,10 @@ export function CasesModule() {
                       </div>
                     </TableFirstColumnContent>
                   </td>
-                  <td className={`whitespace-nowrap border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS}`}>
+                  <td className={`whitespace-nowrap border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS} ${cellSurface}`}>
                     {item.caseKind === 'claim' && item.claimSubType ? claimSubTypeLabel(item.claimSubType) : '—'}
                   </td>
-                  <td className={`min-w-[320px] max-w-[420px] border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS}`}>
+                  <td className={`min-w-[320px] max-w-[420px] border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                     <TwoLineSummaryCell
                       className="max-w-[420px]"
                       title={item.aiRecommendation === 'Approve'
@@ -514,30 +520,30 @@ export function CasesModule() {
                       summary={item.aiSummary}
                     />
                   </td>
-                  <td className={`border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS}`}>
+                  <td className={`border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                     <PriorityChip priority={item.priority} />
                   </td>
-                  <td className={`border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS}`}>{item.sla}</td>
+                  <td className={`border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS} ${cellSurface}`}>{item.sla}</td>
                   <td
-                    className={`max-w-[200px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS}`}
+                    className={`max-w-[200px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS} ${cellSurface}`}
                     title={item.product}
                   >
                     {item.product}
                   </td>
                   <td
-                    className={`max-w-[180px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS}`}
+                    className={`max-w-[180px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS} ${cellSurface}`}
                     title={currency.localize(item.benefit)}
                   >
                     {currency.localize(item.benefit)}
                   </td>
                   <td
-                    className={`max-w-[120px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS}`}
+                    className={`max-w-[120px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS} ${cellSurface}`}
                     title={item.created}
                   >
                     {item.created}
                   </td>
                   <td
-                    className={`sticky right-0 z-[5] w-[190px] min-w-[190px] relative border-b border-border-default bg-white px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} transition-colors group-hover:bg-surface-hover ${
+                    className={`sticky right-0 z-[5] w-[190px] min-w-[190px] relative border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface} ${
                       showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.12)]' : ''
                     }`}
                     onClick={(event) => event.stopPropagation()}
@@ -557,7 +563,8 @@ export function CasesModule() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
             </table>
           </div>

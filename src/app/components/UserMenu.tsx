@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { LogOut, Settings, User } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import svgPaths from '../../imports/svg-v9frl7sg8p';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -124,51 +123,34 @@ export function UserMenu() {
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className={`relative shrink-0 rounded-[9999px] transition-colors ${
+            className={`box-border inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-transparent pl-1 pr-2 leading-none outline-none transition-[background-color,border-color,box-shadow] lg:gap-2 lg:pr-2.5 ${
               themeMode === 'light'
-                ? 'border border-border-soft bg-white shadow-[0_1px_2px_rgba(27,28,30,0.06)] hover:border-[#c4cbd2] hover:bg-[#f7f8fa] hover:shadow-[0_2px_6px_rgba(27,28,30,0.10)]'
-                : 'hover:bg-white/10'
+                ? 'border-border-soft bg-white shadow-[0_1px_2px_rgba(27,28,30,0.06)] hover:border-[#c4cbd2] hover:bg-[#f7f8fa]'
+                : 'hover:bg-white/10 data-[state=open]:bg-white/10'
             }`}
+            style={{ color: 'var(--brand-on-header)' }}
             aria-label={t('userMenu.openMenu')}
           >
-            <div className="flex flex-row items-center justify-center overflow-clip rounded-[inherit] size-full">
-              <div className="content-stretch flex gap-[8px] items-center justify-center p-[4px] lg:pl-[4px] lg:pr-[16px] lg:py-[4px] relative">
-                <div className="relative shrink-0 size-[24px]">
-                  <div className="content-stretch flex flex-col items-start relative size-full">
-                    <div className={`${themeMode === 'light' ? 'bg-[#eef2f6] ring-1 ring-[#d7dde3]' : 'bg-surface-muted'} relative rounded-[9999px] shrink-0 size-[24px]`}>
-                      <div className="flex flex-col items-center justify-center size-full">
-                        <div className="content-stretch flex flex-col items-center justify-center p-[2px] relative size-full">
-                          <div
-                            className={`flex flex-col font-['Open_Sans:SemiBold',sans-serif] font-semibold h-[19px] justify-center leading-[0] relative shrink-0 text-[9px] text-center tracking-[0.2px] w-[18px] ${themeMode === 'light' ? 'text-text-primary' : 'text-text-secondary'}`}
-                            style={{ fontVariationSettings: "'wdth' 100" }}
-                          >
-                            <p className="leading-[20px]">{USER_INITIALS}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="hidden lg:flex flex-col items-start text-left font-['Open_Sans:SemiBold',sans-serif] justify-center relative shrink-0"
-                  style={{ fontVariationSettings: "'wdth' 100", color: 'var(--brand-on-header)' }}
-                >
-                  <p className="text-[14px] font-semibold leading-[18px] whitespace-nowrap">{USER_NAME}</p>
-                  <p className="text-[11px] font-medium leading-[14px] whitespace-nowrap opacity-80">
-                    {roleView === 'manager' ? t('userMenu.roleManager') : t('userMenu.roleAssessor')}
-                  </p>
-                </div>
-                <div className="hidden lg:content-stretch lg:flex items-center justify-center relative shrink-0">
-                  <div className="overflow-clip relative shrink-0 size-[16px]">
-                    <div className="absolute inset-[34.38%_21.88%]">
-                      <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 9 5">
-                        <path clipRule="evenodd" d={svgPaths.p29cba700} fill="currentColor" fillRule="evenodd" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <span
+              className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold leading-none tracking-[0.2px] ${
+                themeMode === 'light'
+                  ? 'bg-[#eef2f6] text-text-primary ring-1 ring-[#d7dde3]'
+                  : 'bg-white/15 text-white'
+              }`}
+            >
+              {USER_INITIALS}
+            </span>
+            <span className="hidden h-7 min-w-0 flex-col justify-center text-left lg:flex">
+              <span className="block h-4 truncate text-[13px] font-semibold leading-4">{USER_NAME}</span>
+              <span className="block h-3 truncate text-[10px] font-medium leading-3 opacity-80">
+                {roleView === 'manager' ? t('userMenu.roleManager') : t('userMenu.roleAssessor')}
+              </span>
+            </span>
+            <ChevronDown
+              className="hidden size-3.5 shrink-0 self-center opacity-80 lg:block"
+              strokeWidth={2.25}
+              aria-hidden
+            />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[240px]">

@@ -41,6 +41,25 @@ export type DashboardBriefAction = {
   caseKey?: string;
 };
 
+export type DashboardBriefHighlightTone = 'neutral' | 'warn' | 'urgent' | 'action' | 'positive';
+
+export type DashboardBriefHighlightIcon = 'sla' | 'blocker' | 'focus' | 'progress' | 'decision';
+
+export type DashboardBriefSegment =
+  | { type: 'text'; value: string }
+  | {
+      type: 'cue';
+      label: string;
+      tone: DashboardBriefHighlightTone;
+      icon: DashboardBriefHighlightIcon;
+    }
+  | {
+      type: 'link';
+      label: string;
+      route: string;
+      kind: 'case' | 'task' | 'request' | 'document';
+    };
+
 export type DashboardCaseRow = {
   key: string;
   name: string;
@@ -157,7 +176,9 @@ export type DashboardViewModel = {
   kpis: DashboardKpi[];
   kpiTrends: DashboardKpiTrend[];
   cards: DashboardSummaryCard[];
+  /** Plain-text fallback when segments are empty. */
   briefText: string;
+  briefSegments: DashboardBriefSegment[];
   briefAction: DashboardBriefAction;
   cases: DashboardCaseHealthRow[];
   showAssigneeOnCases: boolean;

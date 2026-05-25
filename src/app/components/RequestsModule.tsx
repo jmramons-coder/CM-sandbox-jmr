@@ -30,6 +30,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { AiCueSparkle } from './AiCueSparkle';
+import { SidePanelSummaryBox } from './AiSummaryWithConfidenceCard';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
 import { filterDatasetBySettings, getSystemDataset, listRequests, listRequirements, listTasks } from '../data/objectRepository';
 import { getDocumentEvidence } from '../data/mock-document-evidence';
@@ -382,8 +383,8 @@ export function RequestsModule() {
         <ModuleTabsBar tabs={requestTabs} activeId={activeTab} onChange={setActiveTab} />
       </div>
 
-      <div className="flex min-h-0 flex-1">
-        <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative z-0 flex min-h-0 flex-1 overflow-hidden">
+        <div className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col bg-white transition-all">
           <div className="flex items-center justify-between gap-3 border-b border-border-default bg-surface-primary px-6 py-4">
             <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search requests..." className="max-w-[340px]" />
             <div className="flex overflow-hidden rounded-full border border-border-default bg-white p-0.5">
@@ -397,7 +398,7 @@ export function RequestsModule() {
           </div>
 
           {viewMode === 'card' ? (
-            <div className="min-h-0 flex-1 overflow-y-auto p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white p-6">
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
                 {sortedRequests.map((request) => (
                   <RequestCard key={request.id} request={request} selected={selectedRequest?.id === request.id} onSelect={() => selectRequest(request)} />
@@ -791,15 +792,9 @@ function RequestDetailBody({
         <div className="app-scrollbar h-full overflow-y-auto px-5 py-4">
           {activeTab === 'overview' ? (
             <div className="space-y-3">
-              <section className="rounded-lg border border-border-soft bg-white p-4">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-brand-accent/20 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.35px] text-brand-accent">
-                    <AiCueSparkle size={12} />
-                    Summary
-                  </span>
-                </div>
+              <SidePanelSummaryBox>
                 <p className="text-[12px] leading-relaxed text-text-primary">{request.summary ?? request.aiSummary}</p>
-              </section>
+              </SidePanelSummaryBox>
               <div className="grid gap-2 sm:grid-cols-2">
                 {stats.map((stat) => (
                   <div key={stat.label} className="rounded-lg border border-border-soft bg-white p-3">
@@ -1000,6 +995,7 @@ function EvidenceSnapshotCard({
   onOpen: () => void;
 }) {
   const firstPage = document.pages[0];
+  const previewSrc = firstPage?.image?.trim() ?? '';
   const topInsights = document.evidence.slice(0, 3);
 
   return (
@@ -1029,13 +1025,19 @@ function EvidenceSnapshotCard({
           className="group relative flex h-[420px] items-center justify-center overflow-hidden bg-[#dfe3e8] p-5 text-left"
           aria-label={`Open ${document.documentTitle}`}
         >
-          {firstPage ? (
+          {previewSrc ? (
             <img
-              src={firstPage.image}
+              src={previewSrc}
               alt=""
               className="max-h-full max-w-full rounded-sm bg-white object-contain shadow-[0_1px_5px_rgba(27,28,30,0.22)] transition-transform group-hover:scale-[1.02]"
             />
-          ) : null}
+          ) : (
+            <div className="flex max-w-xs flex-col items-center gap-2 px-6 text-center">
+              <FileText className="size-10 text-text-muted" aria-hidden />
+              <p className="text-sm font-semibold text-text-primary">Preview unavailable</p>
+              <p className="text-xs text-text-secondary">Open the document to view metadata and linked evidence.</p>
+            </div>
+          )}
           <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-text-secondary shadow-sm">
             Snapshot only
           </span>

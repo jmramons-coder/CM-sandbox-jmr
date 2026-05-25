@@ -27,3 +27,28 @@ export function moduleTableScrollContainerClass(hasHorizontalOverflow: boolean, 
     .filter(Boolean)
     .join(' ');
 }
+
+export type ModuleTableRowSurfaceOptions = {
+  selected?: boolean;
+  locked?: boolean;
+  restricted?: boolean;
+};
+
+/**
+ * Per-cell background for module tables with horizontal scroll + sticky columns.
+ * Apply on every <td> (and checkbox/sticky cells) — not only sticky edges.
+ * Matches Task module: explicit bg + group-hover on each cell avoids gaps when scrolling.
+ */
+export function moduleTableRowSurface({
+  selected = false,
+  locked = false,
+  restricted = false,
+}: ModuleTableRowSurfaceOptions = {}): string {
+  if (locked) return 'bg-surface-hover group-hover:bg-surface-hover';
+  if (restricted) return 'bg-surface-primary group-hover:bg-surface-primary';
+  if (selected) return 'bg-surface-selected-alt group-hover:bg-surface-selected-alt';
+  return 'bg-white group-hover:bg-surface-hover';
+}
+
+/** Row wrapper: group hover is driven by cell surfaces above, not tr:hover. */
+export const MODULE_TABLE_ROW_INTERACTIVE_CLASS = 'group cursor-pointer';

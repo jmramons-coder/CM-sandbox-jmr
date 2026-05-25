@@ -7,7 +7,8 @@ import {
   type RoleView,
 } from '../domain/access/roleView';
 import { getUserProfile } from './userProfiles';
-import { buildLiveDashboardSlice } from './dashboardLiveProjection';
+import { buildDailyBrief } from './dailyBrief';
+import { buildLiveBriefSegments, briefSegmentsToText, buildLiveDashboardSlice } from './dashboardLiveProjection';
 import type { SystemDataset } from './multi-case-dataset';
 
 type HomeDashRole = (typeof homeSeed.DASH_DATA)['assessor'];
@@ -34,7 +35,7 @@ function parseBriefAction(action: BriefActionsSeed['assessor'], cases: HomeDashR
   return { label: action.label, route: '/cases' };
 }
 
-function buildSeedFocus(roleView: RoleView): DashboardFocusData {
+export function buildSeedFocus(roleView: RoleView): DashboardFocusData {
   const focus = homeSeed.inlineData.focusData[roleView];
   const cases = homeSeed.DASH_DATA[roleView].cases;
   const caseId = cases.find((row) => row.key === focus.caseKey)?.id ?? '';
@@ -84,6 +85,45 @@ export function getDashboardViewModel(
       )
     : null;
 
+  const cases =
+    live?.cases
+    ?? dash.cases.map((row) => ({
+      ...row,
+      stages: {
+        total: inline.stageProgress.stagesTotal[row.key as keyof typeof inline.stageProgress.stagesTotal] ?? 5,
+        done: inline.stageProgress.stagesDone[row.key as keyof typeof inline.stageProgress.stagesDone] ?? 0,
+        active: inline.stageProgress.stagesActive[row.key as keyof typeof inline.stageProgress.stagesActive] ?? 0,
+      },
+    }));
+
+  const blocker = live?.blocker ?? {
+    count: seedBlocker.count,
+    val: seedBlocker.val,
+    items: seedBlocker.items,
+    primaryCaseKey: 'bb',
+  };
+  const focus = live?.focus ?? seedFocus;
+  const progress = live?.progress ?? seedProgress;
+  const seedBrief = inline.briefTexts[roleView];
+  const briefBundle = dataset
+    ? (() => {
+        const brief = buildDailyBrief(dataset, user, {
+          contextId: 'home',
+          roleView,
+          fallbackText: seedBrief,
+          seedFocus,
+          seedBlocker,
+        });
+        return { briefSegments: brief.segments, briefText: brief.text };
+      })()
+    : (() => {
+        const segments = buildLiveBriefSegments(roleView, cases, blocker, focus, seedBrief);
+        return {
+          briefSegments: segments,
+          briefText: segments.length ? briefSegmentsToText(segments) : seedBrief,
+        };
+      })();
+
   return {
     roleView,
     user,
@@ -93,27 +133,15 @@ export function getDashboardViewModel(
     kpis: dash.kpis,
     kpiTrends: inline.trendArrows[roleView],
     cards: live?.cards ?? dash.cards,
-    briefText: live?.briefText ?? inline.briefTexts[roleView],
+    ...briefBundle,
     briefAction: live?.briefAction ?? seedBriefAction,
-    cases: live?.cases ?? dash.cases.map((row) => ({
-      ...row,
-      stages: {
-        total: inline.stageProgress.stagesTotal[row.key as keyof typeof inline.stageProgress.stagesTotal] ?? 5,
-        done: inline.stageProgress.stagesDone[row.key as keyof typeof inline.stageProgress.stagesDone] ?? 0,
-        active: inline.stageProgress.stagesActive[row.key as keyof typeof inline.stageProgress.stagesActive] ?? 0,
-      },
-    })),
+    cases,
     showAssigneeOnCases: isManager,
     caseHealthTitle: isManager ? 'Team case health' : 'Case health',
-    blocker: live?.blocker ?? {
-      count: seedBlocker.count,
-      val: seedBlocker.val,
-      items: seedBlocker.items,
-      primaryCaseKey: 'bb',
-    },
-    focus: live?.focus ?? seedFocus,
+    blocker,
+    focus,
     focusTitle: 'Priority task',
-    progress: live?.progress ?? seedProgress,
+    progress,
     progressTitle: isManager ? 'Team progress' : 'Weekly progress',
     progressLabel: isManager ? 'Team tasks this week' : 'Tasks completed this week',
     metricBars: live?.metricBars ?? seedMetricBars,

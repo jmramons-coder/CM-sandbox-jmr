@@ -17,7 +17,9 @@ import {
 } from './WorkspaceSidePanelChrome';
 import {
   MODULE_TABLE_LAYOUT_CLASS,
+  MODULE_TABLE_ROW_INTERACTIVE_CLASS,
   MODULE_TABLE_SUMMARY_COL_CLASS,
+  moduleTableRowSurface,
   moduleTableScrollContainerClass,
 } from '../utils/module-table-scroll';
 import { filterDatasetBySettings, getSystemDataset, listDocuments } from '../data/objectRepository';
@@ -70,12 +72,6 @@ const DOC_TABLE_MIN_WIDTH =
   120 +
   DOC_TABLE_STATUS_COL_WIDTH +
   DOC_TABLE_ACTIONS_COL_WIDTH;
-
-function docTableRowSurface(selected: boolean) {
-  return selected
-    ? 'bg-surface-selected-alt group-hover:bg-surface-selected-alt'
-    : 'bg-white group-hover:bg-surface-hover';
-}
 
 function documentHasAiInsight(doc: CaseDocument) {
   return Boolean(doc.aiSummary || doc.aiAction);
@@ -639,23 +635,23 @@ export function DocumentModule() {
                   <tbody>
                     {sortedDocuments.map((doc) => {
                       const selected = selectedDocument?.id === doc.id;
-                      const stickyRowSurface = docTableRowSurface(selected);
+                      const cellSurface = moduleTableRowSurface({ selected });
                       return (
                         <tr
                           key={doc.id}
                           data-keep-sidepanel="row"
                           onClick={() => selectDocument(doc)}
-                          className={`group cursor-pointer transition-colors active:scale-[0.995] ${stickyRowSurface}`}
+                          className={`${MODULE_TABLE_ROW_INTERACTIVE_CLASS} active:scale-[0.995]`}
                         >
                           <ModuleTableCheckboxColumnCell
                             as="td"
                             className="z-[14]"
-                            surfaceClassName={stickyRowSurface}
+                            surfaceClassName={cellSurface}
                           >
                             <Checkbox className="size-4 rounded-[4px]" onClick={(e) => e.stopPropagation()} />
                           </ModuleTableCheckboxColumnCell>
                           <td
-                            className={`relative sticky z-[15] overflow-hidden border-b border-border-default ${DOC_TABLE_DOCUMENT_COL_CLASS} py-3 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                            className={`relative sticky z-[15] overflow-hidden border-b border-border-default ${DOC_TABLE_DOCUMENT_COL_CLASS} py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                             style={{
                               left: DOC_TABLE_CHECKBOX_COL_WIDTH,
                               width: DOC_TABLE_NAME_COL_WIDTH,
@@ -683,13 +679,13 @@ export function DocumentModule() {
                               />
                             </div>
                           </td>
-                          <td className={`border-b border-border-default bg-inherit ${MODULE_TABLE_SUMMARY_COL_CLASS} ${DOC_TABLE_SUMMARY_COL_CLASS} py-3 align-top ${TABLE_CELL_ALIGN_CLASS}`}>
+                          <td className={`border-b border-border-default ${MODULE_TABLE_SUMMARY_COL_CLASS} ${DOC_TABLE_SUMMARY_COL_CLASS} py-3 align-top ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                             <TwoLineSummaryCell
                               title={deriveDocumentSummaryTitle(doc.name, doc.aiSummary)}
                               summary={documentSummarySubtitle(doc.name, doc.aiSummary)}
                             />
                           </td>
-                          <td className={`border-b border-border-default bg-inherit px-2 py-3 align-top ${TABLE_CELL_ALIGN_CLASS}`}>
+                          <td className={`border-b border-border-default px-2 py-3 align-top ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                             {doc.caseId ? (
                               <div className="min-w-[150px]">
                                 <button
@@ -715,14 +711,14 @@ export function DocumentModule() {
                               </div>
                             )}
                           </td>
-                          <td className={`border-b border-border-default bg-inherit px-2 py-3 whitespace-nowrap ${TABLE_TEXT_CLASS}`}>
+                          <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap ${TABLE_TEXT_CLASS} ${cellSurface}`}>
                             {doc.uploaded}
                           </td>
-                          <td className={`border-b border-border-default bg-inherit px-2 py-3 ${TABLE_CELL_ALIGN_CLASS}`}>
+                          <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                             <DocumentSourceTag source={doc.source} />
                           </td>
                           <td
-                            className={`relative sticky z-[14] border-b border-border-default py-3 pl-2 pr-1 align-top ${stickyRowSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                            className={`relative sticky z-[14] border-b border-border-default py-3 pl-2 pr-1 align-top ${cellSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                             style={{
                               right: DOC_TABLE_ACTIONS_COL_WIDTH,
                               width: DOC_TABLE_STATUS_COL_WIDTH,
@@ -736,13 +732,13 @@ export function DocumentModule() {
                             <LozengeTag label={doc.status} type={getStatusLozengeType(doc.status, 'document')} subtle />
                           </td>
                           <td
-                            className={`relative sticky right-0 z-[14] box-border min-h-12 border-b border-border-default py-0 align-middle ${DOC_TABLE_ACTIONS_CELL_CLASS} ${stickyRowSurface}`}
+                            className={`relative sticky right-0 z-[14] box-border min-h-12 border-b border-border-default py-0 align-middle ${DOC_TABLE_ACTIONS_CELL_CLASS} ${cellSurface}`}
                             style={{ width: DOC_TABLE_ACTIONS_COL_WIDTH, minWidth: DOC_TABLE_ACTIONS_COL_WIDTH, maxWidth: DOC_TABLE_ACTIONS_COL_WIDTH }}
                             onClick={(e) => e.stopPropagation()}
                           >
                             <span
                               aria-hidden
-                              className={`pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] ${stickyRowSurface}`}
+                              className={`pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] ${cellSurface}`}
                             />
                             <div className="relative z-10 flex h-full min-h-12 items-center justify-end gap-0.5">
                               <button

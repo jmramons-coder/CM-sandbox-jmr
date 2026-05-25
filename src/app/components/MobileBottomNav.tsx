@@ -1,5 +1,6 @@
 import { Briefcase, CheckSquare, FileText, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
+import { casesPanelOpenState } from '../utils/cases-navigation';
 import { useTranslation } from 'react-i18next';
 import { useCasesNav } from '../contexts/CasesNavContext';
 import { useModules } from '../contexts/PlatformSettingsContext';
@@ -64,6 +65,7 @@ export function MobileBottomNav() {
             <Link
               key={path}
               to={path}
+              state={labelKey === 'cases' ? casesPanelOpenState() : undefined}
               aria-current={active ? 'page' : undefined}
               className={`relative flex min-h-[52px] flex-col items-center justify-center gap-1 px-1 transition-colors ${
                 active

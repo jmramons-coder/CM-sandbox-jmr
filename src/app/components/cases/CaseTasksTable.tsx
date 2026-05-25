@@ -1,7 +1,11 @@
 import { ListChecks, MoreVertical } from 'lucide-react';
 import type { CaseOverview, Task } from '../../types';
 import type { TableHorizontalScrollState } from '../../hooks/useTableHorizontalScroll';
-import { moduleTableScrollContainerClass } from '../../utils/module-table-scroll';
+import {
+  MODULE_TABLE_ROW_INTERACTIVE_CLASS,
+  moduleTableRowSurface,
+  moduleTableScrollContainerClass,
+} from '../../utils/module-table-scroll';
 import { resolveTaskForCaseContextRow } from '../../utils/caseContextualTask';
 import { getStatusLozengeType } from '../../utils/status-display';
 import { PriorityChip } from '../ds';
@@ -82,6 +86,7 @@ export function CaseTasksTable({
             {rows.map((row) => {
               const resolved = row.task ?? resolveTaskForCaseContextRow(row, data);
               const selected = selectedTaskId === resolved.id;
+              const cellSurface = moduleTableRowSurface({ selected });
               return (
                 <tr
                   key={row.id}
@@ -95,10 +100,10 @@ export function CaseTasksTable({
                       onOpenTask(resolved);
                     }
                   }}
-                  className={`cursor-pointer border-b border-border-default transition-colors ${selected ? 'bg-surface-selected-alt' : 'bg-white hover:bg-surface-hover'}`}
+                  className={`${MODULE_TABLE_ROW_INTERACTIVE_CLASS} border-b border-border-default`}
                 >
                   <td
-                    className={`relative min-w-[220px] w-[240px] border-b border-border-default pl-6 pr-2 py-3 align-middle sticky left-0 z-[6] ${selected ? 'bg-surface-selected-alt' : 'bg-white group-hover:bg-surface-hover'} ${tableScroll.showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                    className={`relative min-w-[220px] w-[240px] border-b border-border-default pl-6 pr-2 py-3 align-middle sticky left-0 z-[6] ${cellSurface} ${tableScroll.showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                   >
                     {tableScroll.showLeftStickyEdge ? (
                       <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
@@ -109,27 +114,27 @@ export function CaseTasksTable({
                       aiSourced={Boolean(row.aiGenerated)}
                     />
                   </td>
-                  <td className="border-b border-border-default px-2 py-3 text-sm text-text-primary">
+                  <td className={`border-b border-border-default px-2 py-3 text-sm text-text-primary ${cellSurface}`}>
                     <span className="line-clamp-2">{row.task?.aiSummary ?? row.task?.description ?? '—'}</span>
                   </td>
-                  <td className="border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary">
+                  <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary ${cellSurface}`}>
                     {row.stage ? <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-semibold text-text-secondary">{row.stage}</span> : <span className="text-text-muted">—</span>}
                   </td>
-                  <td className="border-b border-border-default px-2 py-3 whitespace-nowrap">
+                  <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap ${cellSurface}`}>
                     <PriorityChip priority={row.priority} />
                   </td>
-                  <td className="border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary">{row.dueDate}</td>
-                  <td className="border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary">{row.assignee}</td>
+                  <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary ${cellSurface}`}>{row.dueDate}</td>
+                  <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary ${cellSurface}`}>{row.assignee}</td>
                   <td
-                    className={`relative border-b border-border-default py-3 pl-2 pr-2 align-top text-sm sticky right-[64px] z-[6] ${selected ? 'bg-surface-selected-alt' : 'bg-white group-hover:bg-surface-hover'} ${tableScroll.showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                    className={`relative border-b border-border-default py-3 pl-2 pr-2 align-top text-sm sticky right-[64px] z-[6] ${cellSurface} ${tableScroll.showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                   >
                     {tableScroll.showRightStickyEdge ? (
                       <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                     ) : null}
                     <LozengeTag label={row.status} type={getStatusLozengeType(row.status, 'task')} subtle />
                   </td>
-                  <td className={`relative box-border min-h-12 w-[64px] min-w-[64px] max-w-[64px] border-b border-border-default p-0 align-middle sticky right-0 z-[7] ${selected ? 'bg-surface-selected-alt' : 'bg-white group-hover:bg-surface-hover'}`}>
-                    <span aria-hidden className={`pointer-events-none absolute inset-y-0 left-0 z-[7] h-full w-[calc(100%+3px)] ${selected ? 'bg-surface-selected-alt' : 'bg-white group-hover:bg-surface-hover'}`} />
+                  <td className={`relative box-border min-h-12 w-[64px] min-w-[64px] max-w-[64px] border-b border-border-default p-0 align-middle sticky right-0 z-[7] ${cellSurface}`}>
+                    <span aria-hidden className={`pointer-events-none absolute inset-y-0 left-0 z-[7] h-full w-[calc(100%+3px)] ${cellSurface}`} />
                     <div className="relative z-10 flex h-full min-h-12 items-center justify-center px-1">
                       <MoreVertical className="h-4 w-4 text-text-secondary" />
                     </div>

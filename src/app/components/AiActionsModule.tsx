@@ -8,7 +8,11 @@ import { filterDatasetBySettings, getSystemDataset, listAiActions } from '../dat
 import type { AiActionRecord, AiActionStatus } from '../data/multi-case-dataset';
 import { formatCaseIntelligenceTimestamp, listCaseIntelligence, type CaseIntelligenceRecord, type CaseIntelligenceStep } from '../domain/intelligenceMonitoring';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
-import { moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import {
+  MODULE_TABLE_ROW_INTERACTIVE_CLASS,
+  moduleTableRowSurface,
+  moduleTableScrollContainerClass,
+} from '../utils/module-table-scroll';
 import { UI_CLASS } from '../constants/design-tokens';
 import { ModuleTabsBar } from './ModuleTabsBar';
 import { SearchBar } from './ds';
@@ -457,30 +461,31 @@ export function AiActionsModule() {
                   {filteredRows.map((row) => {
                     const linked = primaryLinkedObject(row);
                     const linkedCaseId = row.linkedObjects.find((ref) => ref.kind === 'case')?.id;
+                    const cellSurface = moduleTableRowSurface({ selected: selectedAction?.id === row.id });
                     return (
-                      <tr key={row.id} data-keep-sidepanel="row" onClick={() => selectAction(row)} className={`group cursor-pointer border-b border-border-default ${selectedAction?.id === row.id ? 'bg-surface-selected-alt' : 'bg-white hover:bg-surface-hover'}`}>
-                        <td className={`sticky left-0 z-[6] w-[220px] min-w-[220px] max-w-[220px] border-b border-border-default px-3 py-3 align-top ${selectedAction?.id === row.id ? 'bg-surface-selected-alt' : 'bg-white group-hover:bg-surface-hover'} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}>
+                      <tr key={row.id} data-keep-sidepanel="row" onClick={() => selectAction(row)} className={`${MODULE_TABLE_ROW_INTERACTIVE_CLASS} border-b border-border-default`}>
+                        <td className={`sticky left-0 z-[6] w-[220px] min-w-[220px] max-w-[220px] border-b border-border-default px-3 py-3 align-top ${cellSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}>
                           {showLeftStickyEdge ? (
                             <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                           ) : null}
                           <span className="block max-w-[190px] truncate text-sm font-semibold text-brand-blue" title={row.id}>{row.id}</span>
                         </td>
-                        <td className="min-w-[340px] border-b border-border-default px-3 py-3 align-top">
+                        <td className={`min-w-[340px] border-b border-border-default px-3 py-3 align-top ${cellSurface}`}>
                           <AiActionSummaryCell action={row} />
                         </td>
-                        <td className="border-b border-border-default px-3 py-3 align-top text-sm capitalize text-text-primary">{row.sourceSurface}</td>
-                        <td className="min-w-[180px] max-w-[220px] border-b border-border-default px-3 py-3 align-top text-sm whitespace-nowrap">
+                        <td className={`border-b border-border-default px-3 py-3 align-top text-sm capitalize text-text-primary ${cellSurface}`}>{row.sourceSurface}</td>
+                        <td className={`min-w-[180px] max-w-[220px] border-b border-border-default px-3 py-3 align-top text-sm whitespace-nowrap ${cellSurface}`}>
                           {linked ? <Link to={objectHref(linked.kind, linked.id, linkedCaseId) ?? '#'} onClick={(event) => event.stopPropagation()} className={TABLE_LINK_TRUNCATE_CLASS} title={linked.label ?? linked.id}>{linked.label ?? linked.id}</Link> : <span className="text-text-muted">-</span>}
                         </td>
-                        <td className="border-b border-border-default px-3 py-3 align-top text-sm text-text-primary">{row.confidence ? `${row.confidence}%` : '-'}</td>
-                        <td className="border-b border-border-default px-3 py-3 align-top text-sm text-text-primary">{new Date(row.createdAt).toLocaleDateString()}</td>
-                        <td className={`sticky right-[48px] z-[6] min-w-[140px] border-b border-border-default px-3 py-3 align-top ${selectedAction?.id === row.id ? 'bg-surface-selected-alt' : 'bg-white group-hover:bg-surface-hover'} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}>
+                        <td className={`border-b border-border-default px-3 py-3 align-top text-sm text-text-primary ${cellSurface}`}>{row.confidence ? `${row.confidence}%` : '-'}</td>
+                        <td className={`border-b border-border-default px-3 py-3 align-top text-sm text-text-primary ${cellSurface}`}>{new Date(row.createdAt).toLocaleDateString()}</td>
+                        <td className={`sticky right-[48px] z-[6] min-w-[140px] border-b border-border-default px-3 py-3 align-top ${cellSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}>
                           {showRightStickyEdge ? (
                             <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                           ) : null}
                           <LozengeTag label={row.status.replace('_', ' ')} type={statusType(row.status)} subtle />
                         </td>
-                        <td className={`sticky right-0 z-[5] w-[48px] min-w-[48px] max-w-[48px] border-b border-border-default px-3 py-3 align-top ${selectedAction?.id === row.id ? 'bg-surface-selected-alt' : 'bg-white group-hover:bg-surface-hover'}`}>
+                        <td className={`sticky right-0 z-[5] w-[48px] min-w-[48px] max-w-[48px] border-b border-border-default px-3 py-3 align-top ${cellSurface}`}>
                           <MoreVertical className="size-4 text-text-muted" />
                         </td>
                       </tr>
@@ -584,14 +589,16 @@ function CaseIntelligenceTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((record) => (
+          {rows.map((record) => {
+            const cellSurface = moduleTableRowSurface({ selected: selectedCaseId === record.caseId });
+            return (
             <tr
               key={record.caseId}
               data-keep-sidepanel="row"
               onClick={() => onSelect(record)}
-              className={`group cursor-pointer ${selectedCaseId === record.caseId ? 'bg-surface-selected-alt' : 'bg-white hover:bg-surface-hover'}`}
+              className={MODULE_TABLE_ROW_INTERACTIVE_CLASS}
             >
-              <td className={`sticky left-0 z-[6] border-b border-border-default px-6 py-3 align-top ${selectedCaseId === record.caseId ? 'bg-surface-selected-alt' : 'bg-white group-hover:bg-surface-hover'}`}>
+              <td className={`sticky left-0 z-[6] border-b border-border-default px-6 py-3 align-top ${cellSurface}`}>
                 <Link
                   to={`/cases/${record.caseId}`}
                   onClick={(event) => event.stopPropagation()}
@@ -604,26 +611,27 @@ function CaseIntelligenceTable({
                   {record.summary.primaryPartyName ?? record.summary.claimant}
                 </span>
               </td>
-              <td className="min-w-[340px] border-b border-border-default px-3 py-3 align-top">
+              <td className={`min-w-[340px] border-b border-border-default px-3 py-3 align-top ${cellSurface}`}>
                 <p className="truncate text-sm font-semibold text-text-primary">{record.latestSignal}</p>
                 <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-text-muted">{record.summary.aiSummary}</p>
               </td>
-              <td className="border-b border-border-default px-3 py-3 align-top">
+              <td className={`border-b border-border-default px-3 py-3 align-top ${cellSurface}`}>
                 <LozengeTag label={record.summary.status} type={caseStatusType(record.summary.status)} subtle />
               </td>
-              <td className="border-b border-border-default px-3 py-3 align-top text-sm font-semibold text-text-primary">{record.metrics.aiActions}</td>
-              <td className="border-b border-border-default px-3 py-3 align-top text-sm font-semibold text-text-primary">{record.metrics.tasks}</td>
-              <td className="border-b border-border-default px-3 py-3 align-top text-sm font-semibold text-text-primary">{record.metrics.requirements}</td>
-              <td className="border-b border-border-default px-3 py-3 align-top">
+              <td className={`border-b border-border-default px-3 py-3 align-top text-sm font-semibold text-text-primary ${cellSurface}`}>{record.metrics.aiActions}</td>
+              <td className={`border-b border-border-default px-3 py-3 align-top text-sm font-semibold text-text-primary ${cellSurface}`}>{record.metrics.tasks}</td>
+              <td className={`border-b border-border-default px-3 py-3 align-top text-sm font-semibold text-text-primary ${cellSurface}`}>{record.metrics.requirements}</td>
+              <td className={`border-b border-border-default px-3 py-3 align-top ${cellSurface}`}>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${record.metrics.attention > 0 ? 'bg-[#fff4e6] text-[#8a5a00]' : 'bg-[#e7f6ec] text-[#1f8a4d]'}`}>
                   {record.metrics.attention} signals
                 </span>
               </td>
-              <td className={`sticky right-0 z-[5] w-[48px] min-w-[48px] max-w-[48px] border-b border-border-default px-3 py-3 align-top ${selectedCaseId === record.caseId ? 'bg-surface-selected-alt' : 'bg-white group-hover:bg-surface-hover'}`}>
+              <td className={`sticky right-0 z-[5] w-[48px] min-w-[48px] max-w-[48px] border-b border-border-default px-3 py-3 align-top ${cellSurface}`}>
                 <MoreVertical className="size-4 text-text-muted" />
               </td>
             </tr>
-          ))}
+          );
+          })}
         </tbody>
       </table>
     </div>

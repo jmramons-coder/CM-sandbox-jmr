@@ -22,6 +22,9 @@ import type {
   DashboardActivityRow,
   DashboardBlockerData,
   DashboardBriefAction,
+  DashboardBriefHighlightIcon,
+  DashboardBriefHighlightTone,
+  DashboardBriefSegment,
   DashboardCaseHealthRow,
   DashboardFocusData,
   DashboardMetricBar,
@@ -31,7 +34,7 @@ import type {
   UserProfile,
 } from '../domain/access/roleView';
 import type { CaseRecord } from '../domain/objectRefs';
-import type { CaseSummary, Task } from '../types';
+import type { Task } from '../types';
 
 /** Demo cases shown on the home dashboard (matches seed keys bb/sd/mt/er). */
 export const HOME_DASHBOARD_CASE_IDS = [
@@ -371,6 +374,36 @@ export function buildLiveMetricBars(
   ];
 }
 
+import { briefSegmentsToText, buildDailyBriefSegments } from './dailyBrief/segmentBuilder';
+import type { DailyBriefFacts } from '../domain/dailyBrief';
+
+export { briefSegmentsToText };
+
+/** @deprecated Prefer buildDailyBrief() — kept for dashboard slice assembly. */
+export function buildLiveBriefSegments(
+  roleView: RoleView,
+  cases: DashboardCaseHealthRow[],
+  blocker: DashboardBlockerData,
+  focus: DashboardFocusData,
+  fallback: string,
+): DashboardBriefSegment[] {
+  const facts: DailyBriefFacts = {
+    roleView,
+    subjectMode: 'cases',
+    subjectCount: cases.length,
+    subjectLabel: 'case',
+    scopePhrase: roleView === 'manager' ? 'in flight' : 'on your board',
+    teamScope: roleView === 'manager',
+    cases,
+    blocker,
+    focus: { ...focus, linkKind: 'task' },
+    fallbackText: fallback,
+  };
+  if (!cases.length) return [{ type: 'text', value: fallback }];
+  return buildDailyBriefSegments(facts);
+}
+
+/** @deprecated Use buildLiveBriefSegments */
 export function composeLiveBriefText(
   roleView: RoleView,
   cases: DashboardCaseHealthRow[],
@@ -378,18 +411,7 @@ export function composeLiveBriefText(
   focus: DashboardFocusData,
   fallback: string,
 ): string {
-  if (!cases.length) return fallback;
-
-  const slaToday = cases.filter((row) => row.slaCls === 'red').length;
-  const topBlocker = blocker.items.split(' · ')[0] ?? 'open requirements';
-  const focusTitle = focus.title;
-
-  if (roleView === 'manager') {
-    const countersignCases = cases.filter((row) => row.status.toLowerCase().includes('pending')).length;
-    return `${countersignCases} case${countersignCases === 1 ? '' : 's'} need manager attention. ${blocker.count} open requirement${blocker.count === 1 ? '' : 's'} are holding ${blocker.val} in decisions. Top priority: ${focusTitle}.`;
-  }
-
-  return `${slaToday} case${slaToday === 1 ? '' : 's'} at SLA deadline today. Top blocker: ${topBlocker}. Recommended action: ${focusTitle}.`;
+  return briefSegmentsToText(buildLiveBriefSegments(roleView, cases, blocker, focus, fallback));
 }
 
 export function buildLiveBriefAction(
@@ -549,7 +571,19 @@ export function buildLiveDashboardSlice(
     focus,
     progress,
     metricBars,
-    briefText: composeLiveBriefText(roleView, cases, blocker.count > 0 ? blocker : seedBlocker, focus, seedBrief),
+    ...(() => {
+      const segments = buildLiveBriefSegments(
+        roleView,
+        cases,
+        blocker.count > 0 ? blocker : seedBlocker,
+        focus,
+        seedBrief,
+      );
+      return {
+        briefSegments: segments,
+        briefText: segments.length ? briefSegmentsToText(segments) : seedBrief,
+      };
+    })(),
     briefAction: buildLiveBriefAction(roleView, focus, seedBriefAction),
     cards: buildLiveSummaryCards(tasks, profile, isManager, seedCards),
     activity24h: activity.activity24h,

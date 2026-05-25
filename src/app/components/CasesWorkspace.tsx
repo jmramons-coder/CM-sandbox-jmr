@@ -5,6 +5,7 @@ import { Outlet, useLocation, useNavigate, useParams } from 'react-router';
 import { useCasesNav } from '../contexts/CasesNavContext';
 import { filterDatasetBySettings, getSystemDataset, listCaseSummaries } from '../data/objectRepository';
 import { DEMO_CASE_IDS, resolveCaseRouteId } from '../data/demoCaseIds';
+import { casesPanelOpenState, type CasesLocationState } from '../utils/cases-navigation';
 import { useDataSourceSettings } from '../contexts/PlatformSettingsContext';
 import { useMobileSidePanelLayout } from '../hooks/useMobileSidePanelLayout';
 import { useResizableSidePanel } from '../hooks/useResizableSidePanel';
@@ -81,10 +82,41 @@ export function CasesWorkspace() {
     prevCaseIdRef.current = caseId;
   }, [caseId, isCompactShell, setSidePanelOpen]);
 
+  const prevPathRef = useRef('');
+  const casesPanelIntent = (location.state as CasesLocationState | null)?.casesPanelOpen;
+
+  useEffect(() => {
+    if (isCompactShell) return;
+
+    const prev = prevPathRef.current;
+    const wasInCasesModule = prev.startsWith('/cases');
+    const onCasesList = location.pathname === '/cases';
+
+    if (onCasesList) {
+      setSidePanelOpen(true);
+    } else if (caseId) {
+      if (casesPanelIntent === true) {
+        setSidePanelOpen(true);
+      } else if (casesPanelIntent === false) {
+        setSidePanelOpen(false);
+      } else if (!wasInCasesModule) {
+        setSidePanelOpen(false);
+      } else if (prev === '/cases') {
+        setSidePanelOpen(true);
+      }
+    }
+
+    prevPathRef.current = location.pathname;
+  }, [caseId, casesPanelIntent, isCompactShell, location.pathname, setSidePanelOpen]);
+
   const openCaseDetail = (targetCaseId: string) => {
     addOpenCase(targetCaseId);
-    if (isCompactShell) setSidePanelOpen(false);
-    navigate(`/cases/${targetCaseId}`);
+    if (isCompactShell) {
+      setSidePanelOpen(false);
+    } else {
+      setSidePanelOpen(true);
+    }
+    navigate(`/cases/${targetCaseId}`, { state: casesPanelOpenState() });
   };
 
   useEffect(() => {
@@ -161,7 +193,7 @@ export function CasesWorkspace() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('/cases')}
+            onClick={() => navigate('/cases', { state: casesPanelOpenState() })}
             className={`flex w-full items-center gap-2.5 rounded-[8px] border px-2 py-2 text-left text-sm font-semibold ${
               location.pathname === '/cases'
                 ? 'border-brand-blue/40 bg-white text-brand-blue'
@@ -213,7 +245,7 @@ export function CasesWorkspace() {
                     onClick={() => {
                       clearOpenCases();
                       setOpenCasesMenuOpen(false);
-                      navigate('/cases');
+                      navigate('/cases', { state: casesPanelOpenState() });
                     }}
                   >
                     Remove all
@@ -282,7 +314,7 @@ export function CasesWorkspace() {
                         e.preventDefault();
                         const isViewing = caseId === item.caseId || location.pathname === `/cases/${item.caseId}`;
                         removeOpenCase(item.caseId);
-                        if (isViewing) navigate('/cases');
+                        if (isViewing) navigate('/cases', { state: casesPanelOpenState() });
                       }}
                     >
                       <X className="h-3 w-3" />

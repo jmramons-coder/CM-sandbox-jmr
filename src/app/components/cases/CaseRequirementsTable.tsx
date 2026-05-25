@@ -3,6 +3,8 @@ import type { CaseRequirement } from '../../types';
 import type { TableHorizontalScrollState } from '../../hooks/useTableHorizontalScroll';
 import {
   MODULE_TABLE_LAYOUT_CLASS,
+  MODULE_TABLE_ROW_INTERACTIVE_CLASS,
+  moduleTableRowSurface,
   moduleTableScrollContainerClass,
 } from '../../utils/module-table-scroll';
 import { getRequirementStatusLozengeType } from '../../utils/status-display';
@@ -21,12 +23,6 @@ type CaseRequirementsTableProps = {
   setScrollEl: (el: HTMLDivElement | null) => void;
   onOpenRequirement: (row: CaseRequirement) => void;
 };
-
-function reqTableRowSurface(selected: boolean) {
-  return selected
-    ? 'bg-surface-selected-alt group-hover:bg-surface-selected-alt'
-    : 'bg-white group-hover:bg-surface-hover';
-}
 
 export function CaseRequirementsTable({
   caseId,
@@ -89,7 +85,7 @@ export function CaseRequirementsTable({
             ) : null}
             {rows.map((row) => {
               const isSelected = selectedRequirementId === row.id;
-              const stickyRowSurface = reqTableRowSurface(isSelected);
+              const cellSurface = moduleTableRowSurface({ selected: isSelected });
               return (
                 <tr
                   key={row.id}
@@ -103,10 +99,10 @@ export function CaseRequirementsTable({
                       onOpenRequirement(row);
                     }
                   }}
-                  className={`group cursor-pointer border-b border-border-default transition-colors ${stickyRowSurface}`}
+                  className={`${MODULE_TABLE_ROW_INTERACTIVE_CLASS} border-b border-border-default`}
                 >
                   <td
-                    className={`relative min-w-[280px] w-[320px] border-b border-border-default py-3 pl-6 pr-3 text-sm font-medium text-text-primary sticky left-0 z-[6] ${stickyRowSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                    className={`relative min-w-[280px] w-[320px] border-b border-border-default py-3 pl-6 pr-3 text-sm font-medium text-text-primary sticky left-0 z-[6] ${cellSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                   >
                     {showLeftStickyEdge ? (
                       <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
@@ -115,30 +111,30 @@ export function CaseRequirementsTable({
                       {row.name}
                     </TableFirstColumnContent>
                   </td>
-                  <td className="border-b border-border-default bg-inherit px-3 py-3 text-sm">{row.category}</td>
-                  <td className="border-b border-border-default bg-inherit px-3 py-3 text-sm">{row.stage ?? '—'}</td>
-                  <td className="border-b border-border-default bg-inherit px-3 py-3 text-sm">{row.dueDate}</td>
-                  <td className="border-b border-border-default bg-inherit px-3 py-3 text-sm">{row.followUpDate}</td>
-                  <td className="border-b border-border-default bg-inherit px-3 py-3 text-sm">{row.source}</td>
-                  <td className="max-w-[160px] border-b border-border-default bg-inherit px-3 py-3 text-sm">
+                  <td className={`border-b border-border-default px-3 py-3 text-sm ${cellSurface}`}>{row.category}</td>
+                  <td className={`border-b border-border-default px-3 py-3 text-sm ${cellSurface}`}>{row.stage ?? '—'}</td>
+                  <td className={`border-b border-border-default px-3 py-3 text-sm ${cellSurface}`}>{row.dueDate}</td>
+                  <td className={`border-b border-border-default px-3 py-3 text-sm ${cellSurface}`}>{row.followUpDate}</td>
+                  <td className={`border-b border-border-default px-3 py-3 text-sm ${cellSurface}`}>{row.source}</td>
+                  <td className={`max-w-[160px] border-b border-border-default px-3 py-3 text-sm ${cellSurface}`}>
                     <span className="block truncate text-[12px] text-text-secondary">{row.notes ?? '—'}</span>
                   </td>
-                  <td className="border-b border-border-default bg-inherit px-3 py-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                  <td className={`border-b border-border-default px-3 py-3 text-sm ${cellSurface}`} onClick={(e) => e.stopPropagation()}>
                     <a href={requirementExternalHref(caseId, row)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-mono text-[13px] font-medium text-brand-blue underline">
                       {requirementExternalCode(row)}
                       <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
                     </a>
                   </td>
                   <td
-                    className={`relative border-b border-border-default py-3 pl-2 pr-2 text-sm sticky right-[64px] z-[6] ${stickyRowSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                    className={`relative border-b border-border-default py-3 pl-2 pr-2 text-sm sticky right-[64px] z-[6] ${cellSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                   >
                     {showRightStickyEdge ? (
                       <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                     ) : null}
                     <LozengeTag label={row.status} type={getRequirementStatusLozengeType(row.status, 'caseTable')} subtle />
                   </td>
-                  <td className={`relative box-border min-h-12 w-[64px] min-w-[64px] max-w-[64px] border-b border-border-default p-0 align-middle sticky right-0 z-[7] ${stickyRowSurface}`}>
-                    <span aria-hidden className={`pointer-events-none absolute inset-y-0 left-0 z-[7] h-full w-[calc(100%+3px)] ${stickyRowSurface}`} />
+                  <td className={`relative box-border min-h-12 w-[64px] min-w-[64px] max-w-[64px] border-b border-border-default p-0 align-middle sticky right-0 z-[7] ${cellSurface}`}>
+                    <span aria-hidden className={`pointer-events-none absolute inset-y-0 left-0 z-[7] h-full w-[calc(100%+3px)] ${cellSurface}`} />
                   </td>
                 </tr>
               );

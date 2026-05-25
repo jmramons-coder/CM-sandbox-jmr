@@ -3,7 +3,9 @@ import type { CaseDocument } from '../../types';
 import type { TableHorizontalScrollState } from '../../hooks/useTableHorizontalScroll';
 import {
   MODULE_TABLE_LAYOUT_CLASS,
+  MODULE_TABLE_ROW_INTERACTIVE_CLASS,
   MODULE_TABLE_SUMMARY_COL_CLASS,
+  moduleTableRowSurface,
   moduleTableScrollContainerClass,
 } from '../../utils/module-table-scroll';
 import { deriveDocumentSummaryTitle, documentSummarySubtitle } from '../../utils/summaryText';
@@ -38,12 +40,6 @@ const DOC_TABLE_MIN_WIDTH =
 
 function documentHasAiInsight(doc: Pick<CaseDocument, 'aiSummary' | 'insight' | 'aiAction'>) {
   return Boolean(doc.aiSummary || doc.insight || doc.aiAction);
-}
-
-function docTableRowSurface(selected: boolean) {
-  return selected
-    ? 'bg-surface-selected-alt group-hover:bg-surface-selected-alt'
-    : 'bg-white group-hover:bg-surface-hover';
 }
 
 type CaseDocumentsTableProps = {
@@ -117,7 +113,7 @@ export function CaseDocumentsTable({
             ) : null}
             {rows.map((row) => {
               const selected = selectedDocumentName === row.name;
-              const stickyRowSurface = docTableRowSurface(selected);
+              const cellSurface = moduleTableRowSurface({ selected });
               return (
                 <tr
                   key={row.id ?? row.name}
@@ -131,10 +127,10 @@ export function CaseDocumentsTable({
                       onOpenDocument(row);
                     }
                   }}
-                  className={`group cursor-pointer border-b border-border-default transition-colors ${stickyRowSurface}`}
+                  className={`${MODULE_TABLE_ROW_INTERACTIVE_CLASS} border-b border-border-default`}
                 >
                   <td
-                    className={`relative min-w-[300px] w-[300px] border-b border-border-default ${DOC_TABLE_DOCUMENT_COL_CLASS} py-3 align-middle sticky left-0 z-[6] ${stickyRowSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                    className={`relative min-w-[300px] w-[300px] border-b border-border-default ${DOC_TABLE_DOCUMENT_COL_CLASS} py-3 align-middle sticky left-0 z-[6] ${cellSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                   >
                     {showLeftStickyEdge ? (
                       <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
@@ -159,26 +155,26 @@ export function CaseDocumentsTable({
                       />
                     </div>
                   </td>
-                  <td className={`border-b border-border-default bg-inherit ${MODULE_TABLE_SUMMARY_COL_CLASS} ${DOC_TABLE_SUMMARY_COL_CLASS} py-3 align-top ${TABLE_CELL_ALIGN_CLASS}`}>
+                  <td className={`border-b border-border-default ${MODULE_TABLE_SUMMARY_COL_CLASS} ${DOC_TABLE_SUMMARY_COL_CLASS} py-3 align-top ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                     <TwoLineSummaryCell
                       title={deriveDocumentSummaryTitle(row.name, row.aiSummary ?? row.insight)}
                       summary={documentSummarySubtitle(row.name, row.aiSummary ?? row.insight)}
                     />
                   </td>
-                  <td className={`border-b border-border-default bg-inherit px-2 py-3 whitespace-nowrap ${TABLE_TEXT_CLASS}`}>
+                  <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap ${TABLE_TEXT_CLASS} ${cellSurface}`}>
                     {row.stage ? (
                       <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-semibold text-text-secondary">{row.stage}</span>
                     ) : (
                       <span className="text-text-muted">—</span>
                     )}
                   </td>
-                  <td className={`border-b border-border-default bg-inherit px-2 py-3 whitespace-nowrap ${TABLE_TEXT_CLASS}`}>
+                  <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap ${TABLE_TEXT_CLASS} ${cellSurface}`}>
                     {row.uploaded || '—'}
                   </td>
-                  <td className={`border-b border-border-default bg-inherit px-2 py-3 ${TABLE_CELL_ALIGN_CLASS}`}>
+                  <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                     <DocumentSourceTag source={row.source} />
                   </td>
-                  <td className={`border-b border-border-default bg-inherit px-2 py-3 align-top ${TABLE_CELL_ALIGN_CLASS}`} onClick={(e) => e.stopPropagation()}>
+                  <td className={`border-b border-border-default px-2 py-3 align-top ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`} onClick={(e) => e.stopPropagation()}>
                     {row.linkedRequirement ? (
                       <button
                         type="button"
@@ -192,15 +188,15 @@ export function CaseDocumentsTable({
                     )}
                   </td>
                   <td
-                    className={`relative border-b border-border-default py-3 pl-2 pr-2 align-top sticky right-[64px] z-[6] ${stickyRowSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                    className={`relative border-b border-border-default py-3 pl-2 pr-2 align-top sticky right-[64px] z-[6] ${cellSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                   >
                     {showRightStickyEdge ? (
                       <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                     ) : null}
                     <LozengeTag label={row.status} type={getStatusLozengeType(row.status, 'document')} subtle />
                   </td>
-                  <td className={`relative box-border min-h-12 w-[64px] min-w-[64px] max-w-[64px] border-b border-border-default p-0 align-middle sticky right-0 z-[7] ${stickyRowSurface}`}>
-                    <span aria-hidden className={`pointer-events-none absolute inset-y-0 left-0 z-[7] h-full w-[calc(100%+3px)] ${stickyRowSurface}`} />
+                  <td className={`relative box-border min-h-12 w-[64px] min-w-[64px] max-w-[64px] border-b border-border-default p-0 align-middle sticky right-0 z-[7] ${cellSurface}`}>
+                    <span aria-hidden className={`pointer-events-none absolute inset-y-0 left-0 z-[7] h-full w-[calc(100%+3px)] ${cellSurface}`} />
                     <div className="relative z-10 flex h-full min-h-12 items-center justify-center px-1">
                       <MoreVertical className="h-4 w-4 text-text-secondary" />
                     </div>

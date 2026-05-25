@@ -6,7 +6,11 @@ import { FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } 
 import { TABLE_CELL_ALIGN_CLASS, TABLE_LINK_CLASS, TABLE_LINK_TRUNCATE_CLASS } from './ModuleCellHelpers';
 import { SearchBar } from './ds';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
-import { moduleTableScrollContainerClass } from '../utils/module-table-scroll';
+import {
+  MODULE_TABLE_ROW_INTERACTIVE_CLASS,
+  moduleTableRowSurface,
+  moduleTableScrollContainerClass,
+} from '../utils/module-table-scroll';
 import { useFoldersNav } from '../contexts/FoldersNavContext';
 import { useDataSourceSettings, useEnabledCaseTypes } from '../contexts/PlatformSettingsContext';
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter';
@@ -361,14 +365,16 @@ export function FoldersModule() {
                 </tr>
               </thead>
               <tbody>
-                {sortedFolders.map((folder) => (
+                {sortedFolders.map((folder) => {
+                  const cellSurface = moduleTableRowSurface();
+                  return (
                   <tr
                     key={folder.id}
-                    className="group cursor-pointer bg-white transition-colors hover:bg-surface-hover"
+                    className={MODULE_TABLE_ROW_INTERACTIVE_CLASS}
                     onClick={() => handleRowClick(folder)}
                   >
                     <td
-                      className="relative sticky z-[15] border-b border-border-default bg-white py-3 pl-6 pr-3 text-sm transition-colors group-hover:bg-surface-hover whitespace-nowrap"
+                      className={`relative sticky z-[15] border-b border-border-default py-3 pl-6 pr-3 text-sm whitespace-nowrap ${cellSurface}`}
                       style={{
                         left: FOLDER_TABLE_STICKY_COL.id.left,
                         minWidth: FOLDER_TABLE_STICKY_COL.id.width,
@@ -388,7 +394,7 @@ export function FoldersModule() {
                       </Link>
                     </td>
                     <td
-                      className={`relative sticky z-[16] border-b border-border-default bg-white px-3 py-3 align-middle transition-colors group-hover:bg-surface-hover ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                      className={`relative sticky z-[16] border-b border-border-default px-3 py-3 align-middle ${cellSurface} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                       style={{
                         left: FOLDER_TABLE_STICKY_COL.type.left,
                         minWidth: FOLDER_TABLE_STICKY_COL.type.width,
@@ -406,31 +412,31 @@ export function FoldersModule() {
                       />
                     </td>
                     <td
-                      className="max-w-[220px] overflow-hidden text-ellipsis border-b border-border-default bg-white px-3 py-3 text-sm text-text-primary whitespace-nowrap transition-colors group-hover:bg-surface-hover"
+                      className={`max-w-[220px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 text-sm text-text-primary whitespace-nowrap ${cellSurface}`}
                       title={folder.claimant}
                     >
                       {folder.claimant}
                     </td>
                     <td
-                      className="max-w-[200px] overflow-hidden text-ellipsis border-b border-border-default bg-white px-3 py-3 text-sm text-text-primary whitespace-nowrap transition-colors group-hover:bg-surface-hover"
+                      className={`max-w-[200px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 text-sm text-text-primary whitespace-nowrap ${cellSurface}`}
                       title={folder.product}
                     >
                       {folder.product}
                     </td>
                     <td
-                      className="max-w-[180px] overflow-hidden text-ellipsis border-b border-border-default bg-white px-3 py-3 text-sm text-text-primary whitespace-nowrap transition-colors group-hover:bg-surface-hover"
+                      className={`max-w-[180px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 text-sm text-text-primary whitespace-nowrap ${cellSurface}`}
                       title={currency.localize(folder.benefit)}
                     >
                       {currency.localize(folder.benefit)}
                     </td>
                     <td
-                      className="max-w-[120px] overflow-hidden text-ellipsis border-b border-border-default bg-white px-3 py-3 text-sm text-text-primary whitespace-nowrap transition-colors group-hover:bg-surface-hover"
+                      className={`max-w-[120px] overflow-hidden text-ellipsis border-b border-border-default px-3 py-3 text-sm text-text-primary whitespace-nowrap ${cellSurface}`}
                       title={folder.created}
                     >
                       {formatDate(folder.created) || folder.created}
                     </td>
                     <td
-                      className={`sticky right-0 z-[14] relative border-b border-border-default bg-white px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} transition-colors group-hover:bg-surface-hover ${
+                      className={`sticky right-0 z-[14] relative border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface} ${
                         showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.12)]' : ''
                       }`}
                       style={{ width: FOLDER_STATUS_COL_WIDTH, minWidth: FOLDER_STATUS_COL_WIDTH }}
@@ -445,7 +451,8 @@ export function FoldersModule() {
                       />
                     </td>
                   </tr>
-                ))}
+                );
+                })}
               </tbody>
             </table>
           </div>

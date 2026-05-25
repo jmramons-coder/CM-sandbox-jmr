@@ -14,7 +14,7 @@ export function DashboardFocusCard({ viewModel }: DashboardFocusCardProps) {
 
   return (
     <SurfaceCard className="overflow-hidden">
-      <div className="flex items-start justify-between gap-3 border-b border-border-default px-4 py-3">
+      <div className="flex items-start justify-between gap-3 px-4 py-3">
         <div className="flex items-center gap-2">
           <ListTodo className="size-4 text-text-heading" />
           <p className="text-[12px] font-semibold text-text-heading">{viewModel.focusTitle}</p>

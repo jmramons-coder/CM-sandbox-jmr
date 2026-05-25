@@ -1,4 +1,4 @@
-import { ArrowRight, Flame, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowRight, CircleGauge, Flame, TrendingDown, TrendingUp } from 'lucide-react';
 import { SurfaceCard } from '../ds';
 import type { DashboardViewModel } from '../../domain/access/roleView';
 import { MetricBarList, progressRingColor } from './dashboardWidgetUtils';
@@ -23,7 +23,10 @@ export function DashboardProgressPanel({ viewModel }: DashboardProgressPanelProp
 
   return (
     <SurfaceCard className="px-4 py-3">
-      <p className="text-[12px] font-semibold text-text-heading">{viewModel.progressTitle}</p>
+      <div className="flex items-center gap-2">
+        <CircleGauge className="size-4 shrink-0 text-text-heading" />
+        <p className="text-[12px] font-semibold text-text-heading">{viewModel.progressTitle}</p>
+      </div>
       <div className="mt-3 flex items-center gap-4">
         <svg viewBox="0 0 68 68" className="size-[68px] shrink-0" aria-hidden>
           <circle cx="34" cy="34" r={RING_RADIUS} fill="none" stroke="var(--surface-muted, #eef2f6)" strokeWidth="6" />

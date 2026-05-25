@@ -27,8 +27,8 @@ export function Dashboard() {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-surface-primary">
       <div className="mx-auto w-full min-w-0 max-w-[1100px] space-y-3 px-4 pb-6 pt-18 sm:space-y-4 sm:px-6 sm:pb-8 sm:pt-24 lg:space-y-4 lg:px-8 lg:pb-8">
-        <DashboardHeroSection viewModel={dashboardViewModel} />
         <DashboardAiBrief viewModel={dashboardViewModel} />
+        <DashboardHeroSection viewModel={dashboardViewModel} />
 
         <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-3">

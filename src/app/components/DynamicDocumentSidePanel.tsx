@@ -889,28 +889,18 @@ function DocumentInsightPanel({
     <div className="relative z-40 min-h-0 border-l border-border-default bg-white">
       <div className="flex h-full min-h-0 flex-col bg-white">
         <div className="app-scrollbar min-h-0 flex-1 overflow-y-auto p-3" onScroll={onScroll}>
-          <CollapsibleDetailSection
-            title={document.summary.label}
-            defaultOpen
-            headerAction={(
-              <span className="rounded-full bg-[#fff4e6] px-2 py-0.5 text-[10px] font-semibold text-[#8a5a00]">
-                {document.summary.status}
-              </span>
-            )}
-          >
-            <AiSummaryBanner meta={document.summary.status} text={document.summary.text} />
-            {document.summary.contextTitle || document.summary.contextText ? (
-              <div className="mt-3 rounded-[6px] border border-border-soft bg-[#fbfcfd] p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Requirement context</p>
-                {document.summary.contextTitle ? (
-                  <p className="mt-1 text-[13px] font-semibold text-text-primary">{document.summary.contextTitle}</p>
-                ) : null}
-                {document.summary.contextText ? (
-                  <p className="mt-1 text-[12px] leading-relaxed text-text-secondary">{document.summary.contextText}</p>
-                ) : null}
-              </div>
-            ) : null}
-          </CollapsibleDetailSection>
+          <AiSummaryBanner text={document.summary.text} />
+          {document.summary.contextTitle || document.summary.contextText ? (
+            <div className="mt-3 rounded-[6px] border border-border-soft bg-[#fbfcfd] p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Requirement context</p>
+              {document.summary.contextTitle ? (
+                <p className="mt-1 text-[13px] font-semibold text-text-primary">{document.summary.contextTitle}</p>
+              ) : null}
+              {document.summary.contextText ? (
+                <p className="mt-1 text-[12px] leading-relaxed text-text-secondary">{document.summary.contextText}</p>
+              ) : null}
+            </div>
+          ) : null}
 
           <CollapsibleDetailSection title="Evidence" subtitle={`${document.evidence.length} anchors`} className="mt-3" defaultOpen>
             <div className="space-y-2">
@@ -1085,28 +1075,18 @@ function DocumentMobileLayout({
     <div className="flex min-h-0 flex-1 flex-col bg-white">
       <div className="app-scrollbar min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-4 px-4 py-4">
-          <CollapsibleDetailSection
-            title={document.summary.label}
-            defaultOpen
-            headerAction={(
-              <span className="rounded-full bg-[#fff4e6] px-2 py-0.5 text-[10px] font-semibold text-[#8a5a00]">
-                {document.summary.status}
-              </span>
-            )}
-          >
-            <AiSummaryBanner meta={document.summary.status} text={document.summary.text} />
-            {document.summary.contextTitle || document.summary.contextText ? (
-              <div className="mt-3 rounded-[6px] border border-border-soft bg-[#fbfcfd] p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Requirement context</p>
-                {document.summary.contextTitle ? (
-                  <p className="mt-1 text-[13px] font-semibold text-text-primary">{document.summary.contextTitle}</p>
-                ) : null}
-                {document.summary.contextText ? (
-                  <p className="mt-1 text-[12px] leading-relaxed text-text-secondary">{document.summary.contextText}</p>
-                ) : null}
-              </div>
-            ) : null}
-          </CollapsibleDetailSection>
+          <AiSummaryBanner text={document.summary.text} />
+          {document.summary.contextTitle || document.summary.contextText ? (
+            <div className="mt-3 rounded-[6px] border border-border-soft bg-[#fbfcfd] p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Requirement context</p>
+              {document.summary.contextTitle ? (
+                <p className="mt-1 text-[13px] font-semibold text-text-primary">{document.summary.contextTitle}</p>
+              ) : null}
+              {document.summary.contextText ? (
+                <p className="mt-1 text-[12px] leading-relaxed text-text-secondary">{document.summary.contextText}</p>
+              ) : null}
+            </div>
+          ) : null}
 
           <section aria-label="Evidence insights">
             <div className="mb-2 flex items-center justify-between gap-2">

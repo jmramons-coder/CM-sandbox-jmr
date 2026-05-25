@@ -238,11 +238,25 @@ function DocumentZoomCanvas({
               />
             ) : null}
             {file.kind === 'pdf' && file.previewUrl ? (
-              <iframe
-                title={file.name}
-                src={file.previewUrl}
-                className="pointer-events-none h-full w-full border-0 bg-white"
-              />
+              <object
+                data={file.previewUrl}
+                type="application/pdf"
+                aria-label={file.name}
+                className="h-full w-full bg-white"
+              >
+                <iframe
+                  title={file.name}
+                  src={file.previewUrl}
+                  className="pointer-events-none h-full w-full border-0 bg-white"
+                />
+              </object>
+            ) : null}
+            {(file.kind === 'image' || file.kind === 'pdf') && !file.previewUrl ? (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-4 text-center">
+                <FileText className="size-8 text-text-muted" />
+                <p className="text-[12px] font-semibold text-text-primary">Preview could not be loaded</p>
+                <p className="text-[11px] text-text-secondary">Try uploading the file again.</p>
+              </div>
             ) : null}
           </div>
         )}

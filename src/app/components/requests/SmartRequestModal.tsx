@@ -45,12 +45,12 @@ const SMART_INTAKE_FEATURES = [
   },
 ] as const;
 
-const SMART_REQUEST_MODAL_SIZE_CLASS =
-  'z-[1110] !flex h-[min(860px,calc(100vh-2rem))] max-h-[min(860px,calc(100vh-2rem))] w-[min(1240px,calc(100vw-2rem))] min-w-0 max-w-[min(1240px,calc(100vw-2rem))] flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(1240px,calc(100vw-2rem))]';
-
 function classifyUploadFile(file: File): SmartRequestUploadedFile['kind'] {
   if (file.type.startsWith('image/')) return 'image';
-  if (file.type === 'application/pdf') return 'pdf';
+  if (file.type === 'application/pdf' || file.type === 'application/x-pdf') return 'pdf';
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (ext && ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'heic'].includes(ext)) return 'image';
+  if (ext === 'pdf') return 'pdf';
   return 'other';
 }
 

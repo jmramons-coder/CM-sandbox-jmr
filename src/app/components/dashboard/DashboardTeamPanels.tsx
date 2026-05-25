@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router';
-import { Sparkles } from 'lucide-react';
 import { SurfaceCard } from '../ds';
+import { AiCueSparkle } from '../AiCueSparkle';
 import type { DashboardViewModel } from '../../domain/access/roleView';
 import { MetricBarList, VELOCITY_AVATAR_CLASS, VELOCITY_TREND_CLASS } from './dashboardWidgetUtils';
 
@@ -73,7 +73,7 @@ export function DashboardAiHealthPanel({ viewModel }: DashboardAiHealthPanelProp
   return (
     <SurfaceCard className="px-4 py-3">
       <div className="flex items-center gap-2">
-        <Sparkles className="size-4 text-[#602fa0]" />
+        <AiCueSparkle size={16} className="!text-text-heading" />
         <div>
           <p className="text-[12px] font-semibold text-text-heading">AI health</p>
           <p className="text-[11px] text-text-secondary">Portfolio</p>

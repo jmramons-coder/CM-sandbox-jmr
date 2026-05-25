@@ -390,17 +390,7 @@ function EmpowerTaskDetailContent({
 
       <div className="min-h-0 flex-1 overflow-hidden bg-surface-primary">
         <div className="app-scrollbar h-full overflow-y-auto px-5 py-4">
-          <CollapsibleDetailSection
-            title="Summary"
-            defaultOpen
-            headerAction={(
-              <span className="rounded-full bg-[#fff4e6] px-2 py-0.5 text-[10px] font-semibold text-[#8a5a00]">
-                {task.panelContext?.summaryStatus ?? 'Human validation'}
-              </span>
-            )}
-          >
-            <TaskSummaryBody task={task} isInterview={isInterview} />
-          </CollapsibleDetailSection>
+          <TaskSummaryBody task={task} isInterview={isInterview} />
 
           <ScoringMiniWidget scoring={taskCaseRecord?.underwritingScoring} onOpenScoring={() => navigate(`/cases/${caseId}#tab=scoring`)} />
 

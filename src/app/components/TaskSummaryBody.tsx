@@ -1,5 +1,6 @@
 import type { Task, TaskContextCard } from '../types';
-import { SidePanelAiSummary } from './AiSummaryWithConfidenceCard';
+import { resolveAiSummaryPresentation } from '../utils/aiSummaryPresentation';
+import { SidePanelSummaryBox } from './AiSummaryWithConfidenceCard';
 
 export function isSimpleServiceTask(task: Pick<Task, 'caseType' | 'caseSubtype'>): boolean {
   return task.caseType === 'Service' || task.caseSubtype === 'address_change' || task.caseSubtype === 'beneficiary_change';
@@ -55,7 +56,15 @@ function SuggestedNextSteps({ items }: { items: string[] }) {
   );
 }
 
-function DefaultTaskContext({ task, isInterview }: { task: Task; isInterview: boolean }) {
+function DefaultTaskContext({
+  task,
+  isInterview,
+  suppressIntro = false,
+}: {
+  task: Task;
+  isInterview: boolean;
+  suppressIntro?: boolean;
+}) {
   const steps =
     task.summary?.checklist ?? task.panelContext?.suggestions ??
     (isInterview
@@ -64,7 +73,7 @@ function DefaultTaskContext({ task, isInterview }: { task: Task; isInterview: bo
 
   return (
     <>
-      {!task.aiNarrative?.text ? (
+      {!suppressIntro && !task.aiNarrative?.text ? (
         <p className="text-[12px] leading-relaxed text-text-secondary">
           {task.summary?.description ?? task.panelContext?.contextSummary ??
             (isInterview
@@ -99,6 +108,9 @@ function DefaultTaskContext({ task, isInterview }: { task: Task; isInterview: bo
 export function TaskSummaryBody({ task, isInterview }: { task: Task; isInterview: boolean }) {
   const simpleService = isSimpleServiceTask(task);
   const aiText = task.aiNarrative?.text ?? (simpleService ? undefined : task.aiSummary);
+  const resolvedAi = aiText
+    ? resolveAiSummaryPresentation(aiText, task.aiNarrative?.confidence ?? task.aiConfidence)
+    : null;
   const steps =
     task.summary?.checklist ?? task.panelContext?.suggestions ??
     (isInterview
@@ -106,7 +118,7 @@ export function TaskSummaryBody({ task, isInterview }: { task: Task; isInterview
       : ['Review case context', 'Take the next action', 'Document the outcome']);
 
   return (
-    <>
+    <SidePanelSummaryBox>
       {task.alert ? (
         <div className={`mb-3 rounded-md border border-border-soft border-l-4 px-3 py-2 ${taskAlertClass(task.alert.type)}`}>
           <p className="text-[11px] font-semibold uppercase tracking-[0.24px]">{task.alert.type}</p>
@@ -114,26 +126,23 @@ export function TaskSummaryBody({ task, isInterview }: { task: Task; isInterview
         </div>
       ) : null}
 
-      {aiText ? (
-        <SidePanelAiSummary
-          text={aiText}
-          confidence={task.aiNarrative?.confidence ?? task.aiConfidence}
-          generatedAt={task.aiNarrative?.generatedAt}
-          generatedBy={task.aiNarrative?.generatedBy}
-        />
+      {resolvedAi?.text ? (
+        <p className="text-[12px] leading-relaxed text-text-primary">{resolvedAi.text}</p>
       ) : null}
 
       {simpleService ? (
-        <>
+        <div className={resolvedAi?.text ? 'mt-3' : ''}>
           {task.contextCards?.map((card) => (
             <SimpleServiceContextCard key={`${card.title}-${card.type}`} card={card} />
           ))}
           <SuggestedNextSteps items={steps} />
-        </>
+        </div>
       ) : (
-        <DefaultTaskContext task={task} isInterview={isInterview} />
+        <div className={resolvedAi?.text ? 'mt-3' : ''}>
+          <DefaultTaskContext task={task} isInterview={isInterview} suppressIntro={Boolean(resolvedAi?.text)} />
+        </div>
       )}
-    </>
+    </SidePanelSummaryBox>
   );
 }
 

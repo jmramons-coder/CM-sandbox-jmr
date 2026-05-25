@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { GlobalCreateMenu } from './GlobalCreateMenu';
 import { Link, useLocation } from 'react-router';
+import { casesPanelOpenState } from '../utils/cases-navigation';
 import { useTranslation } from 'react-i18next';
 import { AiCueSparkle } from './AiCueSparkle';
 import { useModules, usePlatformSettings, useThemeMode } from '../contexts/PlatformSettingsContext';
@@ -97,6 +98,7 @@ export default function VerticalNav({
       <Link
         key={path}
         to={path}
+        state={path === '/cases' ? casesPanelOpenState() : undefined}
         className={isDrawer ? 'block w-full px-2 py-0.5' : 'my-[2px] w-full px-1.5'}
         onClick={onNavigate}
       >

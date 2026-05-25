@@ -539,7 +539,7 @@ function LayoutInner() {
 
         <HeaderGlobalSearch />
 
-        <div className="ml-auto flex shrink-0 items-center gap-2 lg:gap-4">
+        <div className="ml-auto flex h-full shrink-0 items-center gap-2 lg:gap-4">
           {aiSidePanelEnabled && (
             <div className="content-stretch flex gap-[8px] items-center relative shrink-0">
 
@@ -595,7 +595,7 @@ function LayoutInner() {
             style={{ backgroundColor: 'var(--brand-on-header)' }}
           />
 
-          <div className="relative h-[32px] shrink-0">
+          <div className="relative flex shrink-0 items-center">
             <UserMenu />
           </div>
 

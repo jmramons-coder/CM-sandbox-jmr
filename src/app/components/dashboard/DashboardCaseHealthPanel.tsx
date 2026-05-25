@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { EmptyState, SurfaceCard } from '../ds';
 import type { DashboardCaseHealthRow, DashboardViewModel } from '../../domain/access/roleView';
@@ -40,10 +40,13 @@ export function DashboardCaseHealthPanel({ viewModel }: DashboardCaseHealthPanel
 
   return (
     <SurfaceCard className="overflow-hidden">
-      <div className="flex items-start justify-between gap-3 border-b border-border-default px-4 py-3">
-        <div>
-          <p className="text-[12px] font-semibold text-text-heading">{viewModel.caseHealthTitle}</p>
-          <p className="mt-0.5 text-[11px] text-text-secondary">Stage progress across active cases.</p>
+      <div className="flex items-start justify-between gap-3 px-4 py-3">
+        <div className="flex items-start gap-2">
+          <Activity className="size-4 shrink-0 text-text-heading" />
+          <div>
+            <p className="text-[12px] font-semibold text-text-heading">{viewModel.caseHealthTitle}</p>
+            <p className="mt-0.5 text-[11px] text-text-secondary">Stage progress across active cases.</p>
+          </div>
         </div>
         <button
           type="button"
