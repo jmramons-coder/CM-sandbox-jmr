@@ -30,7 +30,8 @@ import {
   findTemplate,
   type RequestCreationMode,
 } from './requests/requestCreationConfig';
-import { createRequest } from '../data/datasetMutations';
+import { createRequest, createSimpleServiceRequest } from '../data/datasetMutations';
+import { DEMO_CURRENT_PERSONA } from '../data/demoPersonas';
 import { ASSIGNEE_OPTIONS } from '../data/userDirectory';
 import { getSystemDataset } from '../data/objectRepository';
 import type { DataSourceSettings } from '../domain/objectRefs';
@@ -94,6 +95,8 @@ export function CreateRequestModal({
   const [requirementId, setRequirementId] = useState('');
   const [due, setDue] = useState('');
   const [notes, setNotes] = useState('');
+  const [currentAddress, setCurrentAddress] = useState('');
+  const [newAddress, setNewAddress] = useState('');
   const [tasks, setTasks] = useState<ChainedTaskDraft[]>([]);
   const [tasksOpen, setTasksOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(true);
@@ -120,10 +123,12 @@ export function CreateRequestModal({
     },
   }));
 
+  const isAddressServiceTemplate = templateId === 'int-address-service';
   const canSubmit =
     Boolean(title.trim()) &&
     Boolean(templateId) &&
-    (mode === 'internal' ? Boolean(clientId) : Boolean(requester.trim()));
+    (mode === 'internal' ? Boolean(clientId) : Boolean(requester.trim())) &&
+    (!isAddressServiceTemplate || (Boolean(policyNumber) && Boolean(newAddress.trim()) && !caseId));
 
   const applyTemplate = (nextId: string) => {
     const next = findTemplate(nextId);
@@ -163,6 +168,8 @@ export function CreateRequestModal({
     setRequirementId('');
     setDue('');
     setNotes('');
+    setCurrentAddress('');
+    setNewAddress('');
     setTasks([]);
     setTasksOpen(false);
     setReviewOpen(true);
@@ -171,30 +178,51 @@ export function CreateRequestModal({
   const submit = () => {
     if (!canSubmit) return;
     const activeTemplate = findTemplate(templateId) ?? template;
-    const result = createRequest(dataSource.activeDatasetId, {
-      title,
-      category: activeTemplate.category,
-      priority,
-      due,
-      source: mode === 'external' ? 'Manual external request' : 'Manual client request',
-      sourceChannel,
-      sourceDetail: activeTemplate.label,
-      requester: mode === 'external' ? requester : dataset.clients.find((client) => client.id === clientId)?.name,
-      clientId: clientId || undefined,
-      caseId: caseId || undefined,
-      policyNumber: policyNumber || undefined,
-      requirementId: requirementId || undefined,
-      notes,
-      assignedTo: 'Operations queue',
-      tasks: tasks.filter((task) => task.title.trim()).map((task) => ({
-        title: task.title,
-        type: task.type,
-        assignee: task.assignee,
-        dueWindow: task.dueWindow,
-        description: task.description,
-      })),
-    });
-    onCreated({ datasetId: result.datasetId, requestId: result.record.id });
+    const clientName = dataset.clients.find((client) => client.id === clientId)?.name;
+    const result =
+      isAddressServiceTemplate && clientId && policyNumber && !caseId
+        ? createSimpleServiceRequest(dataSource.activeDatasetId, {
+            title,
+            workflowId: 'address_change',
+            clientId,
+            policyNumber,
+            requester: clientName,
+            priority,
+            due,
+            source: 'Manual client request',
+            sourceChannel,
+            assignedTo: DEMO_CURRENT_PERSONA.name,
+            currentAddress: currentAddress || selectedClient?.profile?.address || '',
+            newAddress,
+            effectiveDate: due || undefined,
+            notes,
+          })
+        : createRequest(dataSource.activeDatasetId, {
+            title,
+            category: activeTemplate.category,
+            priority,
+            due,
+            source: mode === 'external' ? 'Manual external request' : 'Manual client request',
+            sourceChannel,
+            sourceDetail: activeTemplate.label,
+            requester: mode === 'external' ? requester : clientName,
+            clientId: clientId || undefined,
+            caseId: caseId || undefined,
+            policyNumber: policyNumber || undefined,
+            requirementId: requirementId || undefined,
+            notes,
+            assignedTo: 'Operations queue',
+            tasks: tasks.filter((task) => task.title.trim()).map((task) => ({
+              title: task.title,
+              type: task.type,
+              assignee: task.assignee,
+              dueWindow: task.dueWindow,
+              description: task.description,
+            })),
+          });
+    const requestId =
+      result.record && 'request' in result.record ? result.record.request.id : result.record.id;
+    onCreated({ datasetId: result.datasetId, requestId });
     reset();
     onOpenChange(false);
   };
@@ -276,7 +304,32 @@ export function CreateRequestModal({
                 />
                 <CreationSearchSelect label="Requirement" value={requirementId} onValueChange={setRequirementId} placeholder="Search requirements" options={requirementOptions} />
               </div>
+              {isAddressServiceTemplate ? (
+                <p className="mt-2 text-sm text-text-muted">
+                  Leave case empty for simple policy-service intake. A linked service task is created automatically.
+                </p>
+              ) : null}
             </RequestCreationSection>
+
+            {isAddressServiceTemplate ? (
+              <RequestCreationSection title="Mailing address" subtitle="Current and new addresses for policy admin.">
+                <div className="grid gap-4">
+                  <CreationInput
+                    label="Current address on file"
+                    value={currentAddress}
+                    onChange={(event) => setCurrentAddress(event.target.value)}
+                    placeholder={selectedClient?.profile?.address ?? 'From client profile'}
+                  />
+                  <CreationInput
+                    label="New mailing address"
+                    required
+                    value={newAddress}
+                    onChange={(event) => setNewAddress(event.target.value)}
+                    placeholder="Street, city, state, ZIP"
+                  />
+                </div>
+              </RequestCreationSection>
+            ) : null}
 
             <RequestCreationSection
               title="Follow-up tasks"

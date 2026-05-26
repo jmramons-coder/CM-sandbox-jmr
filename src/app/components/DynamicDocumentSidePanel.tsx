@@ -90,6 +90,7 @@ type DynamicDocumentSidePanelProps = {
   onResizeStart: () => void;
   embedded?: boolean;
   hideHeader?: boolean;
+  onDocumentAction?: (actionId: string, documentId: string) => void;
 };
 
 export function DynamicDocumentSidePanel({
@@ -103,6 +104,7 @@ export function DynamicDocumentSidePanel({
   onResizeStart,
   embedded = false,
   hideHeader = false,
+  onDocumentAction,
 }: DynamicDocumentSidePanelProps) {
   const defaultPageNumber = document.evidence.find((item) => item.id === activeInsightId)?.page ?? document.pages[0]?.number ?? 1;
   const [activePageNumber, setActivePageNumber] = useState(defaultPageNumber);
@@ -342,6 +344,9 @@ export function DynamicDocumentSidePanel({
   const isCompactPanel = panelWidth < 760;
   const isMobileDocLayout = isCompactShell || isCompactPanel;
   const insightColumnWidth = isCompactPanel ? 240 : 320;
+  const handleDocumentActionClick = (actionId: string) => {
+    onDocumentAction?.(actionId, document.documentId);
+  };
 
   const panelContent = (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -387,6 +392,7 @@ export function DynamicDocumentSidePanel({
                 onPageChange={setActivePageNumber}
                 scoringContext={document.scoringContext}
                 visibleEvidence={visibleEvidence}
+                onActionClick={handleDocumentActionClick}
               />
             ) : (
             <div
@@ -429,6 +435,7 @@ export function DynamicDocumentSidePanel({
                 document={document}
                 onInsightSelect={selectInsight}
                 onScroll={updateConnectorPath}
+                onActionClick={handleDocumentActionClick}
               />
               {connectorPath ? (
                 <svg className="pointer-events-none absolute inset-0 z-30 overflow-visible" aria-hidden>
@@ -877,6 +884,7 @@ function DocumentInsightPanel({
   document,
   onInsightSelect,
   onScroll,
+  onActionClick,
 }: {
   actions: DynamicDocumentAction[];
   activeInsightId: string;
@@ -884,6 +892,7 @@ function DocumentInsightPanel({
   document: DynamicDocumentData;
   onInsightSelect: (insight: DynamicDocumentInsight) => void;
   onScroll: () => void;
+  onActionClick?: (actionId: string) => void;
 }) {
   return (
     <div className="relative z-40 min-h-0 border-l border-border-default bg-white">
@@ -922,6 +931,8 @@ function DocumentInsightPanel({
             {actions.map((action) => (
               <button
                 key={action.id}
+                type="button"
+                onClick={() => onActionClick?.(action.id)}
                 className={
                   action.variant === 'primary'
                     ? 'inline-flex h-8 w-full items-center justify-center rounded-full bg-brand-blue px-3 text-[12px] font-semibold text-white transition-colors hover:bg-brand-blue-hover'
@@ -1038,6 +1049,7 @@ type DocumentMobileLayoutProps = {
   onPageChange: (pageNumber: number) => void;
   scoringContext?: DocumentScoringContext;
   visibleEvidence: DynamicDocumentInsight[];
+  onActionClick?: (actionId: string) => void;
 };
 
 function DocumentMobileLayout({
@@ -1070,6 +1082,7 @@ function DocumentMobileLayout({
   onPageChange,
   scoringContext,
   visibleEvidence,
+  onActionClick,
 }: DocumentMobileLayoutProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
@@ -1136,7 +1149,7 @@ function DocumentMobileLayout({
         </div>
       </div>
 
-      <DocumentMobileActions actions={actions} />
+      <DocumentMobileActions actions={actions} onActionClick={onActionClick} />
     </div>
   );
 }
@@ -1168,7 +1181,13 @@ function DocumentInsightsCarousel({
   );
 }
 
-function DocumentMobileActions({ actions }: { actions: DynamicDocumentAction[] }) {
+function DocumentMobileActions({
+  actions,
+  onActionClick,
+}: {
+  actions: DynamicDocumentAction[];
+  onActionClick?: (actionId: string) => void;
+}) {
   if (!actions.length) return null;
 
   return (
@@ -1177,6 +1196,7 @@ function DocumentMobileActions({ actions }: { actions: DynamicDocumentAction[] }
         <button
           key={action.id}
           type="button"
+          onClick={() => onActionClick?.(action.id)}
           className={
             action.variant === 'primary'
               ? 'inline-flex h-11 w-full items-center justify-center rounded-full bg-brand-blue px-4 text-[13px] font-semibold text-white transition-colors hover:bg-brand-blue-hover'

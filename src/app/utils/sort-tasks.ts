@@ -3,6 +3,7 @@
  */
 
 import type { Task, SortableColumn, SortDirection } from '../types';
+import { sortTasksByRelevance } from './module-relevance-sort';
 import { getPriorityOrder, isValidDateString } from './task-helpers';
 
 /**
@@ -13,7 +14,7 @@ export function sortTasks(
   column: SortableColumn | null,
   direction: SortDirection
 ): Task[] {
-  if (!column) return tasks;
+  if (!column) return sortTasksByRelevance(tasks);
 
   return [...tasks].sort((a, b) => {
     let aValue: string | number;

@@ -148,7 +148,7 @@ function getDatasetDocumentEvidence(documentId: string, dataset?: SystemDataset)
     })) ?? [],
     scoringContext: document?.scoringContext,
     actions: [
-      { id: 'review-dataset-evidence', label: 'Review evidence', variant: 'primary' },
+      { id: 'mark-reviewed', label: 'Mark evidence reviewed', variant: 'primary' },
     ],
   };
 }

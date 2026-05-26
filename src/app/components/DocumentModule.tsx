@@ -37,6 +37,7 @@ import { WorkspaceAssistantPanel } from './WorkspaceAssistantPanel';
 import { useDataSourceSettings } from '../contexts/PlatformSettingsContext';
 import type { SystemDataset } from '../data/multi-case-dataset';
 import { deriveDocumentSummaryTitle, documentSummarySubtitle } from '../utils/summaryText';
+import { sortDocumentsByRelevance } from '../utils/module-relevance-sort';
 import { ModuleTableCheckboxColumnCell } from './ModuleTableCheckboxColumn';
 import {
   MODULE_TABLE_CHECKBOX_COL_WIDTH,
@@ -189,7 +190,7 @@ function DocumentListCard({
 }
 
 function sortDocuments(docs: CaseDocument[], column: DocSortableColumn | null, direction: SortDirection): CaseDocument[] {
-  if (!column) return docs;
+  if (!column) return sortDocumentsByRelevance(docs);
   return [...docs].sort((a, b) => {
     const aVal = column === 'caseId' ? (a.caseId ?? '') : String(a[column] ?? '');
     const bVal = column === 'caseId' ? (b.caseId ?? '') : String(b[column] ?? '');

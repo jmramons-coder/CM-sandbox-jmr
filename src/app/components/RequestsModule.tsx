@@ -33,6 +33,16 @@ import { AiCueSparkle } from './AiCueSparkle';
 import { SidePanelSummaryBox } from './AiSummaryWithConfidenceCard';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
 import { filterDatasetBySettings, getSystemDataset, listRequests, listRequirements, listTasks } from '../data/objectRepository';
+import {
+  buildRequestActionContext,
+  executePanelAction,
+  pickAccomplishmentTask,
+  resolveRequestPanelActions,
+  tasksForRequest,
+  type PanelAction,
+} from '../domain/objectWorkflow';
+import { ObjectPanelFooter } from './ObjectPanelFooter';
+import { useActiveUser } from '../contexts/ActiveUserContext';
 import { getDocumentEvidence } from '../data/mock-document-evidence';
 import type {
   RequestSortableColumn,
@@ -52,6 +62,7 @@ import { ModuleTabsBar } from './ModuleTabsBar';
 import { Checkbox } from './ui/checkbox';
 import { LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
 import { getStatusLozengeType } from '../utils/status-display';
+import { sortRequestsByRelevance } from '../utils/module-relevance-sort';
 import { WorkspaceObjectSidePanel, type WorkspacePanelContext } from './WorkspaceObjectSidePanel';
 import { documentPanelContextId, pushWorkspacePanelContext, requestPanelContextId } from '../utils/workspacePanelContextUtils';
 import { DynamicDocumentSidePanel, type DynamicDocumentData } from './DynamicDocumentSidePanel';
@@ -107,7 +118,7 @@ const REQUEST_TABLE_MIN_WIDTH =
   REQUEST_STATUS_ACTIONS_WIDTH;
 
 function sortRequests(rows: ServiceRequest[], column: RequestSortableColumn | null, direction: SortDirection) {
-  if (!column) return rows;
+  if (!column) return sortRequestsByRelevance(rows);
   return [...rows].sort((a, b) => {
     const cmp = String(a[column] ?? '').localeCompare(String(b[column] ?? ''));
     return direction === 'asc' ? cmp : -cmp;
@@ -146,6 +157,34 @@ export function RequestsModule() {
   const location = useLocation();
   const dataSource = useDataSourceSettings();
   const { updateDataSource } = usePlatformSettings();
+  const { profile } = useActiveUser();
+
+  const refreshSelectedRequest = (datasetId: string, requestId: string) => {
+    const nextDataSource = { ...dataSource, activeDatasetId: datasetId };
+    const refreshed = listRequests(filterDatasetBySettings(getSystemDataset(datasetId), nextDataSource)).find(
+      (row) => row.id === requestId,
+    );
+    updateDataSource({ activeDatasetId: datasetId });
+    if (refreshed) setSelectedRequest(refreshed);
+  };
+
+  const workflowActor = useMemo(() => ({ name: profile.name }), [profile.name]);
+
+  const handleRequestPanelAction = (requestId: string, action: PanelAction) => {
+    const result = executePanelAction(dataSource.activeDatasetId, action, workflowActor);
+    refreshSelectedRequest(result.datasetId, requestId);
+  };
+
+  const handleDocumentWorkflow = (actionId: string, documentId: string) => {
+    if (actionId !== 'mark-reviewed' && actionId !== 'review-dataset-evidence') return;
+    handleRequestPanelAction(selectedRequest?.id ?? '', {
+      id: 'doc-mark-reviewed',
+      label: 'Mark evidence reviewed',
+      variant: 'secondary',
+      execution: { type: 'mutation', action: 'mark_document_reviewed', documentId },
+    });
+  };
+
   const activeDataset = useMemo(() => filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource), [dataSource]);
   const requests = useMemo(
     () => listRequests(activeDataset),
@@ -675,6 +714,7 @@ export function RequestsModule() {
                 panelWidth={panelWidth}
                 isResizing={false}
                 onResizeStart={() => undefined}
+                onDocumentAction={handleDocumentWorkflow}
               />
             ) : (
               <RequestDetailBody
@@ -684,6 +724,8 @@ export function RequestsModule() {
                 linkedTasks={selectedRequestTasks}
                 linkedRequirements={selectedRequestRequirements}
                 onNavigate={navigate}
+                onPanelAction={(action) => handleRequestPanelAction(selectedRequest.id, action)}
+                onNavigateToPath={navigate}
               />
             )}
           </WorkspaceObjectSidePanel>
@@ -733,6 +775,8 @@ function RequestDetailBody({
   evidenceDocument,
   onOpenEvidence,
   onNavigate,
+  onNavigateToPath,
+  onPanelAction,
   request,
   linkedTasks,
   linkedRequirements,
@@ -742,9 +786,15 @@ function RequestDetailBody({
   linkedRequirements: CaseRequirement[];
   onOpenEvidence: () => void;
   onNavigate: (path: string) => void;
+  onNavigateToPath: (path: string) => void;
+  onPanelAction: (action: PanelAction) => void;
   request: ServiceRequest;
 }) {
   const [activeTab, setActiveTab] = useState<RequestPanelTab>('overview');
+  const panelActions = useMemo(() => {
+    const ctx = buildRequestActionContext(request, linkedTasks, evidenceDocument);
+    return resolveRequestPanelActions(ctx);
+  }, [evidenceDocument, linkedTasks, request]);
   const allActions = [...(request.aiActions ?? []), ...(request.humanActions ?? [])]
     .sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
   const stats = [
@@ -767,7 +817,7 @@ function RequestDetailBody({
           <span className="ml-auto shrink-0 text-text-muted">#{request.id}</span>
         </div>
         <h2 className="text-[18px] font-semibold leading-tight text-text-heading">{request.title}</h2>
-        <dl className="mt-4 grid overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px] sm:grid-cols-2">
+        <dl className="mt-4 grid grid-cols-3 overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px]">
           <MetaItem icon={<ClipboardCheck className="size-3.5" />} label="Sub-type" value={request.subtype ?? request.category} />
           <MetaItem icon={<CalendarDays className="size-3.5" />} label="Received" value={`${request.received}${request.receivedTime ? ` · ${request.receivedTime}` : ''}`} />
           <MetaItem icon={<Globe className="size-3.5" />} label="Channel" value={request.channel ?? request.source} />
@@ -792,6 +842,9 @@ function RequestDetailBody({
         <div className="app-scrollbar h-full overflow-y-auto px-5 py-4">
           {activeTab === 'overview' ? (
             <div className="space-y-3">
+              {request.systemSteps?.length ? (
+                <SystemInitiatedStepsSection request={request} onNavigate={onNavigate} />
+              ) : null}
               <SidePanelSummaryBox>
                 <p className="text-[12px] leading-relaxed text-text-primary">{request.summary ?? request.aiSummary}</p>
               </SidePanelSummaryBox>
@@ -820,32 +873,29 @@ function RequestDetailBody({
           {activeTab === 'links' ? (
             <div className="space-y-3">
               <LinkedRequestCaseSection request={request} onNavigate={onNavigate} />
-              <LinkedRequestTasksSection linkedTasks={linkedTasks} onNavigate={onNavigate} />
+              <LinkedRequestTasksSection request={request} linkedTasks={linkedTasks} onNavigate={onNavigate} />
               <LinkedRequestRequirementsSection linkedRequirements={linkedRequirements} caseId={request.caseId} onNavigate={onNavigate} />
-              {evidenceDocument ? <EvidenceSnapshotCard document={evidenceDocument} onOpen={onOpenEvidence} /> : null}
+              {evidenceDocument ? (
+                <EvidenceSnapshotCard document={evidenceDocument} onOpen={onOpenEvidence} />
+              ) : null}
             </div>
           ) : null}
         </div>
       </div>
 
-      <div className="shrink-0 space-y-2 border-t border-border-default bg-white p-4">
-        <button onClick={() => request.caseId && onNavigate(`/cases/${request.caseId}`)} className="inline-flex w-full items-center justify-center rounded-full bg-brand-navy px-4 py-2.5 text-sm font-semibold leading-none text-white transition-colors hover:bg-brand-blue-hover">
-          Open case — {request.caseId ?? 'N/A'}
-        </button>
-        <button className="inline-flex w-full items-center justify-center rounded-full border border-border-default px-4 py-2 text-sm font-semibold leading-none text-text-secondary transition-colors hover:bg-surface-muted">
-          Send update to requester
-        </button>
-        <button className="inline-flex w-full items-center justify-center rounded-full border border-border-default px-4 py-2 text-sm font-semibold leading-none text-text-secondary transition-colors hover:bg-surface-muted">
-          Flag for review
-        </button>
-      </div>
+      <ObjectPanelFooter
+        panel={panelActions}
+        onNavigate={onNavigateToPath}
+        onOpenDocument={() => onOpenEvidence()}
+        onAction={onPanelAction}
+      />
     </>
   );
 }
 
 function MetaItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="min-w-0 border-b border-border-soft px-3 py-2 sm:border-b-0 sm:border-r sm:last:border-r-0">
+    <div className="min-w-0 border-b border-r border-border-soft px-3 py-2 [&:nth-child(3n)]:border-r-0 [&:nth-child(n+4)]:border-b-0">
       <dt className="flex items-center gap-1.5 text-[11px] text-text-muted">{icon}{label}</dt>
       <dd className="mt-0.5 truncate font-semibold text-text-primary">{value}</dd>
     </div>
@@ -918,35 +968,45 @@ function LinkedRequestCaseSection({ onNavigate, request }: { onNavigate: (path: 
 }
 
 function LinkedRequestTasksSection({
+  request,
   linkedTasks,
   onNavigate,
 }: {
+  request: ServiceRequest;
   linkedTasks: Task[];
   onNavigate: (path: string) => void;
 }) {
-  if (!linkedTasks.length) return null;
+  const accomplishment = pickAccomplishmentTask(request, linkedTasks);
+  if (!accomplishment) return null;
+
+  const linkedCount = tasksForRequest(request, linkedTasks).length;
+  const taskPath = accomplishment.caseId
+    ? `/cases/${accomplishment.caseId}#tab=tasks&task=${encodeURIComponent(accomplishment.id)}`
+    : `/tasks#task=${encodeURIComponent(accomplishment.id)}`;
+
   return (
     <section className="mt-3 overflow-hidden rounded-lg border border-border-soft bg-white">
       <div className="border-b border-border-soft px-4 py-3">
-        <p className="text-[13px] font-semibold text-text-primary">Follow-up work</p>
-        <p className="mt-0.5 text-[11px] text-text-secondary">Tasks created from or linked to this request.</p>
+        <p className="text-[13px] font-semibold text-text-primary">Task to complete</p>
+        <p className="mt-0.5 text-[11px] text-text-secondary">
+          {linkedCount > 1
+            ? `Primary linked task · ${linkedCount - 1} more in Tasks`
+            : 'Linked service task for this request.'}
+        </p>
       </div>
-      <div className="divide-y divide-border-soft">
-        {linkedTasks.map((task) => (
-          <button
-            key={task.id}
-            type="button"
-            onClick={() => onNavigate(task.caseId ? `/cases/${task.caseId}#tab=tasks&task=${encodeURIComponent(task.id)}` : `/tasks#task=${encodeURIComponent(task.id)}`)}
-            className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-primary"
-          >
-            <span className="min-w-0">
-              <span className="block text-[12px] font-semibold text-text-primary">{task.taskType}</span>
-              <span className="mt-0.5 block text-[11px] text-text-secondary">{task.id} · {task.status} · {task.assignedTo}</span>
-            </span>
-            <PriorityChip priority={task.priority} className="shrink-0" />
-          </button>
-        ))}
-      </div>
+      <button
+        type="button"
+        onClick={() => onNavigate(taskPath)}
+        className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-primary"
+      >
+        <span className="min-w-0">
+          <span className="block text-[12px] font-semibold text-text-primary">{accomplishment.taskType}</span>
+          <span className="mt-0.5 block text-[11px] text-text-secondary">
+            {accomplishment.id} · {accomplishment.status} · {accomplishment.assignedTo}
+          </span>
+        </span>
+        <PriorityChip priority={accomplishment.priority} className="shrink-0" />
+      </button>
     </section>
   );
 }

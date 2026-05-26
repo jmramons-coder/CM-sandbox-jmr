@@ -53,9 +53,16 @@ const SLA_RANK: Record<Task['slaStatus'], number> = {
   normal: 2,
 };
 
-export function getTaskKanbanColumnId(status: TaskStatus): TaskKanbanColumnId {
-  const match = TASK_KANBAN_COLUMNS.find((column) => column.statuses.includes(status));
-  return match?.id ?? 'todo';
+export function getTaskKanbanColumnId(status: TaskStatus | string): TaskKanbanColumnId {
+  const match = TASK_KANBAN_COLUMNS.find((column) => column.statuses.includes(status as TaskStatus));
+  if (match) return match.id;
+
+  const key = status.trim().toLowerCase();
+  if (key.includes('complete') || key === 'cancelled' || key === 'canceled') return 'done';
+  if (key.includes('progress') || key === 'saved') return 'in_progress';
+  if (key.includes('pending') || key.includes('escalat') || key.includes('approv')) return 'review';
+  if (key.includes('queue') || key === 'open' || key.includes('to do') || key === 'new') return 'todo';
+  return 'todo';
 }
 
 export function groupTasksByKanbanColumn(tasks: Task[]): Record<TaskKanbanColumnId, Task[]> {

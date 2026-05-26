@@ -13,7 +13,8 @@ import { Checkbox } from './ui/checkbox';
 import { WorkspaceObjectSidePanel, type WorkspacePanelContext } from './WorkspaceObjectSidePanel';
 import { TEAMS, CURRENT_USER } from '../data/mock-tasks';
 import { filterDatasetBySettings, getSystemDataset, listTasks } from '../data/objectRepository';
-import { updateTaskStatus } from '../data/datasetMutations';
+import { executeTaskAction, pickUpTask, releaseTaskToQueue } from '../data/workflowActions';
+import { useActiveUser } from '../contexts/ActiveUserContext';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
 import { useViewportLayout } from '../hooks/useViewportLayout';
 import { APP_EVENTS, STORAGE_KEYS } from '../constants/storage-keys';
@@ -159,6 +160,8 @@ export function TaskModule() {
   const location = useLocation();
   const dataSource = useDataSourceSettings();
   const { updateDataSource } = usePlatformSettings();
+  const { profile } = useActiveUser();
+  const workflowActor = useMemo(() => ({ name: profile.name }), [profile.name]);
   const repositoryTasks = useMemo(
     () => listTasks(filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource)),
     [dataSource],
@@ -176,7 +179,7 @@ export function TaskModule() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortColumn, setSortColumn] = useState<SortableColumn | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [activeTab, setActiveTab] = useState<TaskTabType>('all_tasks');
+  const [activeTab, setActiveTab] = useState<TaskTabType>('my_tasks');
 
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [dueDateFilter, setDueDateFilter] = useState('All');
@@ -388,38 +391,55 @@ export function TaskModule() {
 
   const handlePickUp = useCallback((task: Task, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const updated: Task = { ...task, queue: 'my_tasks', teamOrigin: selectedTeam.name, pickedUpBy: CURRENT_USER.name, pickedUpAt: 'Just now', assignedTo: CURRENT_USER.name };
-    setTeamTasks((prev) => prev.filter((t) => t.id !== task.id));
-    setMyTasks((prev) => [updated, ...prev]);
+    const result = pickUpTask(dataSource.activeDatasetId, task.id, workflowActor);
+    updateDataSource({ activeDatasetId: result.datasetId });
     setActiveTab('my_tasks');
-    openTaskPanel(updated);
+    const refreshed = listTasks(filterDatasetBySettings(getSystemDataset(result.datasetId), dataSource)).find(
+      (row) => row.id === task.id,
+    );
+    if (refreshed) openTaskPanel(refreshed);
     setToastMessage(`Task ${task.id} picked up — now in My Tasks`);
-  }, [selectedTeam.name]);
+  }, [dataSource, openTaskPanel, updateDataSource, workflowActor]);
 
   const handleRelease = useCallback((task: Task, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!task.teamOrigin) return;
-    const updated: Task = { ...task, queue: 'team_tasks', pickedUpBy: undefined, pickedUpAt: undefined, assignedTo: '' };
-    setMyTasks((prev) => prev.filter((t) => t.id !== task.id));
-    setTeamTasks((prev) => [updated, ...prev]);
+    const result = releaseTaskToQueue(dataSource.activeDatasetId, task.id, workflowActor, 'team_tasks');
+    updateDataSource({ activeDatasetId: result.datasetId });
     openTaskPanel(null);
-    setToastMessage(`Task ${task.id} released to ${task.teamOrigin}`);
-  }, []);
+    setToastMessage(`Task ${task.id} released to team queue`);
+  }, [dataSource, openTaskPanel, updateDataSource, workflowActor]);
 
   const handleManagerRelease = useCallback((task: Task, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const updated: Task = { ...task, pickedUpBy: undefined, pickedUpAt: undefined, assignedTo: '', status: 'Open' };
-    setTeamTasks((prev) => prev.map((t) => t.id === task.id ? updated : t));
-    openTaskPanel(updated);
+    const result = releaseTaskToQueue(dataSource.activeDatasetId, task.id, workflowActor, 'team_tasks');
+    updateDataSource({ activeDatasetId: result.datasetId });
+    openTaskPanel(null);
     setToastMessage(`Task ${task.id} released back to queue`);
-  }, []);
+  }, [dataSource, openTaskPanel, updateDataSource, workflowActor]);
 
   const handleCompleteTask = useCallback((task: Task) => {
-    const result = updateTaskStatus(dataSource.activeDatasetId, task.id, 'Completed');
+    const result = executeTaskAction(dataSource.activeDatasetId, task.id, 'complete', workflowActor);
     updateDataSource({ activeDatasetId: result.datasetId });
     openTaskPanel(null);
     setToastMessage(`Task ${task.id} completed`);
-  }, [dataSource.activeDatasetId, updateDataSource]);
+  }, [dataSource.activeDatasetId, openTaskPanel, updateDataSource, workflowActor]);
+
+  const handleTaskAction = useCallback(
+    (task: Task, actionType: string) => {
+      const result = executeTaskAction(dataSource.activeDatasetId, task.id, actionType, workflowActor);
+      updateDataSource({ activeDatasetId: result.datasetId });
+      if (actionType === 'complete' || actionType === 'complete_return' || actionType === 'send_approver') {
+        openTaskPanel(null);
+      } else {
+        const refreshed = listTasks(filterDatasetBySettings(getSystemDataset(result.datasetId), dataSource)).find(
+          (row) => row.id === task.id,
+        );
+        if (refreshed) openTaskPanel(refreshed);
+      }
+      setToastMessage(`Action recorded on ${task.id}`);
+    },
+    [dataSource, openTaskPanel, updateDataSource, workflowActor],
+  );
 
   const isRestricted = (task: Task) => task.requiredAuthorityLevel > CURRENT_USER.authorityLevel;
 
@@ -903,6 +923,7 @@ export function TaskModule() {
               onManagerRelease={handleManagerRelease}
               currentUserIsManager={CURRENT_USER.isManager}
               onCompleteTask={handleCompleteTask}
+              onTaskAction={handleTaskAction}
             />
           </WorkspaceObjectSidePanel>
         )}

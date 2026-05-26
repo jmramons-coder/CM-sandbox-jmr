@@ -39,7 +39,7 @@ import { LozengeTag } from '../LozengeTag';
 import { DEMO_CASE_IDS } from '../../data/demoCaseIds';
 import { DEMO_CURRENT_PERSONA } from '../../data/demoPersonas';
 import { getCaseOverview } from '../../data/mock-cases';
-import { createRequest } from '../../data/datasetMutations';
+import { createRequest, createSimpleServiceRequest } from '../../data/datasetMutations';
 import { filterDatasetBySettings, getSystemDataset, listCaseSummaries } from '../../data/objectRepository';
 import { useDataSourceSettings, usePlatformSettings } from '../../contexts/PlatformSettingsContext';
 import { MOCK_CLIENTS } from '../../data/mock-entity-folders';
@@ -91,6 +91,8 @@ type CreateRequestDraft = {
   policyNumber: string;
   requirementId: string;
   notes: string;
+  currentAddress: string;
+  newAddress: string;
   tasks: ChainedTaskDraft[];
 };
 
@@ -161,6 +163,8 @@ function buildInitialDraft(template: RequestTemplate): CreateRequestDraft {
     policyNumber: '',
     requirementId: '',
     notes: '',
+    currentAddress: '',
+    newAddress: '',
     tasks: [],
   };
 }
@@ -367,6 +371,10 @@ export function CreateRequestForm() {
     if (!isExternal && !draft.internalClient) {
       errors.push('Pick a client to send the request to.');
     }
+    if (draft.templateId === 'int-address-service') {
+      if (!draft.policyNumber) errors.push('Pick a policy for the mailing address change.');
+      if (!draft.newAddress.trim()) errors.push('Enter the new mailing address.');
+    }
     return errors;
   }, [draft, isExternal]);
 
@@ -382,33 +390,58 @@ export function CreateRequestForm() {
         setSelectedTaskId(next.id);
         return;
       }
-      const result = createRequest(dataSource.activeDatasetId, {
-        title: draft.title,
-        category: draft.category,
-        priority: draft.priority,
-        due: draft.due,
-        source: isExternal ? 'Manual external request' : 'Manual client request',
-        sourceChannel: draft.sourceChannel,
-        sourceDetail: selectedTemplate?.label,
-        requester: isExternal
-          ? draft.externalRecipientName || draft.externalRecipientOrganization || 'External party'
-          : draft.internalClient?.name,
-        clientId: draft.clientId || draft.internalClient?.id,
-        caseId: draft.caseId,
-        policyNumber: draft.policyNumber,
-        requirementId: draft.requirementId,
-        notes: draft.notes,
-        assignedTo: 'Operations queue',
-        tasks: draft.tasks.map((task) => ({
-          title: task.title || `${draft.title} follow-up`,
-          type: task.type,
-          assignee: task.assignee,
-          dueWindow: task.dueWindow,
-          description: task.description,
-        })),
-      });
+      const clientId = draft.clientId || draft.internalClient?.id;
+      const result =
+        draft.templateId === 'int-address-service' && clientId && draft.policyNumber && !draft.caseId
+          ? createSimpleServiceRequest(dataSource.activeDatasetId, {
+              title: draft.title,
+              workflowId: 'address_change',
+              clientId,
+              policyNumber: draft.policyNumber,
+              requester: draft.internalClient?.name,
+              priority: draft.priority,
+              due: draft.due,
+              source: 'Manual client request',
+              sourceChannel: draft.sourceChannel,
+              assignedTo: DEMO_CURRENT_PERSONA.name,
+              currentAddress: draft.currentAddress || draft.internalClient?.address || '',
+              newAddress: draft.newAddress,
+              effectiveDate: draft.due || undefined,
+              notes: draft.notes,
+            })
+          : createRequest(dataSource.activeDatasetId, {
+              title: draft.title,
+              category: draft.category,
+              priority: draft.priority,
+              due: draft.due,
+              source: isExternal ? 'Manual external request' : 'Manual client request',
+              sourceChannel: draft.sourceChannel,
+              sourceDetail: selectedTemplate?.label,
+              requester: isExternal
+                ? draft.externalRecipientName || draft.externalRecipientOrganization || 'External party'
+                : draft.internalClient?.name,
+              clientId,
+              caseId: draft.caseId,
+              policyNumber: draft.policyNumber,
+              requirementId: draft.requirementId,
+              notes: draft.notes,
+              assignedTo: 'Operations queue',
+              tasks: draft.tasks.map((task) => ({
+                title: task.title || `${draft.title} follow-up`,
+                type: task.type,
+                assignee: task.assignee,
+                dueWindow: task.dueWindow,
+                description: task.description,
+              })),
+            });
+
+      const requestId =
+        result.record && 'request' in result.record
+          ? result.record.request.id
+          : result.record.id;
+
       updateDataSource({ activeDatasetId: result.datasetId });
-      navigate(`/requests#request=${encodeURIComponent(result.record.id)}`);
+      navigate(`/requests#request=${encodeURIComponent(requestId)}`);
     },
     [dataSource.activeDatasetId, draft, isExternal, navigate, selectedTemplate?.label, updateDataSource, validationIssues.length],
   );
@@ -581,6 +614,7 @@ export function CreateRequestForm() {
                     ...prev,
                     internalClient: client,
                     clientId: client?.id ?? '',
+                    currentAddress: client?.address ?? prev.currentAddress,
                   }));
                 }}
               />
@@ -611,6 +645,29 @@ export function CreateRequestForm() {
                 </SelectContent>
               </Select>
             </div>
+            {draft.templateId === 'int-address-service' ? (
+              <div className="md:col-span-2 space-y-5">
+                <div>
+                  <Label>Current address on file</Label>
+                  <TextInput
+                    value={draft.currentAddress}
+                    onChange={(value) => updateDraft('currentAddress', value)}
+                    placeholder="42 Brookline Ave, Boston MA 02215"
+                  />
+                </div>
+                <div>
+                  <Label required>New mailing address</Label>
+                  <TextInput
+                    value={draft.newAddress}
+                    onChange={(value) => updateDraft('newAddress', value)}
+                    placeholder="9 Willow Court, Suite 2, Cambridge MA 02139"
+                  />
+                </div>
+                <InfoBanner>
+                  Policy service intake creates a linked review task automatically. Leave case empty for the standard SBLI simple-service path.
+                </InfoBanner>
+              </div>
+            ) : null}
             <div>
               <Label>Case</Label>
               <Select value={draft.caseId || undefined} onValueChange={handleCaseChange}>

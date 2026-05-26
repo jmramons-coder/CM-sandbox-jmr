@@ -188,7 +188,8 @@ export type TaskActionType =
   | 'complete_return'
   | 'complete_make_owner'
   | 'send_approver'
-  | 'add_requirement';
+  | 'add_requirement'
+  | 'request_info';
 
 export interface TaskPanelAction {
   type: TaskActionType;

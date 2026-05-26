@@ -32,6 +32,8 @@ import { createPortal } from 'react-dom';
 import { getCaseOverview } from '../data/mock-cases';
 import { resolveCaseRouteId } from '../data/demoCaseIds';
 import { deleteEntity, upsertRequirement } from '../data/datasetMutations';
+import { executeTaskAction } from '../data/workflowActions';
+import { useActiveUser } from '../contexts/ActiveUserContext';
 import { useCasesNav } from '../contexts/CasesNavContext';
 import { AiCueSparkle } from './AiCueSparkle';
 import { AiInsightCell, AiInsightInline } from './index';
@@ -125,6 +127,11 @@ import {
   TwoLineSummaryCell,
 } from './ModuleCellHelpers';
 import { getStatusLozengeType } from '../utils/status-display';
+import {
+  sortCaseDocumentsByRelevance,
+  sortCaseTaskRowsByRelevance,
+  sortRequirementsByRelevance,
+} from '../utils/module-relevance-sort';
 import { filterDatasetBySettings, getSystemDataset, listActivityEvents, listCaseSummaries, listCommunications, listDocuments, listRequirements, listTasks } from '../data/objectRepository';
 import { isEntityEnabled, resolveEffectiveCaseTypeAnatomy } from '../domain/runtimeDataConfig';
 
@@ -258,10 +265,12 @@ export function CaseView({
   const { isCompactShell } = useViewportLayout();
   const caseCardListTabs = new Set<CaseTab>(['tasks', 'documents', 'requirements']);
   const forceCaseCardList = isCompactShell && caseCardListTabs.has(activeTab);
+  /** Tabs that render their own full main area (not the shared card/list scroll region). */
+  const caseTabsWithDedicatedMain = new Set<CaseTab>(['scoring']);
   const showCaseTabList =
     forceCaseCardList
     || tabViews[activeTab as Exclude<CaseTab, 'overview' | 'decision'>] === 'list'
-    || !CASE_TABS_WITH_TABLE.has(activeTab);
+    || (!CASE_TABS_WITH_TABLE.has(activeTab) && !caseTabsWithDedicatedMain.has(activeTab));
   const [decisionModalSignal, setDecisionModalSignal] = useState(0);
   const [newCaseTaskReady, setNewCaseTaskReady] = useState(false);
   const [newTaskBadge, setNewTaskBadge] = useState(false);
@@ -285,6 +294,7 @@ export function CaseView({
 
   const { settings: platformSettings, updateDataSource } = usePlatformSettings();
   const dataSource = useDataSourceSettings();
+  const { profile: activeProfile } = useActiveUser();
   const currency = useCurrencyFormatter();
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const activeDataset = useMemo(
@@ -1283,78 +1293,84 @@ export function CaseView({
   const stagedRequirements = useMemo(() => data.requirements.filter((row) => stageMatches('requirements', row)), [data.requirements, stageMatches]);
   const requirementSearchQuery = (tabSearchQueries.requirements ?? '').trim().toLowerCase();
   const searchedRequirements = useMemo(() => {
-    if (!requirementSearchQuery) return stagedRequirements;
-    return stagedRequirements.filter((row) => {
-      const sourceLabel =
-        row.source === 'ai_rule_engine' ? 'AI Rule Engine' :
-        row.source === 'id_verification' ? 'ID Verification' :
-        row.source === 'employer_portal' ? 'Employer Portal' :
-        row.source === 'pharmacy_check' ? 'Pharmacy Check' :
-        row.source;
-      const haystack = [
-        row.name,
-        row.category,
-        row.stage,
-        row.status,
-        row.dueDate,
-        row.followUpDate,
-        row.source,
-        sourceLabel,
-        row.notes,
-        row.trigger,
-        row.phase,
-        row.aiSummary,
-        row.responsibleParty,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(requirementSearchQuery);
-    });
+    const filtered = !requirementSearchQuery
+      ? stagedRequirements
+      : stagedRequirements.filter((row) => {
+          const sourceLabel =
+            row.source === 'ai_rule_engine' ? 'AI Rule Engine' :
+            row.source === 'id_verification' ? 'ID Verification' :
+            row.source === 'employer_portal' ? 'Employer Portal' :
+            row.source === 'pharmacy_check' ? 'Pharmacy Check' :
+            row.source;
+          const haystack = [
+            row.name,
+            row.category,
+            row.stage,
+            row.status,
+            row.dueDate,
+            row.followUpDate,
+            row.source,
+            sourceLabel,
+            row.notes,
+            row.trigger,
+            row.phase,
+            row.aiSummary,
+            row.responsibleParty,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+          return haystack.includes(requirementSearchQuery);
+        });
+    return sortRequirementsByRelevance(filtered);
   }, [stagedRequirements, requirementSearchQuery]);
   const stagedDocuments = useMemo(() => documents.filter((row) => stageMatches('documents', row)), [documents, stageMatches]);
   const taskSearchQuery = (tabSearchQueries.tasks ?? '').trim().toLowerCase();
   const searchedTasks = useMemo(() => {
-    if (!taskSearchQuery) return stagedTasks;
-    return stagedTasks.filter((row) => {
-      const haystack = [
-        row.id,
-        row.task?.taskId,
-        row.taskType,
-        row.status,
-        row.priority,
-        row.assignee,
-        row.stage,
-        row.dueDate,
-        row.task?.aiSummary,
-        row.task?.description,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(taskSearchQuery);
-    });
+    const filtered = !taskSearchQuery
+      ? stagedTasks
+      : stagedTasks.filter((row) => {
+          const haystack = [
+            row.id,
+            row.task?.taskId,
+            row.taskType,
+            row.status,
+            row.priority,
+            row.assignee,
+            row.stage,
+            row.dueDate,
+            row.task?.aiSummary,
+            row.task?.description,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+          return haystack.includes(taskSearchQuery);
+        });
+    return sortCaseTaskRowsByRelevance(filtered);
   }, [stagedTasks, taskSearchQuery]);
   const documentSearchQuery = (tabSearchQueries.documents ?? '').trim().toLowerCase();
   const searchedDocuments = useMemo(() => {
-    if (!documentSearchQuery) return stagedDocuments;
-    return stagedDocuments.filter((row) => {
-      const haystack = [
-        row.name,
-        row.category,
-        row.stage,
-        row.insight,
-        row.aiSummary,
-        row.uploaded,
-        row.source,
-        row.linkedRequirement,
-        row.status,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(documentSearchQuery);
-    });
+    const filtered = !documentSearchQuery
+      ? stagedDocuments
+      : stagedDocuments.filter((row) => {
+          const haystack = [
+            row.name,
+            row.category,
+            row.stage,
+            row.insight,
+            row.aiSummary,
+            row.uploaded,
+            row.source,
+            row.linkedRequirement,
+            row.status,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+          return haystack.includes(documentSearchQuery);
+        });
+    return sortCaseDocumentsByRelevance(filtered);
   }, [stagedDocuments, documentSearchQuery]);
   const stagedCommunications = useMemo(() => communications.filter((row) => stageMatches('communications', row)), [communications, stageMatches]);
   const stagedHistoryEvents = useMemo(() => historyEvents.filter((row) => stageMatches('history', row)), [historyEvents, stageMatches]);
@@ -2065,11 +2081,33 @@ export function CaseView({
               activePanelContextId={activeCasePanelContextId}
               onPanelNavigationChange={handleCasePanelNavigationChange}
               onCompleteTask={(t) => {
+                const datasetTask = listTasks(activeDataset, { caseId: data.id }).find(
+                  (row) => row.id === t.id || row.taskId === t.id,
+                );
+                if (datasetTask) {
+                  const result = executeTaskAction(dataSource.activeDatasetId, datasetTask.id, 'complete', {
+                    name: activeProfile.name,
+                  });
+                  updateDataSource({ activeDatasetId: result.datasetId });
+                  closeCaseSidePanel();
+                  return;
+                }
                 const ct = contextualTasks.find((x) => x.id === t.id);
                 if (ct) ct.status = 'Completed';
                 if (t.id === 'TSK-BB-OD-01') setOverdueTaskCompleted(true);
                 closeCaseSidePanel();
                 bumpData();
+              }}
+              onTaskAction={(t, actionType) => {
+                const datasetTask = listTasks(activeDataset, { caseId: data.id }).find(
+                  (row) => row.id === t.id || row.taskId === t.id,
+                );
+                if (!datasetTask) return;
+                const result = executeTaskAction(dataSource.activeDatasetId, datasetTask.id, actionType, {
+                  name: activeProfile.name,
+                });
+                updateDataSource({ activeDatasetId: result.datasetId });
+                closeCaseSidePanel();
               }}
               onAcceptMeeting={() => {
                 closeCaseSidePanel();

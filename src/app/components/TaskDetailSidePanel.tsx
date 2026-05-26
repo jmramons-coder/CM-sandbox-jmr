@@ -11,7 +11,9 @@ import { WorkspaceObjectSidePanel, type WorkspacePanelContext } from './Workspac
 import { CollapsibleDetailSection } from './CollapsibleDetailSection';
 import { getDocumentEvidence } from '../data/mock-document-evidence';
 import { filterDatasetBySettings, getSystemDataset } from '../data/objectRepository';
-import { useDataSourceSettings } from '../contexts/PlatformSettingsContext';
+import { updateDocumentStatus } from '../data/datasetMutations';
+import { useActiveUser } from '../contexts/ActiveUserContext';
+import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
 import { formatDocumentFileInfo } from '../data/documentMetadata';
 import { resolveObjectLocation } from '../domain/objectRefs';
 import { ScoringMiniWidget } from './ScoringMiniWidget';
@@ -50,6 +52,7 @@ export type TaskDetailSidePanelProps = {
   currentUserIsManager?: boolean;
   onAcceptMeeting?: (task: Task) => void;
   onCompleteTask?: (task: Task) => void;
+  onTaskAction?: (task: Task, actionType: string) => void;
   panelContexts?: WorkspacePanelContext[];
   activePanelContextId?: string;
   onPanelNavigationChange?: (payload: TaskPanelNavigationPayload) => void;
@@ -125,6 +128,7 @@ function EmpowerTaskDetailContent({
   currentUserIsManager = false,
   onAcceptMeeting,
   onCompleteTask,
+  onTaskAction,
   panelContexts,
   activePanelContextId,
   onPanelNavigationChange,
@@ -136,7 +140,16 @@ function EmpowerTaskDetailContent({
     : internalActiveContextId;
   const activeView = parseTaskPanelView(activeContextId);
   const dataSource = useDataSourceSettings();
+  const { updateDataSource } = usePlatformSettings();
+  const { profile } = useActiveUser();
   const activeDataset = useMemo(() => filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource), [dataSource]);
+  const handleDocumentWorkflow = (actionId: string, documentId: string) => {
+    if (actionId !== 'mark-reviewed' && actionId !== 'review-dataset-evidence') return;
+    const result = updateDocumentStatus(dataSource.activeDatasetId, documentId, 'Validated', {
+      name: profile.name,
+    });
+    updateDataSource({ activeDatasetId: result.datasetId });
+  };
   const evidenceDocumentIds = useMemo(() => {
     const ids = [
       ...(task.evidenceDocuments?.map((document) => document.id) ?? []),
@@ -306,6 +319,7 @@ function EmpowerTaskDetailContent({
           panelWidth={panelWidth}
           isResizing={false}
           onResizeStart={() => undefined}
+          onDocumentAction={handleDocumentWorkflow}
         />
     ) : null
       ) : activeView === 'assistant' ? (
@@ -487,7 +501,9 @@ function EmpowerTaskDetailContent({
                 onClick={() => {
                   if (action.type === 'complete' || action.type === 'complete_return' || action.type === 'send_approver') {
                     onCompleteTask?.(task);
+                    return;
                   }
+                  onTaskAction?.(task, action.type);
                 }}
                 className={actionButtonClass(action)}
               >

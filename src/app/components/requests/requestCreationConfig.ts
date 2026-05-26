@@ -111,6 +111,15 @@ export const REQUEST_CREATION_TEMPLATES: RequestCreationTemplate[] = [
     defaultChannel: 'email',
   },
   {
+    id: 'int-address-service',
+    mode: 'internal',
+    label: 'Mailing address change (policy service)',
+    category: 'Address Change',
+    description: 'Intake a policy mailing address change — creates linked service task (no case).',
+    defaultTitle: 'Mailing address change',
+    defaultChannel: 'client_portal',
+  },
+  {
     id: 'int-id',
     mode: 'internal',
     label: 'Identity / KYC verification',

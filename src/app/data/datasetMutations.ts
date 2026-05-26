@@ -1,7 +1,16 @@
 import { validateSystemDataset } from './dataQualityGuards';
 import { datasetRegistry } from './datasetRegistry';
 import { migrateSystemDataset } from './generatedDatasetRepository';
-import type { DatasetRequestRecord, DatasetRequirementRecord, DatasetTaskRecord, SystemDataset } from './multi-case-dataset';
+import type {
+  DatasetDocumentRecord,
+  DatasetRequestRecord,
+  DatasetRequirementRecord,
+  DatasetTaskRecord,
+  SystemDataset,
+} from './multi-case-dataset';
+import type { RequestSubmittedForm, RequestSystemStep, RequestSystemStepKind, RequestTimelineAction } from '../types';
+import { SIMPLE_SERVICE_WORKFLOWS, type SimpleServiceWorkflowId } from '../domain/workflows/simpleServiceWorkflows';
+import { isSimpleServiceRequestCategory } from './simpleServiceRules';
 import { findRelationshipIssues } from '../domain/dataArchitecture';
 import {
   caseTypeCodeForClaimSubType,
@@ -565,4 +574,406 @@ export function deleteEntity(datasetId: string, target: ObjectRef): MutationResu
   }
   const saved = commitDataset(dataset);
   return { datasetId: saved.id, dataset: saved, record: true };
+}
+
+export type WorkflowActorContext = {
+  name: string;
+  userId?: string;
+};
+
+function timelineTimestamp(): string {
+  return new Date().toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function humanTimelineEntry(
+  actor: WorkflowActorContext,
+  action: string,
+  detail: string,
+): RequestTimelineAction {
+  return {
+    ts: timelineTimestamp(),
+    actor: actor.name,
+    actorType: 'Human',
+    icon: 'ti-user',
+    dotCls: 'rp-tl-dot-human',
+    action,
+    detail,
+  };
+}
+
+function findRequest(dataset: SystemDataset, requestId: string) {
+  return dataset.requests.find((row) => row.id === requestId);
+}
+
+function findTask(dataset: SystemDataset, taskId: string) {
+  return dataset.tasks.find((row) => row.id === taskId);
+}
+
+export function appendRequestHumanAction(
+  datasetId: string,
+  requestId: string,
+  actor: WorkflowActorContext,
+  action: string,
+  detail: string,
+): MutationResult<DatasetRequestRecord | null> {
+  const writable = getWritableDataset(datasetId);
+  const dataset = writable.dataset;
+  let updated: DatasetRequestRecord | null = null;
+  dataset.requests = dataset.requests.map((request) => {
+    if (request.id !== requestId) return request;
+    updated = {
+      ...request,
+      humanActions: [...(request.humanActions ?? []), humanTimelineEntry(actor, action, detail)],
+    };
+    return updated;
+  });
+  const saved = commitDataset(dataset);
+  return { datasetId: saved.id, dataset: saved, record: updated };
+}
+
+export function advanceRequestSystemSteps(
+  datasetId: string,
+  requestId: string,
+  options: {
+    completeKinds?: RequestSystemStepKind[];
+    inProgressKind?: RequestSystemStepKind;
+    completeAll?: boolean;
+  },
+): MutationResult<DatasetRequestRecord | null> {
+  const writable = getWritableDataset(datasetId);
+  const dataset = writable.dataset;
+  let updated: DatasetRequestRecord | null = null;
+  dataset.requests = dataset.requests.map((request) => {
+    if (request.id !== requestId || !request.systemSteps?.length) return request;
+    const steps = request.systemSteps.map((step) => {
+      if (options.completeAll) {
+        return { ...step, status: 'completed' as const };
+      }
+      if (options.completeKinds?.includes(step.kind)) {
+        return { ...step, status: 'completed' as const };
+      }
+      if (options.inProgressKind && step.kind === options.inProgressKind) {
+        return { ...step, status: 'in_progress' as const };
+      }
+      return step;
+    });
+    updated = { ...request, systemSteps: steps };
+    return updated;
+  });
+  const saved = commitDataset(dataset);
+  return { datasetId: saved.id, dataset: saved, record: updated };
+}
+
+export function updateTaskFields(
+  datasetId: string,
+  taskId: string,
+  patch: Partial<
+    Pick<
+      DatasetTaskRecord,
+      'status' | 'assignee' | 'assigneeId' | 'assigneeKind' | 'queue' | 'aiSummary' | 'nextAction'
+    >
+  >,
+): MutationResult<DatasetTaskRecord | null> {
+  const writable = getWritableDataset(datasetId);
+  const dataset = writable.dataset;
+  let updated: DatasetTaskRecord | null = null;
+  dataset.tasks = dataset.tasks.map((task) => {
+    if (task.id !== taskId) return task;
+    updated = { ...task, ...patch };
+    return updated;
+  });
+  const saved = commitDataset(dataset);
+  return { datasetId: saved.id, dataset: saved, record: updated };
+}
+
+function extractFormField(form: RequestSubmittedForm | undefined, label: string): string | undefined {
+  return form?.fields.find((field) => field.label.toLowerCase().includes(label.toLowerCase()))?.value;
+}
+
+export function applyMailingAddressFromRequest(
+  datasetId: string,
+  requestId: string,
+  actor: WorkflowActorContext,
+): MutationResult<{ request: DatasetRequestRecord | null; newAddress?: string }> {
+  const writable = getWritableDataset(datasetId);
+  const dataset = writable.dataset;
+  const request = findRequest(dataset, requestId);
+  if (!request) {
+    return { datasetId: writable.datasetId, dataset, record: { request: null } };
+  }
+
+  const newAddress =
+    extractFormField(request.form, 'new mailing') ??
+    extractFormField(request.form, 'new address');
+  const clientId = request.clientId ?? request.linkedObjects.find((ref) => ref.kind === 'client')?.id;
+  const policyId =
+    request.policyNumber ??
+    request.linkedObjects.find((ref) => ref.kind === 'policy')?.id;
+
+  if (clientId && newAddress) {
+    dataset.clients = dataset.clients.map((client) =>
+      client.id === clientId
+        ? { ...client, profile: { ...client.profile, address: newAddress } }
+        : client,
+    );
+  }
+
+  if (policyId && newAddress) {
+    dataset.policies = dataset.policies.map((policy) =>
+      policy.id === policyId || policy.policyNumber === policyId
+        ? { ...policy, linkedObjects: policy.linkedObjects }
+        : policy,
+    );
+  }
+
+  let updatedRequest: DatasetRequestRecord | null = null;
+  dataset.requests = dataset.requests.map((row) => {
+    if (row.id !== requestId) return row;
+    updatedRequest = {
+      ...row,
+      nextAction: 'Service completed',
+      humanActions: [
+        ...(row.humanActions ?? []),
+        humanTimelineEntry(
+          actor,
+          'Mailing address applied',
+          newAddress ? `Policy and client records updated to ${newAddress}.` : 'Policy administration update recorded.',
+        ),
+      ],
+    };
+    return updatedRequest;
+  });
+
+  const saved = commitDataset(dataset);
+  return { datasetId: saved.id, dataset: saved, record: { request: updatedRequest, newAddress } };
+}
+
+export function updateDocumentStatus(
+  datasetId: string,
+  documentId: string,
+  status: string,
+  actor?: WorkflowActorContext,
+): MutationResult<DatasetDocumentRecord | null> {
+  const writable = getWritableDataset(datasetId);
+  const dataset = writable.dataset;
+  let updated: DatasetDocumentRecord | null = null;
+  dataset.documents = dataset.documents.map((document) => {
+    if (document.id !== documentId) return document;
+    updated = { ...document, status };
+    return updated;
+  });
+
+  if (actor && updated) {
+    const requestId = updated.linkedObjects.find((ref) => ref.kind === 'request')?.id;
+    if (requestId) {
+      dataset.requests = dataset.requests.map((request) =>
+        request.id === requestId
+          ? {
+              ...request,
+              humanActions: [
+                ...(request.humanActions ?? []),
+                humanTimelineEntry(
+                  actor,
+                  'Document reviewed',
+                  `${updated!.label ?? documentId} marked as ${status}.`,
+                ),
+              ],
+            }
+          : request,
+      );
+    }
+  }
+
+  const saved = commitDataset(dataset);
+  const record = saved.documents.find((row) => row.id === documentId) ?? updated;
+  return { datasetId: saved.id, dataset: saved, record };
+}
+
+function buildSimpleServiceSystemSteps(workflowId: SimpleServiceWorkflowId): RequestSystemStep[] {
+  return SIMPLE_SERVICE_WORKFLOWS[workflowId].systemSteps.map((step, index) => ({
+    id: `${nowId()}-step-${index}`,
+    kind: step.kind,
+    status: index === 0 ? 'awaiting_review' : 'queued',
+    title: step.title,
+    description: step.description,
+  }));
+}
+
+export type CreateSimpleServiceRequestInput = {
+  title: string;
+  workflowId: SimpleServiceWorkflowId;
+  clientId: string;
+  policyNumber: string;
+  requester?: string;
+  priority?: DatasetRequestRecord['priority'];
+  due?: string;
+  source?: string;
+  sourceChannel?: DatasetRequestRecord['sourceChannel'];
+  assignedTo?: string;
+  currentAddress?: string;
+  newAddress?: string;
+  effectiveDate?: string;
+  notes?: string;
+};
+
+export function createSimpleServiceRequest(
+  datasetId: string,
+  input: CreateSimpleServiceRequestInput,
+): MutationResult<{ request: DatasetRequestRecord; task: DatasetTaskRecord }> {
+  const workflow = SIMPLE_SERVICE_WORKFLOWS[input.workflowId];
+  const writable = getWritableDataset(datasetId);
+  const dataset = writable.dataset;
+  const assignee = resolveAssigneeIdentity(input.assignedTo ?? 'Operations queue');
+  const client = dataset.clients.find((row) => row.id === input.clientId);
+  const policyRef = findPolicyRef(dataset, input.policyNumber);
+
+  let linkedObjects: ObjectRef[] = [];
+  if (client) {
+    linkedObjects = addUniqueRef(linkedObjects, { kind: 'client', id: client.id, label: client.name });
+  }
+  if (policyRef) linkedObjects = addUniqueRef(linkedObjects, policyRef);
+
+  const requestId = sequence('REQ', dataset.requests);
+  const taskId = sequence('TSK', dataset.tasks);
+
+  const form: RequestSubmittedForm = {
+    submitted: timelineTimestamp(),
+    channel: input.sourceChannel === 'client_portal' ? 'Client portal' : 'Manual intake',
+    formType: workflow.category === 'Address Change' ? 'SBLI Address Change Form v2.0' : 'Beneficiary change form',
+    fields: [
+      { label: 'Policy number', value: input.policyNumber },
+      ...(input.currentAddress ? [{ label: 'Current address on file', value: input.currentAddress }] : []),
+      ...(input.newAddress ? [{ label: 'New mailing address', value: input.newAddress }] : []),
+      ...(input.effectiveDate ? [{ label: 'Effective date', value: input.effectiveDate }] : []),
+      ...(input.notes ? [{ label: 'Notes', value: input.notes }] : []),
+    ],
+  };
+
+  const request: DatasetRequestRecord = {
+    id: requestId,
+    kind: 'request',
+    label: input.title,
+    status: 'In progress',
+    source: input.source ?? 'Manual client request',
+    category: workflow.category,
+    subtype: workflow.subtype,
+    priority: input.priority ?? 'Normal',
+    received: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    sourceChannel: input.sourceChannel ?? 'client_portal',
+    sourceDetail: 'Manual policy service intake',
+    requester: input.requester ?? client?.name ?? 'Client',
+    clientId: input.clientId,
+    policyNumber: input.policyNumber,
+    assignedTo: assignee.assigneeValue,
+    assigneeId: assignee.assigneeId,
+    assigneeKind: assignee.assigneeKind,
+    due: input.due,
+    notes: input.notes,
+    templateId: workflow.templateId,
+    requestMode: 'internal',
+    aiSummary:
+      input.notes ||
+      `Manual ${workflow.category.toLowerCase()} for ${client?.name ?? input.clientId} on policy ${input.policyNumber}.`,
+    nextAction: 'Complete address change review',
+    linkedTasks: [taskId],
+    form,
+    systemSteps: buildSimpleServiceSystemSteps(input.workflowId).map((step, index) =>
+      index === 0 ? { ...step, status: 'completed' } : index === 1 ? { ...step, status: 'completed' } : step,
+    ),
+    aiActions: [
+      {
+        ts: timelineTimestamp(),
+        actor: 'System',
+        actorType: 'System',
+        icon: 'ti-bolt',
+        dotCls: 'rp-tl-dot-system',
+        action: 'Simple service task created',
+        detail: `Task ${taskId} assigned to ${assignee.assigneeValue}. No claim case created.`,
+      },
+    ],
+    humanActions: [],
+    linkedObjects: addUniqueRef(linkedObjects, { kind: 'request', id: requestId, label: input.title }),
+  };
+
+  let taskLinked = addUniqueRef(linkedObjects, { kind: 'request', id: requestId, label: input.title });
+  if (client) {
+    taskLinked = addUniqueRef(taskLinked, { kind: 'client', id: client.id, label: client.name, role: 'owner' });
+  }
+  if (policyRef) taskLinked = addUniqueRef(taskLinked, policyRef);
+
+  const task: DatasetTaskRecord = {
+    id: taskId,
+    kind: 'task',
+    taskId,
+    label: workflow.taskLabel,
+    status: 'To Do',
+    priority: input.priority ?? 'Normal',
+    assignee: assignee.assigneeValue,
+    assigneeId: assignee.assigneeId,
+    assigneeKind: assignee.assigneeKind,
+    caseType: 'Service',
+    caseSubtype: workflow.taskSubtype,
+    hasAI: true,
+    aiSummary: input.notes || `Review ${workflow.category.toLowerCase()} for ${client?.name ?? input.clientId}.`,
+    stage: 'policy_service',
+    origin: 'Manual intake',
+    sourceContext: `Simple policy service — ${workflow.taskSubtype.replace('_', ' ')}`,
+    createdFrom: { kind: 'request', id: requestId, label: input.title },
+    createdDate: new Date().toISOString(),
+    description: `Review and apply ${workflow.category.toLowerCase()} for ${client?.name ?? input.clientId}.`,
+    queue: 'team_tasks',
+    requiredAuthorityLevel: 1,
+    actions: [
+      { type: 'complete', label: 'Complete', isPrimary: true },
+      { type: 'request_info', label: 'Request info' },
+    ],
+    panelContext: {
+      summaryStatus: 'To Do',
+      contextTitle: `Simple tasks — ${workflow.category}`,
+      contextSummary: input.notes || `Review ${workflow.category.toLowerCase()} linked to ${requestId}.`,
+      suggestions: ['Review submitted form', 'Confirm supporting documents', 'Apply policy update'],
+    },
+    summary: {
+      contextLabel: 'Suggested next steps',
+      title: workflow.category,
+      description: `Policy service task for ${workflow.category.toLowerCase()} on ${input.policyNumber}.`,
+      checklist:
+        input.workflowId === 'address_change'
+          ? [
+              'Confirm supporting documents and unit formatting',
+              'Update policy admin mailing address',
+              'Send confirmation letter to client',
+            ]
+          : [
+              'Confirm beneficiary designation details',
+              'Update policy admin beneficiary records',
+              'Send confirmation to client',
+            ],
+    },
+    linkedObjects: taskLinked,
+  };
+
+  request.linkedObjects = addUniqueRef(request.linkedObjects, { kind: 'task', id: taskId, label: workflow.taskLabel });
+
+  dataset.requests = [request, ...dataset.requests];
+  dataset.tasks = [task, ...dataset.tasks];
+  const saved = commitDataset(dataset);
+  return {
+    datasetId: saved.id,
+    dataset: saved,
+    record: {
+      request: saved.requests.find((row) => row.id === requestId) ?? request,
+      task: saved.tasks.find((row) => row.id === taskId) ?? task,
+    },
+  };
+}
+
+export function isSimpleServiceRequestRecord(request: DatasetRequestRecord): boolean {
+  return isSimpleServiceRequestCategory(request.category);
 }

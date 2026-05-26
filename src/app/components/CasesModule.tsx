@@ -33,6 +33,7 @@ import {
 } from './ModuleCellHelpers';
 import { CreateCaseModal } from './CreateCaseModal';
 import { ModuleMobileListCardShell } from './ModuleMobileListCard';
+import { sortCasesByRelevance } from '../utils/module-relevance-sort';
 
 type CasesSortableColumn =
   | 'id'
@@ -87,7 +88,7 @@ const CASE_HEADERS: CaseHeaderConfig[] = [
 ];
 
 function sortCases(cases: CaseSummary[], column: CasesSortableColumn | null, direction: SortDirection) {
-  if (!column) return cases;
+  if (!column) return sortCasesByRelevance(cases);
   return [...cases].sort((a, b) => {
     const multiplier = direction === 'asc' ? 1 : -1;
     switch (column) {
