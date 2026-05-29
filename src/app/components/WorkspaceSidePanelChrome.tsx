@@ -7,6 +7,8 @@ export const LAYOUT_HEADER_HEIGHT_PX = 48;
 export const MOBILE_SIDE_PANEL_SCRIM_Z_CLASS = 'z-[1100]';
 export const MOBILE_SIDE_PANEL_Z_CLASS = '!z-[1110]';
 export const MOBILE_SIDE_PANEL_TOGGLE_Z_CLASS = '!z-[1120]';
+/** Module overlays (reassign, block dates, etc.) — above side panel and panel toggle. */
+export const MODULE_MODAL_OVERLAY_Z_CLASS = 'z-[1200]';
 /** Above Layout vertical nav (`z-20`) and main content; below mobile panel chrome. */
 export const SIDE_PANEL_TOGGLE_Z_CLASS = 'z-[50]';
 /** Main vertical nav width (Layout aside) */

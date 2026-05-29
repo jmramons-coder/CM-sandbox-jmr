@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Database, ExternalLink, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { MODULE_TABLE_ROW_KEBAB_ENABLED } from '../../constants/moduleTableRowActions';
 import type { CaseDocument, CaseRequirement } from '../../types';
 import { AiInsightInline } from '../AiInsightCell';
 import { LozengeTag } from '../LozengeTag';
@@ -262,37 +263,39 @@ export function CaseRequirementMobileCard({
           <LozengeTag label={row.category} type="Neutral" subtle size="compact" />
           <LozengeTag label={row.status} type={getStatusLozengeType(row.status, 'requirement')} subtle />
         </div>
-        <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={onKebabToggle}
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-text-secondary hover:bg-surface-muted"
-            aria-label="Requirement actions"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
-          {kebabOpen ? (
-            <>
-              <div className="fixed inset-0 z-[10]" onClick={onKebabToggle} />
-              <div className="absolute right-0 top-full z-[20] mt-1 w-[140px] overflow-hidden rounded-lg border border-border-default bg-white py-1 shadow-[0_8px_24px_rgba(27,28,30,0.12)]">
-                <button
-                  type="button"
-                  onClick={onEdit}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text-secondary hover:bg-surface-muted"
-                >
-                  <Pencil className="h-3.5 w-3.5 text-text-secondary" /> Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={onDelete}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-brand-red hover:bg-[#fde5e4]"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Delete
-                </button>
-              </div>
-            </>
-          ) : null}
-        </div>
+        {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+          <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={onKebabToggle}
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-text-secondary hover:bg-surface-muted"
+              aria-label="Requirement actions"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+            {kebabOpen ? (
+              <>
+                <div className="fixed inset-0 z-[10]" onClick={onKebabToggle} />
+                <div className="absolute right-0 top-full z-[20] mt-1 w-[140px] overflow-hidden rounded-lg border border-border-default bg-white py-1 shadow-[0_8px_24px_rgba(27,28,30,0.12)]">
+                  <button
+                    type="button"
+                    onClick={onEdit}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text-secondary hover:bg-surface-muted"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-text-secondary" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onDelete}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-brand-red hover:bg-[#fde5e4]"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <h3 className="mb-2 text-sm font-semibold leading-snug text-text-heading">{row.name}</h3>

@@ -10,6 +10,7 @@ export const CASE_SUBTYPE_SCHEMA_VALUES: readonly ClaimSubType[] = [
   'disability_benefit',
   'full_underwriting',
   'simplified_underwriting',
+  'guaranteed_underwriting',
   'death',
 ] as const;
 
@@ -46,7 +47,12 @@ export const CASE_TYPE_METADATA_BY_SUBTYPE: Record<
   simplified_underwriting: {
     caseTypeId: 'ct_nb_simplified',
     workflowTemplateId: 'ct_nb_simplified',
-    caseTypeLabel: 'New business — Simplified underwriting',
+    caseTypeLabel: 'New business — Simplified issue',
+  },
+  guaranteed_underwriting: {
+    caseTypeId: 'ct_nb_guaranteed',
+    workflowTemplateId: 'ct_nb_guaranteed',
+    caseTypeLabel: 'New business — Guaranteed issue',
   },
 };
 
@@ -61,6 +67,7 @@ export const CLAIM_CASE_SUBTYPE_VALUES: readonly ClaimSubType[] = [
 export const NEW_BUSINESS_SUBTYPE_VALUES: readonly ClaimSubType[] = [
   'full_underwriting',
   'simplified_underwriting',
+  'guaranteed_underwriting',
 ] as const;
 
 /** All sub-types (catalog / validation). */
@@ -76,7 +83,8 @@ export const CLAIM_SUBTYPE_LABELS: Record<ClaimSubType, string> = {
   waiver_of_premium: 'Waiver of premium',
   death_benefit: 'Whole life death benefit',
   full_underwriting: 'Full underwriting',
-  simplified_underwriting: 'Simplified underwriting',
+  simplified_underwriting: 'Simplified issue',
+  guaranteed_underwriting: 'Guaranteed issue',
 };
 
 export function subTypesForCaseKind(caseKind: CaseKind): readonly ClaimSubType[] {
@@ -162,7 +170,7 @@ export function resolveClaimSubType(
 export function caseTypeCodeForClaimSubType(sub: ClaimSubType): string {
   if (sub === 'death' || sub === 'death_benefit') return 'DTH';
   if (sub === 'waiver_of_premium' || sub === 'disability_benefit') return 'IP';
-  if (sub === 'full_underwriting' || sub === 'simplified_underwriting') return 'NB';
+  if (sub === 'full_underwriting' || sub === 'simplified_underwriting' || sub === 'guaranteed_underwriting') return 'NB';
   return 'IP';
 }
 

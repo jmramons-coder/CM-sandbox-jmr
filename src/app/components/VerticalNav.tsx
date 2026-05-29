@@ -10,6 +10,7 @@ import {
   Inbox,
   Lightbulb,
   MessageSquare,
+  Users,
 } from 'lucide-react';
 import { GlobalCreateMenu } from './GlobalCreateMenu';
 import { Link, useLocation } from 'react-router';
@@ -72,7 +73,15 @@ export default function VerticalNav({
     { label: t('modules.reports'), path: '/reports', icon: BarChart3, moduleId: 'reports' },
   ];
 
+  const teamNavItem: NavItem & { moduleId: string } = {
+    label: t('modules.team'),
+    path: '/team',
+    icon: Users,
+    moduleId: 'users',
+  };
+
   const navItems = allNavItems.filter((item) => modules[item.moduleId as keyof typeof modules] !== false);
+  const teamNavEnabled = modules.users !== false;
   const intelligenceEnabled = modules.aiActions !== false;
   const intelligenceActive = isActive('/ai-actions');
 
@@ -162,36 +171,47 @@ export default function VerticalNav({
           </div>
           <div className={`flex w-full flex-1 flex-col ${isDrawer ? '' : 'items-center'}`}>
             {navItems.map((item) => renderLink(item))}
-            {intelligenceEnabled ? (
-              <Link
-                to="/ai-actions"
-                className={isDrawer ? 'mt-2 block w-full px-2 py-0.5' : 'mt-auto my-[2px] w-full px-1.5'}
-                onClick={onNavigate}
+            {intelligenceEnabled || teamNavEnabled ? (
+              <div
+                className={`mt-auto flex w-full flex-col ${isDrawer ? '' : 'items-center'}`}
               >
-                <div className={itemClass(intelligenceActive, false)}>
-                  <AiCueSparkle
-                    size={isDrawer ? 20 : 18}
-                    className={`shrink-0 ${intelligenceActive ? '!text-brand-accent' : '!text-text-secondary'}`}
-                  />
-                  {isDrawer ? (
-                    <span
-                      className={`min-w-0 flex-1 truncate text-[15px] ${
-                        intelligenceActive ? 'font-semibold text-brand-accent' : 'font-medium text-text-primary'
-                      }`}
-                    >
-                      {t('modules.aiActions')}
-                    </span>
-                  ) : (
-                    <p
-                      className={`mt-1 max-w-[86px] text-center text-[11px] leading-[13px] ${
-                        intelligenceActive ? 'font-semibold text-brand-accent' : 'font-normal text-text-secondary'
-                      }`}
-                    >
-                      {t('modules.aiActions')}
-                    </p>
-                  )}
-                </div>
-              </Link>
+                {intelligenceEnabled ? (
+                  <Link
+                    to="/ai-actions"
+                    className={isDrawer ? 'block w-full px-2 py-0.5' : 'my-[2px] w-full px-1.5'}
+                    onClick={onNavigate}
+                  >
+                    <div className={itemClass(intelligenceActive, false)}>
+                      <AiCueSparkle
+                        size={isDrawer ? 20 : 18}
+                        className={`shrink-0 ${intelligenceActive ? '!text-brand-accent' : '!text-text-secondary'}`}
+                      />
+                      {isDrawer ? (
+                        <span
+                          className={`min-w-0 flex-1 truncate text-[15px] ${
+                            intelligenceActive ? 'font-semibold text-brand-accent' : 'font-medium text-text-primary'
+                          }`}
+                        >
+                          {t('modules.aiActions')}
+                        </span>
+                      ) : (
+                        <p
+                          className={`mt-1 max-w-[86px] text-center text-[11px] leading-[13px] ${
+                            intelligenceActive ? 'font-semibold text-brand-accent' : 'font-normal text-text-secondary'
+                          }`}
+                        >
+                          {t('modules.aiActions')}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                ) : null}
+                {teamNavEnabled ? (
+                  <div className={isDrawer ? 'w-full px-2 py-0.5' : 'my-[2px] w-full px-1.5'}>
+                    {renderLink(teamNavItem)}
+                  </div>
+                ) : null}
+              </div>
             ) : null}
           </div>
 

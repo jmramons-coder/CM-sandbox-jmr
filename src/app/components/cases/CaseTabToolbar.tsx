@@ -49,7 +49,7 @@ export function CaseTabToolbar({
   const searchEnabled = activeTab === 'tasks' || activeTab === 'documents' || activeTab === 'requirements';
 
   return (
-    <div className={`border-b border-border-default bg-surface-primary py-3 ${isCompactShell ? 'px-4' : 'px-6'}`}>
+    <div className={`shrink-0 border-b border-border-default bg-surface-primary py-3 ${isCompactShell ? 'px-4' : 'px-6'}`}>
       <div className="flex items-center justify-between gap-4">
         {searchEnabled ? (
           <SearchBar

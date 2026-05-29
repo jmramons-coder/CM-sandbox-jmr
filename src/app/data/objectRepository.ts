@@ -363,9 +363,10 @@ function toRequirementStatus(status: string): CaseRequirement['status'] {
   }
 }
 
-function toRequest(row: DatasetRequestRecord): ServiceRequest {
+function toRequest(dataset: SystemDataset, row: DatasetRequestRecord): ServiceRequest {
   const refs = row.linkedObjects ?? [];
   const caseId = row.caseId ?? getLinkedCaseId(refs);
+  const caseRecord = caseId ? dataset.cases.find((item) => item.id === caseId) : undefined;
   const title = row.name ?? row.label;
   return {
     id: row.id,
@@ -390,8 +391,8 @@ function toRequest(row: DatasetRequestRecord): ServiceRequest {
     caseKey: row.caseKey,
     clientId: row.clientId,
     policyNumber: row.policyNumber,
-    primaryPartyName: refs.find((ref) => ref.kind === 'client')?.label,
-    primaryPartyLabel: 'Requester',
+    primaryPartyName: caseRecord?.primaryParty.label ?? refs.find((ref) => ref.kind === 'client')?.label,
+    primaryPartyLabel: 'Primary party',
     assignedTo: row.assignee ?? resolveAssigneeLabel(row.assigneeId ?? row.assignedTo ?? 'Operations queue'),
     assigneeId: row.assigneeId,
     assigneeKind: row.assigneeKind,
@@ -473,7 +474,7 @@ export function listDocuments(dataset: SystemDataset = MULTI_CASE_DEMO_DATASET, 
 
 export function listRequests(dataset: SystemDataset = MULTI_CASE_DEMO_DATASET, filter: { caseId?: string } = {}): ServiceRequest[] {
   if (!dataset.objectDomains.includes('request')) return [];
-  const generated = dataset.requests.map((row) => toRequest(row));
+  const generated = dataset.requests.map((row) => toRequest(dataset, row));
   const rows = dataset.legacyMockOverlayEnabled === true ? dedupeById([...generated, ...MOCK_REQUESTS]) : generated;
   return filter.caseId ? rows.filter((row) => row.caseId === filter.caseId) : rows;
 }

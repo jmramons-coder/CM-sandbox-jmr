@@ -7,6 +7,7 @@ import { packageFromDataset } from './datasetPackageMappers';
 import { normalizeCaseStructure } from './caseStructure';
 import { applyDatasetEnvironmentSettings, setDatasetDisplayCurrency } from './datasetEnvironmentSettings';
 import { mergeGiDemoEntities } from './gi-demo-entity-records';
+import { hydrateDatasetUsers } from './datasetUsers';
 import type { DisplayCurrency } from '../utils/currency';
 
 export function normalizeDataset(dataset: SystemDataset): SystemDataset {
@@ -98,13 +99,16 @@ export function normalizeDataset(dataset: SystemDataset): SystemDataset {
       ...row,
       linkedObjects: row.linkedObjects ?? [],
     })),
+    users: dataset.users ?? [],
   };
-  return applyDatasetEnvironmentSettings(
-    mergeGiDemoEntities({
-      ...normalized,
-      displayCurrency: normalized.displayCurrency ?? 'GBP',
-      cases: normalized.cases.map((caseRecord) => normalizeCaseStructure(caseRecord, normalized)),
-    }),
+  return hydrateDatasetUsers(
+    applyDatasetEnvironmentSettings(
+      mergeGiDemoEntities({
+        ...normalized,
+        displayCurrency: normalized.displayCurrency ?? 'GBP',
+        cases: normalized.cases.map((caseRecord) => normalizeCaseStructure(caseRecord, normalized)),
+      }),
+    ),
   );
 }
 

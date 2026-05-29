@@ -241,7 +241,7 @@ export const SBLI_DATASET: SystemDataset = {
     "new_business"
   ],
   "generationProfileId": "sbli-case-only-seed",
-  "targetRecordCount": 111,
+  "targetRecordCount": 113,
   "documentMode": "metadata_only",
   "displayCurrency": "USD",
   "description": "Shared demo dataset for Equisoft and SBLI branded environments. Four cases with full task, requirement, document, and evidence coverage.",

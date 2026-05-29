@@ -1,5 +1,6 @@
 import type { SystemDataset } from './multi-case-dataset';
 import { GUARDIAN_DEMO_CASE_IDS, GUARDIAN_DATASET_ID } from './guardianDemoCaseIds';
+import { EMPIRE_DEMO_CASE_IDS, EMPIRE_DATASET_ID } from './empireDemoCaseIds';
 
 /** Canonical SBLI demo case IDs — use instead of legacy IP26-* / IP44-* fixtures. */
 export const DEMO_CASE_IDS = {
@@ -35,7 +36,7 @@ export function resolveSbliCaseId(caseId: string): string {
 /** Map legacy bookmark URLs (IP26-*, etc.) to canonical ids for the active dataset. */
 export function resolveDemoCaseId(caseId: string, activeDatasetId?: string | null): string {
   if (!caseId) return caseId;
-  if (activeDatasetId === GUARDIAN_DATASET_ID) {
+  if (activeDatasetId === GUARDIAN_DATASET_ID || activeDatasetId === EMPIRE_DATASET_ID) {
     return caseId;
   }
   return resolveSbliCaseId(caseId);
@@ -46,6 +47,9 @@ export const DEFAULT_DEMO_CASE_ID = DEMO_CASE_IDS.wopClaim;
 export function getDefaultCaseIdForDataset(activeDatasetId?: string | null): string {
   if (activeDatasetId === GUARDIAN_DATASET_ID) {
     return GUARDIAN_DEMO_CASE_IDS.incomeProtectionClaim;
+  }
+  if (activeDatasetId === EMPIRE_DATASET_ID) {
+    return EMPIRE_DEMO_CASE_IDS.disabilityClaim;
   }
   return DEFAULT_DEMO_CASE_ID;
 }

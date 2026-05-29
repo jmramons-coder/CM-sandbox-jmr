@@ -130,6 +130,55 @@ export function releaseTaskToQueue(
   return result;
 }
 
+export type ReassignTasksInput = {
+  taskIds: string[];
+  toAssigneeName: string;
+  actor: WorkflowActorContext;
+  reason?: string;
+};
+
+export function reassignTasks(
+  datasetId: string,
+  input: ReassignTasksInput,
+): MutationResult<{ tasks: DatasetTaskRecord[] }> {
+  const assignee = resolveAssigneeIdentity(input.toAssigneeName);
+  let activeId = datasetId;
+  const reassigned: DatasetTaskRecord[] = [];
+
+  for (const taskId of input.taskIds) {
+    let result = updateTaskFields(activeId, taskId, {
+      status: 'In Progress',
+      assignee: assignee.assigneeValue,
+      assigneeId: assignee.assigneeId,
+      assigneeKind: assignee.assigneeKind ?? 'user',
+      queue: 'my_tasks',
+    });
+    activeId = result.datasetId;
+    const task = result.record;
+    if (!task) continue;
+    reassigned.push(task);
+
+    const requestId = linkedRequestIdFromTask(task);
+    if (requestId) {
+      result = appendRequestHumanAction(
+        activeId,
+        requestId,
+        input.actor,
+        'Work reassigned',
+        `${input.actor.name} reassigned ${task.label} to ${assignee.assigneeLabel}.${input.reason ? ` Reason: ${input.reason}` : ''}`,
+      );
+      activeId = result.datasetId;
+    }
+  }
+
+  const dataset = getDataset(activeId);
+  return {
+    datasetId: activeId,
+    dataset,
+    record: { tasks: reassigned },
+  };
+}
+
 export function executeTaskAction(
   datasetId: string,
   taskId: string,

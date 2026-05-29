@@ -106,6 +106,30 @@ function deriveRouteContext(pathname: string, search = '', hash = ''): LiveConte
     };
   }
 
+  if (parts[0] === 'team' || parts[0] === 'users') {
+    const userId = new URLSearchParams(search).get('user');
+    if (userId) {
+      return {
+        id: `users:open:${userId}`,
+        kind: 'other',
+        icon: ListTodo,
+        crumbs: ['Team', userId],
+        label: `User ${userId}`,
+        href: `/team?user=${encodeURIComponent(userId)}`,
+        enteredAt: now,
+      };
+    }
+    return {
+      id: 'route:/team',
+      kind: 'other',
+      icon: ListTodo,
+      crumbs: ['Team'],
+      label: 'Team',
+      href: '/team',
+      enteredAt: now,
+    };
+  }
+
   // Tasks (also default index)
   if (parts.length === 0 || parts[0] === 'tasks') {
     const taskId = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash || search).get('task');

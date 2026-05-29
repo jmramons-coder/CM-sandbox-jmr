@@ -74,6 +74,7 @@ export function validateSystemDataset(dataset: SystemDataset): DatasetValidation
   const errors: string[] = [];
   const warnings: string[] = [];
 
+  addDuplicateIdErrors(errors, 'user', dataset.users ?? []);
   addDuplicateIdErrors(errors, 'client', dataset.clients);
   addDuplicateIdErrors(errors, 'policy', dataset.policies);
   addDuplicateIdErrors(errors, 'agent', dataset.agents);
@@ -89,6 +90,7 @@ export function validateSystemDataset(dataset: SystemDataset): DatasetValidation
   addDuplicateIdErrors(errors, 'document evidence', dataset.documentEvidence);
   addDuplicateIdErrors(errors, 'AI action', dataset.aiActions);
   addGlobalIdWarnings(warnings, [
+    { label: 'users', rows: dataset.users ?? [] },
     { label: 'clients', rows: dataset.clients },
     { label: 'policies', rows: dataset.policies },
     { label: 'agents', rows: dataset.agents },
@@ -180,9 +182,19 @@ export function validateSystemDataset(dataset: SystemDataset): DatasetValidation
     });
   });
 
+  const userIds = new Set((dataset.users ?? []).map((user) => user.id));
+
   dataset.tasks.forEach((task) => {
     if (!task.assignee && !task.owner) {
       errors.push(`Task ${task.id} must include assignee.`);
+    }
+    if (
+      task.assigneeKind === 'user'
+      && task.assigneeId
+      && userIds.size > 0
+      && !userIds.has(task.assigneeId)
+    ) {
+      warnings.push(`Task ${task.id} assigneeId ${task.assigneeId} is not in dataset.users.`);
     }
     const usesTaskArchitecture = Boolean(task.summary || task.actions?.length || task.evidenceDocuments?.length || task.contextCards?.length || task.aiNarrative);
     const linkedCaseId = task.linkedObjects.find((ref) => ref.kind === 'case')?.id;

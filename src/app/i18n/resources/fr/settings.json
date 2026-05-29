@@ -150,6 +150,10 @@
         "label": "Finances",
         "description": "Opérations financières, signaux de facturation et paiements. Bientôt disponible."
       },
+      "users": {
+        "label": "Équipe",
+        "description": "Effectif, charge de travail, formation, disponibilité et réaffectation pour les gestionnaires."
+      },
       "tasks": {
         "label": "Tâches",
         "description": "Liste unifiée des tâches de tous les dossiers, avec priorité, échéances et statut."

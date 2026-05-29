@@ -205,9 +205,16 @@ Pulled from `dataQualityGuards.ts` — treat as **first-try** requirements:
 - [ ] `aiSummary`, `fulfillmentCriteria`, `context`, `history` (≥ 2 events, valid `dot`)
 - [ ] `linkedDocs` / `linkedTasks` ids exist
 
+**Platform user** (`users[]` on `SystemDataset`)
+
+- [ ] Each assessor/manager is a row: `id` (`usr-*`), `kind: "user"`, `name`, `initials`, `email`, `role` (`assessor` | `senior_assessor` | `manager` | …), `band`, `teamIds`, `teamLabels`, `maxConcurrentTasks`, `training[]`
+- [ ] Demo datasets without `users` are hydrated from the platform catalog on load; prefer explicit `users` for client exports
+- [ ] User-owned tasks/requests: `assigneeKind: "user"`, `assignee` (display name), and **`assigneeId`** matching `users[].id` (hydration backfills missing ids)
+- [ ] Role-view personas (Victor / Sarah) must exist in `users` and match `dashboard-role-seed.json` names
+
 **Task**
 
-- [ ] `assignee`, `stage`, `summary.description`, `summary.checklist`, ≥ 1 `action`
+- [ ] `assignee`, `assigneeId` (when `assigneeKind` is `user`), `stage`, `summary.description`, `summary.checklist`, ≥ 1 `action`
 - [ ] `linkedObjects` includes case
 - [ ] AI tasks: `aiNarrative.text`
 

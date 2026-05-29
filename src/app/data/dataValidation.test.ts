@@ -13,7 +13,7 @@ import { buildSchemaGraph, getDatasetRowsForKind } from '../domain/schemaGraph';
 import { createCase, createRequest, createTask, deleteEntity, linkObject } from './datasetMutations';
 import { datasetRegistry } from './datasetRegistry';
 import { SEEDED_DEMO_ENVIRONMENTS } from './demo-environment-presets';
-import { DEMO_ENV_GUARDIAN_ID } from './demo-environment-deploy';
+import { DEMO_ENV_EMPIRE_ID, DEMO_ENV_GUARDIAN_ID } from './demo-environment-deploy';
 import {
   resolveContextSupportCards,
   type TaskContextCardKind,
@@ -21,6 +21,8 @@ import {
 import { deriveHumanNet } from '../domain/scoring';
 import { resolveObjectLocation, type DataSourceSettings } from '../domain/objectRefs';
 import { getCaseOverview } from './mock-cases';
+import { getDocumentEvidence } from './mock-document-evidence';
+import { SBLI_DOCUMENT_FINDING_IDS, sbliFindingHasDedicatedHighlight } from '../utils/document-evidence-highlights';
 import type { AnatomySettings } from '../contexts/PlatformSettingsContext';
 import { mergeCaseShellWithCaseType, resolveEffectiveCaseTypeAnatomy, resolveCaseTypeForSettings } from '../domain/runtimeDataConfig';
 import enCommon from '../i18n/resources/en/common.json';
@@ -130,6 +132,45 @@ describe('dataset validation gates', () => {
     expect(env!.settings.dataSource.activeDatasetId).toBe('guardian-uk-demo');
     expect(env!.settings.dataSource.displayCurrency).toBe('GBP');
     expect(env!.settings.branding.productName).toBe('Guardian Case Management');
+    expect(env!.settings.dataSource.legacyMockOverlayEnabled).toBe(false);
+  });
+
+  it('validates Empire Life Canada dataset', () => {
+    const dataset = SYSTEM_DATASETS.find((row) => row.id === 'empire-ca-demo');
+    expect(dataset).toBeDefined();
+    expect(validateSystemDataset(dataset!).errors).toEqual([]);
+    expect(dataset!.cases).toHaveLength(6);
+    expect(dataset!.displayCurrency).toBe('CAD');
+    expect(dataset!.documents.length).toBeGreaterThanOrEqual(20);
+    expect(dataset!.requirements.length).toBeGreaterThanOrEqual(20);
+    expect(dataset!.requests).toHaveLength(6);
+    expect(dataset!.assistantResponses).toHaveLength(7);
+    expect(dataset!.activityEvents).toHaveLength(6);
+    expect(dataset!.documents.every((doc) => doc.fileAvailable === false)).toBe(true);
+
+    const nbSubTypes = dataset!.cases
+      .filter((row) => row.caseKind === 'new_business')
+      .map((row) => row.caseSubType);
+    expect(nbSubTypes).toEqual(
+      expect.arrayContaining(['full_underwriting', 'simplified_underwriting', 'guaranteed_underwriting']),
+    );
+
+    const guaranteed = dataset!.cases.find((row) => row.caseSubType === 'guaranteed_underwriting');
+    expect(guaranteed?.caseTypeId).toBe('ct_nb_guaranteed');
+    expect(guaranteed?.workflowTemplateId).toBe('ct_nb_guaranteed');
+    expect(guaranteed?.activeStepId).toBe('contract-issuance');
+  });
+
+  it('seeds Empire Life demo environment with CAD dataset and branding', () => {
+    const env = SEEDED_DEMO_ENVIRONMENTS.find((row) => row.id === DEMO_ENV_EMPIRE_ID);
+    expect(env).toBeDefined();
+    expect(env!.name).toBe('Empire Life');
+    expect(env!.settings.dataSource.activeDatasetId).toBe('empire-ca-demo');
+    expect(env!.settings.dataSource.displayCurrency).toBe('CAD');
+    expect(env!.settings.branding.productName).toBe('Case Management');
+    expect(env!.settings.branding.headerColor).toBe('#8c9538');
+    expect(env!.settings.branding.logoMode).toBe('custom');
+    expect(env!.settings.branding.logoDarkDataUrl).toMatch(/^data:image\/png;base64,/);
     expect(env!.settings.dataSource.legacyMockOverlayEnabled).toBe(false);
   });
 
@@ -263,11 +304,30 @@ describe('dataset validation gates', () => {
     ]);
     expect(dataset.tasks).toHaveLength(33);
     expect(dataset.documents).toHaveLength(18);
-    expect(dataset.documentEvidence).toHaveLength(8);
+    expect(dataset.documentEvidence).toHaveLength(10);
     expect(dataset.requirements).toHaveLength(25);
     expect(dataset.requests).toHaveLength(6);
-    expect(dataset.targetRecordCount).toBe(111);
+    expect(dataset.targetRecordCount).toBe(113);
     expect(dataset.legacyMockOverlayEnabled).toBe(false);
+  });
+
+  it('maps every SBLI document evidence finding to a dedicated highlight preset', () => {
+    const dataset = SYSTEM_DATASETS[0];
+    for (const evidence of dataset.documentEvidence) {
+      for (const finding of evidence.findings) {
+        expect(sbliFindingHasDedicatedHighlight(finding.id), `missing highlight for ${finding.id}`).toBe(true);
+      }
+    }
+    expect(SBLI_DOCUMENT_FINDING_IDS.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it('resolves SBLI document preview evidence with PNG assets and findings', () => {
+    const dataset = SYSTEM_DATASETS[0];
+    const aps = getDocumentEvidence('doc_aps_cd26', dataset);
+    expect(aps?.evidence).toHaveLength(3);
+    expect(aps?.pages[0]?.image).toContain('/documents/sbli/');
+    const deathCert = getDocumentEvidence('doc_death_cert_cd44', dataset);
+    expect(deathCert?.evidence).toHaveLength(2);
   });
 
   it('retains SBLI case AI summaries and exposes seeded utility read models', () => {

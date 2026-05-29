@@ -1,12 +1,16 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
-import { LayoutGrid, List, MoreVertical, Plus, RefreshCw } from 'lucide-react';
+import { LayoutGrid, List, Plus, RefreshCw } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { AiInsightInline, FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
 import { PriorityChip, SearchBar } from './ds';
 import { filterDatasetBySettings, getSystemDataset, listCaseSummaries } from '../data/objectRepository';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
 import {
+  MODULE_TABLE_LAYOUT_CLASS,
   MODULE_TABLE_ROW_INTERACTIVE_CLASS,
+  MODULE_TABLE_TH_SCROLL_CLASS,
+  MODULE_TABLE_TH_STICKY_EDGE_CLASS,
+  MODULE_TABLE_THEAD_CLASS,
   moduleTableRowSurface,
   moduleTableScrollContainerClass,
 } from '../utils/module-table-scroll';
@@ -307,7 +311,7 @@ export function CasesModule() {
 
   return (
     <div className="flex h-full flex-col bg-surface-primary">
-      <div className="relative z-20 min-h-[160px] bg-surface-primary px-6 pt-5 pb-4">
+      <div className="relative z-20 shrink-0 min-h-[160px] bg-surface-primary px-6 pt-5 pb-4">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold text-text-primary">All cases</h1>
@@ -408,11 +412,11 @@ export function CasesModule() {
             ref={setCasesTableScrollEl}
             className={moduleTableScrollContainerClass(
               hasHorizontalOverflow,
-              'flex-1 border-t border-border-default bg-white',
+              'min-h-0 flex-1 border-t border-border-default bg-white',
             )}
           >
-            <table className="w-full border-separate border-spacing-0">
-            <thead className="sticky top-0 z-10 bg-surface-primary">
+            <table className={MODULE_TABLE_LAYOUT_CLASS}>
+            <thead className={MODULE_TABLE_THEAD_CLASS}>
               <tr>
                 {CASE_HEADERS.map((header) => (
                   <th
@@ -422,14 +426,14 @@ export function CasesModule() {
                         ? { minWidth: CASE_TABLE_CASE_COL_WIDTH, width: CASE_TABLE_CASE_COL_WIDTH }
                         : undefined
                     }
-                    className={`whitespace-nowrap border-b border-border-default py-3 text-left align-middle ${
+                    className={`whitespace-nowrap py-3 text-left align-middle ${
                       header.key === 'id' ? 'pl-6 pr-3' : 'px-3'
                     } ${
                       header.key === 'aiRecommendation' ? 'min-w-[260px] max-w-[320px]' : ''
                     } ${
                       header.key === 'id'
-                        ? `sticky left-0 z-[6] relative bg-surface-primary ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`
-                        : ''
+                        ? `sticky left-0 relative ${MODULE_TABLE_TH_STICKY_EDGE_CLASS} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`
+                        : `${MODULE_TABLE_TH_SCROLL_CLASS}`
                     }`}
                   >
                     {header.key === 'id' && showLeftStickyEdge ? (
@@ -456,7 +460,7 @@ export function CasesModule() {
                   </th>
                 ))}
                 <th
-                  className={`sticky right-0 z-[6] w-[190px] min-w-[190px] relative border-b border-border-default bg-surface-primary px-3 py-3 text-left align-middle ${
+                  className={`sticky right-0 w-[190px] min-w-[190px] relative px-3 py-3 text-left align-middle ${MODULE_TABLE_TH_STICKY_EDGE_CLASS} ${
                     showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.12)]' : ''
                   }`}
                 >
@@ -554,13 +558,6 @@ export function CasesModule() {
                     ) : null}
                     <div className="flex items-center justify-between gap-2">
                       <LozengeTag label={getStatusShort(item.status)} type={getStatusLozengeType(item.status, 'case')} subtle />
-                      <button
-                        type="button"
-                        className="inline-flex size-7 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary"
-                        aria-label={`More actions for ${item.id}`}
-                      >
-                        <MoreVertical className="size-4" />
-                      </button>
                     </div>
                   </td>
                 </tr>

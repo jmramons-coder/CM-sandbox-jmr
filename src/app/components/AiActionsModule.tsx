@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState, type ComponentType } from 'react';
-import { AlertCircle, Bot, Briefcase, Check, ClipboardList, ExternalLink, FileCheck2, LayoutGrid, List, MessageSquare, MoreVertical, XCircle } from 'lucide-react';
+import { AlertCircle, Bot, Briefcase, Check, ClipboardList, ExternalLink, FileCheck2, LayoutGrid, List, MessageSquare, XCircle } from 'lucide-react';
+import {
+  MODULE_TABLE_ROW_KEBAB_ENABLED,
+  moduleTableStatusStickyRightClass,
+} from '../constants/moduleTableRowActions';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
 import { useDataSourceSettings } from '../contexts/PlatformSettingsContext';
@@ -445,7 +449,7 @@ export function AiActionsModule() {
                     <th className="sticky top-0 z-[10] min-w-[180px] border-b border-t border-border-default bg-surface-primary px-3 py-3 text-left text-sm font-medium text-text-secondary whitespace-nowrap">Linked object</th>
                     <Header label="Confidence" column="confidence" sortColumn={sortColumn} onSort={handleSort} />
                     <Header label="Created" column="createdAt" sortColumn={sortColumn} onSort={handleSort} />
-                    <th className={`sticky right-[48px] top-0 z-[15] min-w-[140px] border-b border-t border-border-default bg-surface-primary px-3 py-3 text-left align-middle ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}>
+                    <th className={`${moduleTableStatusStickyRightClass(48)} top-0 z-[15] min-w-[140px] border-b border-t border-border-default bg-surface-primary px-3 py-3 text-left align-middle ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}>
                       {showRightStickyEdge ? (
                         <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                       ) : null}
@@ -454,7 +458,9 @@ export function AiActionsModule() {
                         <ReorderIcon isActive={sortColumn === 'status'} />
                       </button>
                     </th>
-                    <th className="sticky right-0 top-0 z-[14] w-[48px] min-w-[48px] max-w-[48px] border-b border-t border-border-default bg-surface-primary px-3 py-3" />
+                    {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                      <th className="sticky right-0 top-0 z-[14] w-[48px] min-w-[48px] max-w-[48px] border-b border-t border-border-default bg-surface-primary px-3 py-3" />
+                    ) : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -479,15 +485,15 @@ export function AiActionsModule() {
                         </td>
                         <td className={`border-b border-border-default px-3 py-3 align-top text-sm text-text-primary ${cellSurface}`}>{row.confidence ? `${row.confidence}%` : '-'}</td>
                         <td className={`border-b border-border-default px-3 py-3 align-top text-sm text-text-primary ${cellSurface}`}>{new Date(row.createdAt).toLocaleDateString()}</td>
-                        <td className={`sticky right-[48px] z-[6] min-w-[140px] border-b border-border-default px-3 py-3 align-top ${cellSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}>
+                        <td className={`${moduleTableStatusStickyRightClass(48)} z-[6] min-w-[140px] border-b border-border-default px-3 py-3 align-top ${cellSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}>
                           {showRightStickyEdge ? (
                             <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                           ) : null}
                           <LozengeTag label={row.status.replace('_', ' ')} type={statusType(row.status)} subtle />
                         </td>
-                        <td className={`sticky right-0 z-[5] w-[48px] min-w-[48px] max-w-[48px] border-b border-border-default px-3 py-3 align-top ${cellSurface}`}>
-                          <MoreVertical className="size-4 text-text-muted" />
-                        </td>
+                        {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                          <td className={`sticky right-0 z-[5] w-[48px] min-w-[48px] max-w-[48px] border-b border-border-default px-3 py-3 align-top ${cellSurface}`} />
+                        ) : null}
                       </tr>
                     );
                   })}
@@ -585,7 +591,9 @@ function CaseIntelligenceTable({
             <th className="sticky top-0 z-[10] min-w-[130px] border-b border-t border-border-default bg-surface-primary px-3 py-3 text-left text-sm font-medium text-text-primary">
               Attention
             </th>
-            <th className="sticky right-0 top-0 z-[14] w-[48px] min-w-[48px] max-w-[48px] border-b border-t border-border-default bg-surface-primary px-3 py-3" />
+            {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+              <th className="sticky right-0 top-0 z-[14] w-[48px] min-w-[48px] max-w-[48px] border-b border-t border-border-default bg-surface-primary px-3 py-3" />
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -626,9 +634,9 @@ function CaseIntelligenceTable({
                   {record.metrics.attention} signals
                 </span>
               </td>
-              <td className={`sticky right-0 z-[5] w-[48px] min-w-[48px] max-w-[48px] border-b border-border-default px-3 py-3 align-top ${cellSurface}`}>
-                <MoreVertical className="size-4 text-text-muted" />
-              </td>
+              {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                <td className={`sticky right-0 z-[5] w-[48px] min-w-[48px] max-w-[48px] border-b border-border-default px-3 py-3 align-top ${cellSurface}`} />
+              ) : null}
             </tr>
           );
           })}

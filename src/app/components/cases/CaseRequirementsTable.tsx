@@ -1,12 +1,21 @@
 import { ExternalLink } from 'lucide-react';
+import {
+  MODULE_TABLE_ROW_KEBAB_ENABLED,
+  moduleTableStatusStickyRightClass,
+} from '../../constants/moduleTableRowActions';
 import type { CaseRequirement } from '../../types';
 import type { TableHorizontalScrollState } from '../../hooks/useTableHorizontalScroll';
 import {
   MODULE_TABLE_LAYOUT_CLASS,
   MODULE_TABLE_ROW_INTERACTIVE_CLASS,
+  MODULE_TABLE_TD_STICKY_EDGE_CLASS,
+  MODULE_TABLE_TH_SCROLL_CLASS,
+  MODULE_TABLE_TH_STICKY_EDGE_CLASS,
+  MODULE_TABLE_THEAD_CLASS,
   moduleTableRowSurface,
   moduleTableScrollContainerClass,
 } from '../../utils/module-table-scroll';
+import { ModuleTablePaginationFooter } from '../ModuleTablePaginationFooter';
 import { getRequirementStatusLozengeType } from '../../utils/status-display';
 import { requirementExternalCode, requirementExternalHref } from '../../utils/caseViewRequirementUtils';
 import { LozengeTag } from '../LozengeTag';
@@ -36,47 +45,47 @@ export function CaseRequirementsTable({
   const { showLeftStickyEdge, showRightStickyEdge } = tableScroll;
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-white">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white">
       <div
         ref={setScrollEl}
-        className={moduleTableScrollContainerClass(tableScroll.hasHorizontalOverflow, 'flex-1')}
+        className={moduleTableScrollContainerClass(tableScroll.hasHorizontalOverflow, 'min-h-0 flex-1')}
       >
         <table className={MODULE_TABLE_LAYOUT_CLASS} style={{ minWidth: REQ_TABLE_MIN_WIDTH }}>
-          <thead className="sticky top-0 z-[1] bg-surface-primary">
+          <thead className={MODULE_TABLE_THEAD_CLASS}>
             <tr>
               <th
-                className={`relative min-w-[280px] w-[320px] border-b border-border-default bg-surface-primary pl-6 pr-3 py-2 text-left align-middle text-sm font-medium text-text-secondary sticky left-0 z-[6] ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                className={`relative min-w-[280px] w-[320px] border-b border-border-default pl-6 pr-3 py-2 text-left align-middle text-sm font-medium text-text-secondary sticky left-0 ${MODULE_TABLE_TH_STICKY_EDGE_CLASS} ${showLeftStickyEdge ? 'shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
               >
-                {showLeftStickyEdge ? (
-                  <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
-                ) : null}
-                Name
+                <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] bg-surface-primary" />
+                <span className="relative z-[1]">Name</span>
               </th>
-              <th className="border-b border-border-default bg-surface-primary px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap">Category</th>
-              <th className="border-b border-border-default bg-surface-primary px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap">Stage</th>
-              <th className="border-b border-border-default bg-surface-primary px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap">Due Date</th>
-              <th className="border-b border-border-default bg-surface-primary px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap">Follow-Up</th>
-              <th className="border-b border-border-default bg-surface-primary px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap">Source</th>
-              <th className="max-w-[160px] border-b border-border-default bg-surface-primary px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap">Notes</th>
-              <th className="border-b border-border-default bg-surface-primary px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap">External Source</th>
+              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Category</th>
+              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Stage</th>
+              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Due Date</th>
+              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Follow-Up</th>
+              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Source</th>
+              <th className={`max-w-[160px] ${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Notes</th>
+              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>External Source</th>
               <th
-                className={`relative border-b border-border-default bg-surface-primary py-2 pl-2 pr-2 text-left align-middle text-sm font-medium text-text-secondary sticky right-[64px] z-[6] ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                className={`relative border-b border-border-default py-2 pl-2 pr-2 text-left align-middle text-sm font-medium text-text-secondary ${moduleTableStatusStickyRightClass(64)} ${MODULE_TABLE_TH_STICKY_EDGE_CLASS} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
               >
                 {showRightStickyEdge ? (
                   <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                 ) : null}
                 Status
               </th>
-              <th className="relative h-10 w-[64px] min-h-10 min-w-[64px] max-w-[64px] bg-surface-primary p-0 align-middle sticky right-0 z-[7]">
-                <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-[9] h-full min-h-10 w-[calc(100%+3px)] border-b border-border-default bg-surface-primary" />
-                <span className="sr-only">Actions</span>
-              </th>
+              {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                <th className={`relative h-10 w-[64px] min-h-10 min-w-[64px] max-w-[64px] p-0 align-middle sticky right-0 ${MODULE_TABLE_TH_STICKY_EDGE_CLASS}`}>
+                  <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-[9] h-full min-h-10 w-[calc(100%+3px)] border-b border-border-default bg-surface-primary" />
+                  <span className="sr-only">Actions</span>
+                </th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-6 py-16 text-center">
+                <td colSpan={MODULE_TABLE_ROW_KEBAB_ENABLED ? 10 : 9} className="px-6 py-16 text-center">
                   <p className="text-sm font-medium text-text-muted">
                     {totalRows === 0 ? 'No requirements yet' : 'No requirements match your search'}
                   </p>
@@ -126,22 +135,25 @@ export function CaseRequirementsTable({
                     </a>
                   </td>
                   <td
-                    className={`relative border-b border-border-default py-3 pl-2 pr-2 text-sm sticky right-[64px] z-[6] ${cellSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                    className={`relative border-b border-border-default py-3 pl-2 pr-2 text-sm ${moduleTableStatusStickyRightClass(64)} z-[6] ${cellSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                   >
                     {showRightStickyEdge ? (
                       <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                     ) : null}
                     <LozengeTag label={row.status} type={getRequirementStatusLozengeType(row.status, 'caseTable')} subtle />
                   </td>
-                  <td className={`relative box-border min-h-12 w-[64px] min-w-[64px] max-w-[64px] border-b border-border-default p-0 align-middle sticky right-0 z-[7] ${cellSurface}`}>
-                    <span aria-hidden className={`pointer-events-none absolute inset-y-0 left-0 z-[7] h-full w-[calc(100%+3px)] ${cellSurface}`} />
-                  </td>
+                  {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                    <td className={`relative box-border min-h-12 w-[64px] min-w-[64px] max-w-[64px] border-b border-border-default p-0 align-middle sticky right-0 z-[6] ${cellSurface}`}>
+                      <span aria-hidden className={`pointer-events-none absolute inset-y-0 left-0 z-[7] h-full w-[calc(100%+3px)] ${cellSurface}`} />
+                    </td>
+                  ) : null}
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+      <ModuleTablePaginationFooter total={totalRows} />
     </div>
   );
 }

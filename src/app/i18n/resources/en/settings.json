@@ -150,6 +150,10 @@
         "label": "Finances",
         "description": "Financial operations, billing signals, and payment workflows. Coming soon."
       },
+      "users": {
+        "label": "Team",
+        "description": "Team roster, workload, training, availability, and work reassignment for managers."
+      },
       "tasks": {
         "label": "Tasks",
         "description": "Unified task list across all cases with priority, due dates, and status."

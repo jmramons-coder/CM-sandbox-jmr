@@ -16,7 +16,7 @@ export type DirectoryTeam = {
   queueLabel: string;
 };
 
-function userId(name: string) {
+export function userId(name: string) {
   return `usr-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
 }
 

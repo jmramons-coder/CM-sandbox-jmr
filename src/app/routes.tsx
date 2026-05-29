@@ -1,6 +1,7 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter, Navigate, useLocation } from "react-router";
 import { Layout } from "./components/Layout";
 import { TaskModule } from "./components/TaskModule";
+import { UsersModule } from "./components/UsersModule";
 import { CaseView } from "./components/CaseView";
 import { Dashboard } from "./components/Dashboard";
 import { CasesModule } from "./components/CasesModule";
@@ -29,6 +30,11 @@ import { EAppDashboard } from "./components/eapp/EAppDashboard";
 import { EAppForm } from "./components/eapp/EAppForm";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 
+function LegacyUsersRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/team${search}`} replace />;
+}
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -37,6 +43,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/home" replace />, ErrorBoundary: RouteErrorBoundary },
       { path: "tasks", Component: TaskModule, ErrorBoundary: RouteErrorBoundary },
+      { path: "team", Component: UsersModule, ErrorBoundary: RouteErrorBoundary },
+      { path: "users", Component: LegacyUsersRedirect, ErrorBoundary: RouteErrorBoundary },
       { path: "home", Component: Dashboard, ErrorBoundary: RouteErrorBoundary },
       { path: "dashboard", Component: Dashboard, ErrorBoundary: RouteErrorBoundary },
       { path: "finances", element: <ComingSoonModule moduleId="finances" />, ErrorBoundary: RouteErrorBoundary },

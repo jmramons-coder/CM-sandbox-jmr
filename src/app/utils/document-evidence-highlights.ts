@@ -5,19 +5,42 @@ export type DocumentHighlightRect = {
   height: string;
 };
 
-/** Body-text highlights align to the document's left margin (Riverside / APS layout). */
+/** Body-text highlights align to the document's left margin (medical letters). */
 const BODY_TEXT_LEFT = 2.4;
 const BODY_TEXT_WIDTH = 93;
 
+/** Claim / intake forms — left column field blocks (left ≥ 18% skips body-text nudge). */
+const FORM_FIELD_LEFT = 20;
+const FORM_FIELD_WIDTH = 72;
+
 const FINDING_HIGHLIGHT_BY_ID: Record<string, DocumentHighlightRect> = {
-  // Attending Physician Statement — page 1 (Riverside specialist report)
+  // Attending Physician Statement (Dr. Chen ortho)
   doc_aps_cd26_anchor_1: { top: '37.8%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '5.8%' },
   doc_aps_cd26_anchor_2: { top: '52.4%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '13.5%' },
   doc_aps_cd26_anchor_3: { top: '71.6%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '8.2%' },
-  // Surgical report (same page asset)
-  doc_surgical_cd26_anchor_1: { top: '37.8%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '5.8%' },
-  doc_surgical_cd26_anchor_2: { top: '58.2%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '10.5%' },
-  // Address change verification package
+  // Surgical report (St. Luke's) — distinct layout from APS
+  doc_surgical_cd26_anchor_1: { top: '22%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '8%' },
+  doc_surgical_cd26_anchor_2: { top: '48%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '14%' },
+  // WOP claim form
+  doc_wop_form_cd26_anchor_1: { top: '34%', left: `${FORM_FIELD_LEFT}%`, width: `${FORM_FIELD_WIDTH}%`, height: '7%' },
+  // Employer confirmation letter
+  doc_employer_cd26_anchor_1: { top: '40%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '6%' },
+  doc_employer_cd26_anchor_2: { top: '58%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '9%' },
+  // Policy certificate
+  doc_policy_cd26_anchor_1: { top: '45%', left: '10%', width: '80%', height: '12%' },
+  // MIB disclosure comparison (CD44)
+  doc_mib_cd44_anchor_1: { top: '32%', left: '6%', width: '88%', height: '10%' },
+  doc_mib_cd44_anchor_2: { top: '52%', left: '6%', width: '88%', height: '12%' },
+  // Death certificate (CD44)
+  doc_death_cert_cd44_anchor_1: { top: '38%', left: '12%', width: '76%', height: '8%' },
+  doc_death_cert_cd44_anchor_2: { top: '52%', left: '12%', width: '76%', height: '8%' },
+  // Attending physician statement (CD44)
+  doc_aps_cd44_anchor_1: { top: '36%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '7%' },
+  doc_aps_cd44_anchor_2: { top: '54%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '11%' },
+  // Simple service — address / beneficiary forms
+  doc_addr_change_form_anchor_1: { top: '42%', left: `${FORM_FIELD_LEFT}%`, width: `${FORM_FIELD_WIDTH}%`, height: '9%' },
+  doc_beneficiary_change_form_anchor_1: { top: '46%', left: `${FORM_FIELD_LEFT}%`, width: `${FORM_FIELD_WIDTH}%`, height: '9%' },
+  // Legacy mock request package (DOC-1001)
   'missing-government-id': { top: '52.0%', left: `${BODY_TEXT_LEFT}%`, width: '68%', height: '3.4%' },
   'client-statement-scope': { top: '27.1%', left: '58%', width: '36%', height: '10%' },
   'unit-format-variance': { top: '61.6%', left: '28%', width: '48%', height: '11.2%' },
@@ -60,4 +83,29 @@ export function resolveDocumentFindingHighlight(
   const preset = FINDING_HIGHLIGHT_BY_ID[findingId];
   const rect = preset ?? DEFAULT_BODY_HIGHLIGHTS[fallbackIndex % DEFAULT_BODY_HIGHLIGHTS.length];
   return normalizeDocumentHighlight(rect);
+}
+
+/** Every SBLI seeded finding id should resolve to a document-specific preset (not generic fallback). */
+export const SBLI_DOCUMENT_FINDING_IDS = [
+  'doc_aps_cd26_anchor_1',
+  'doc_aps_cd26_anchor_2',
+  'doc_aps_cd26_anchor_3',
+  'doc_surgical_cd26_anchor_1',
+  'doc_surgical_cd26_anchor_2',
+  'doc_wop_form_cd26_anchor_1',
+  'doc_employer_cd26_anchor_1',
+  'doc_employer_cd26_anchor_2',
+  'doc_policy_cd26_anchor_1',
+  'doc_mib_cd44_anchor_1',
+  'doc_mib_cd44_anchor_2',
+  'doc_death_cert_cd44_anchor_1',
+  'doc_death_cert_cd44_anchor_2',
+  'doc_aps_cd44_anchor_1',
+  'doc_aps_cd44_anchor_2',
+  'doc_addr_change_form_anchor_1',
+  'doc_beneficiary_change_form_anchor_1',
+] as const;
+
+export function sbliFindingHasDedicatedHighlight(findingId: string): boolean {
+  return Boolean(FINDING_HIGHLIGHT_BY_ID[findingId]);
 }

@@ -1219,6 +1219,10 @@ export function CaseView({
       ],
     };
   }, [activeDataset, data.claimantName, data.id, data.policyNumber, dataSource.legacyMockOverlayEnabled, selectedCaseDocument]);
+  const [activeDocumentInsightId, setActiveDocumentInsightId] = useState('');
+  useEffect(() => {
+    setActiveDocumentInsightId(selectedCaseDocumentData?.evidence[0]?.id ?? '');
+  }, [selectedCaseDocumentData?.documentId]);
   const resolveCasePanelContext = useCallback((contextId: string) => {
     setActiveCasePanelContextId(contextId);
     if (contextId.startsWith('task:')) {
@@ -2158,8 +2162,8 @@ export function CaseView({
                 }
               }}
               document={selectedCaseDocumentData}
-              activeInsightId={selectedCaseDocumentData.evidence[0]?.id ?? ''}
-              onInsightChange={() => undefined}
+              activeInsightId={activeDocumentInsightId}
+              onInsightChange={setActiveDocumentInsightId}
               panelWidth={taskDetailPanelWidth}
               isResizing={false}
               onResizeStart={() => undefined}

@@ -26,7 +26,7 @@ export function ModuleTablePaginationFooter({
     ? "font-['Open_Sans:Regular',sans-serif] text-[12px] font-normal leading-[18px] tracking-[0.18px] text-text-primary"
     : "font-['Open_Sans:Regular',sans-serif] text-[14px] font-normal leading-[24px] tracking-[0.24px] text-text-primary";
   return (
-    <div className={`shrink-0 border-t border-border-default bg-white px-6 ${compact ? 'py-1.5' : 'py-3'}`}>
+    <div className={`shrink-0 relative z-[40] border-t border-border-default bg-white px-6 ${compact ? 'py-1.5' : 'py-3'}`}>
       <div className={`flex items-center ${compact ? 'gap-4' : 'gap-6'}`}>
         {!compact ? (
           <div className="flex items-center gap-2">

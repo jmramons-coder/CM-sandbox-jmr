@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
-import { MoreVertical, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { MODULE_TABLE_ROW_KEBAB_ENABLED } from '../../constants/moduleTableRowActions';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ModuleTablePaginationFooter } from '../ModuleTablePaginationFooter';
@@ -127,7 +128,9 @@ export function EntityRelationshipTab({
                       </button>
                     </ModuleTableHeaderCell>
                   ))}
-                  <th className="w-12 border-b border-border-default bg-surface-primary px-3 py-3" />
+                  {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                    <th className="w-12 border-b border-border-default bg-surface-primary px-3 py-3" />
+                  ) : null}
                 </tr>
               </thead>
               <tbody>
@@ -152,15 +155,9 @@ export function EntityRelationshipTab({
                         subtle
                       />
                     </ModuleTableCell>
-                    <td className="w-12 border-b border-border-default px-3 py-3 text-right text-text-secondary">
-                      <button
-                        type="button"
-                        className="inline-flex size-7 items-center justify-center rounded-md hover:bg-surface-muted"
-                        aria-label={row.folderName}
-                      >
-                        <MoreVertical className="size-4" />
-                      </button>
-                    </td>
+                    {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                      <td className="w-12 border-b border-border-default px-3 py-3 text-right text-text-secondary" />
+                    ) : null}
                   </tr>
                 ))}
               </tbody>

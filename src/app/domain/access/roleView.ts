@@ -135,6 +135,8 @@ export type DashboardVelocityRow = {
   avCls: string;
   tasks: number;
   overdue: number;
+  capacityPct: number;
+  inProgress: number;
   trend: 'warn' | 'ok' | 'flat' | string;
   trendLabel: string;
 };

@@ -781,8 +781,9 @@ export function countDatasetObjects(dataset: SystemDataset): DatasetObjectCounts
     note: dataset.notes.length,
     event: dataset.activityEvents.length,
   };
+  const userCount = dataset.users?.length ?? 0;
   return {
-    total: Object.values(byKind).reduce((sum, value) => sum + value, 0),
+    total: Object.values(byKind).reduce((sum, value) => sum + value, 0) + userCount,
     byKind,
   };
 }

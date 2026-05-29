@@ -9,7 +9,9 @@ import {
 import { getUserProfile } from './userProfiles';
 import { buildDailyBrief } from './dailyBrief';
 import { buildLiveBriefSegments, briefSegmentsToText, buildLiveDashboardSlice } from './dashboardLiveProjection';
+import { getPlatformUserFromDataset } from './datasetUsers';
 import type { SystemDataset } from './multi-case-dataset';
+import { buildDashboardVelocityRows } from './userWorkloadProjection';
 
 type HomeDashRole = (typeof homeSeed.DASH_DATA)['assessor'];
 type BriefActionsSeed = typeof homeSeed.inlineData.briefActions;
@@ -143,7 +145,14 @@ export function getDashboardViewModel(
     progressTitle: isManager ? 'Team progress' : 'Weekly progress',
     progressLabel: isManager ? 'Team tasks this week' : 'Tasks completed this week',
     metricBars: live?.metricBars ?? seedMetricBars,
-    velocity: isManager ? inline.velData.assessors : [],
+    velocity:
+      dataset && isManager
+        ? buildDashboardVelocityRows(dataset, {
+            managerTeamIds: getPlatformUserFromDataset(dataset, user.name)?.teamIds ?? [],
+          })
+        : isManager
+          ? inline.velData.assessors
+          : [],
     aiHealthBars: isManager ? inline.metricBars.managerAIHealth : [],
     activity24h: live?.activity24h?.length ? live.activity24h : dash.activity24h,
     activityWeek: live?.activityWeek?.length ? live.activityWeek : dash.activityWeek,

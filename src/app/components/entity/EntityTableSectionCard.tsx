@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreVertical } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { MODULE_TABLE_ROW_KEBAB_ENABLED } from '../../constants/moduleTableRowActions';
 import { useTranslation } from 'react-i18next';
 import type { EntityPagination, EntityTableSection } from '../../domain/entityFolders';
 import { getStatusLozengeType } from '../../utils/status-display';
@@ -54,10 +55,12 @@ export function EntityTableSectionCard({ section }: { section: EntityTableSectio
                     </span>
                   </ModuleTableHeaderCell>
                 ))}
-                <th
-                  aria-hidden
-                  className="w-[36px] border-b border-border-soft bg-white px-2 py-2"
-                />
+                {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                  <th
+                    aria-hidden
+                    className="w-[36px] border-b border-border-soft bg-white px-2 py-2"
+                  />
+                ) : null}
               </tr>
             </thead>
             <tbody>
@@ -82,15 +85,11 @@ export function EntityTableSectionCard({ section }: { section: EntityTableSectio
                       </td>
                     );
                   })}
-                  <td className="border-b border-border-soft px-2 py-3 text-right">
-                    <button
-                      type="button"
-                      aria-label={t('entity.table.rowActions')}
-                      className="rounded p-1 text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary"
-                    >
-                      <MoreVertical className="size-4" />
-                    </button>
-                  </td>
+                  {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                    <td className="border-b border-border-soft px-2 py-3 text-right">
+                      <span className="sr-only">{t('entity.table.rowActions')}</span>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

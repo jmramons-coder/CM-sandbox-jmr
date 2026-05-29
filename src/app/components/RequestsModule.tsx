@@ -20,7 +20,6 @@ import {
   Loader2,
   Mail,
   MailQuestion,
-  MoreVertical,
   Phone,
   Plus,
   ShieldCheck,
@@ -483,7 +482,7 @@ export function RequestsModule() {
                         />
                         <div className="relative z-[1] grid min-w-0" style={REQUEST_TABLE_LEFT_PACK_GRID_STYLE}>
                           <button type="button" onClick={() => handleSort('id')} className="group flex min-w-0 items-center gap-1 text-sm font-medium text-text-secondary hover:text-brand-blue">
-                            Request ID
+                            Request
                             <ReorderIcon isActive={sortColumn === 'id'} />
                           </button>
                           <button type="button" onClick={() => handleSort('caseId')} className="group flex min-w-0 items-center gap-1 px-2 text-sm font-medium text-text-secondary hover:text-brand-blue">
@@ -580,7 +579,6 @@ export function RequestsModule() {
                             />
                             <div className="relative z-[1] grid min-w-0" style={REQUEST_TABLE_LEFT_PACK_GRID_STYLE}>
                               <div className="min-w-0 pr-1">
-                                <LozengeTag label={request.category} type={requestCategoryType(request.category)} subtle className="mb-1.5" />
                                 <button
                                   type="button"
                                   onClick={(event) => {
@@ -592,23 +590,38 @@ export function RequestsModule() {
                                 >
                                   {request.id}
                                 </button>
+                                <LozengeTag
+                                  label={request.category}
+                                  type={requestCategoryType(request.category)}
+                                  subtle
+                                  size="compact"
+                                  className="mt-1.5"
+                                />
                               </div>
-                              <div className="min-w-0 px-2">
-                                {request.caseId ? (
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      navigate(`/cases/${request.caseId}`);
-                                    }}
-                                    className={TABLE_LINK_TRUNCATE_CLASS}
-                                    title={request.caseId}
+                              <div className="flex min-w-0 items-center px-2">
+                                <div className="min-w-0">
+                                  {request.caseId ? (
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        navigate(`/cases/${request.caseId}`);
+                                      }}
+                                      className={`block whitespace-nowrap ${TABLE_LINK_CLASS}`}
+                                      title={request.caseId}
+                                    >
+                                      {request.caseId}
+                                    </button>
+                                  ) : (
+                                    <span className={TABLE_SUBTEXT_CLASS}>—</span>
+                                  )}
+                                  <span
+                                    className={`mt-0.5 block truncate ${TABLE_SUBTEXT_CLASS}`}
+                                    title={request.primaryPartyName}
                                   >
-                                    {request.caseId}
-                                  </button>
-                                ) : (
-                                  <span className={TABLE_SUBTEXT_CLASS}>—</span>
-                                )}
+                                    {request.primaryPartyName ?? '—'}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -664,15 +677,8 @@ export function RequestsModule() {
                               aria-hidden
                               className={`pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] ${stickyRowSurface}`}
                             />
-                            <div className="relative z-[1] flex items-center justify-between gap-2">
+                            <div className="relative z-[1] flex items-center">
                               <LozengeTag label={request.status} type={requestStatusType(request.status)} subtle />
-                              <button
-                                type="button"
-                                className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary"
-                                aria-label={`More actions for ${request.id}`}
-                              >
-                                <MoreVertical className="size-4" />
-                              </button>
                             </div>
                           </td>
                         </tr>

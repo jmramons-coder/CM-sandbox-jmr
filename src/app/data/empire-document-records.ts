@@ -1,0 +1,268 @@
+import type { DatasetDocumentRecord } from './multi-case-dataset';
+import { EMPIRE_DEMO_CASE_IDS } from './empireDemoCaseIds';
+
+const DI = EMPIRE_DEMO_CASE_IDS.disabilityClaim;
+const CI = EMPIRE_DEMO_CASE_IDS.criticalIllnessClaim;
+const LIFE = EMPIRE_DEMO_CASE_IDS.lifeDeathClaim;
+const NB = EMPIRE_DEMO_CASE_IDS.nbFullUw;
+const NB_S = EMPIRE_DEMO_CASE_IDS.nbSimplified;
+const NB_G = EMPIRE_DEMO_CASE_IDS.nbGuaranteed;
+
+function doc(
+  id: string,
+  caseId: string,
+  label: string,
+  category: string,
+  extra: Partial<DatasetDocumentRecord> = {},
+): DatasetDocumentRecord {
+  const linkedRequirementId = extra.linkedRequirementId;
+  const linkedRequirement = extra.linkedRequirement;
+  return {
+    id,
+    kind: 'document',
+    label,
+    filename: extra.filename ?? label.replace(/\s+/g, '_').toLowerCase(),
+    category,
+    status: extra.status ?? 'Validated',
+    uploaded: extra.uploaded ?? 'May 12, 2026',
+    uploadedAt: extra.uploadedAt ?? '2026-05-12',
+    source: extra.source ?? 'Empire Life Claims',
+    claimant: extra.claimant,
+    reqContext: extra.reqContext,
+    insights: extra.insights,
+    followUps: extra.followUps ?? 0,
+    insight: extra.insight ?? extra.aiSummary,
+    aiInsight: extra.aiInsight ?? true,
+    aiConfidence: extra.aiConfidence ?? 0.88,
+    aiSummary: extra.aiSummary,
+    aiAction: extra.aiAction ?? 'Review evidence',
+    linkedRequirement,
+    linkedRequirementId,
+    linkedCase: caseId,
+    linkedCaseId: caseId,
+    fileType: extra.fileType ?? 'PDF',
+    fileSize: extra.fileSize ?? 'Metadata only',
+    fileAvailable: false,
+    placeholderReason: 'Empire Life document preview — file to be generated',
+    ...extra,
+    linkedObjects: [
+      { kind: 'case', id: caseId, label: caseId },
+      ...(linkedRequirementId
+        ? [{ kind: 'requirement' as const, id: linkedRequirementId, label: linkedRequirement ?? linkedRequirementId }]
+        : []),
+      ...(extra.linkedObjects ?? []).filter((ref) => ref.kind !== 'case' && ref.kind !== 'requirement'),
+    ],
+  };
+}
+
+export const EMPIRE_DOCUMENT_RECORDS: DatasetDocumentRecord[] = [
+  doc('doc_emp_di_fnol', DI, 'FNOL confirmation email — Marc Tremblay.pdf', 'Claim', {
+    filename: 'FNOL_confirmation_tremblay.pdf',
+    uploaded: 'Mar 22, 2026',
+    uploadedAt: '2026-03-22',
+    source: 'Empire Life Claims — automated',
+    claimant: 'Marc Tremblay',
+    linkedRequirementId: 'req_emp_di_001',
+    linkedRequirement: 'FNOL — advisor notification',
+    reqContext:
+      'Email sent to life insured and Jean-Philippe Morin (advisor) after advisor FNOL. Confirms claim reference CLM-DI-2026-0214 and next steps for employer and medical evidence.',
+    aiSummary: 'FNOL registered 22 Mar 2026. Own-occupation DI claim opened; waiting period timeline included.',
+    insights: [
+      { anchor: '§1', title: 'Claim reference issued', body: 'CLM-DI-2026-0214 linked to policy POL-EMP-DI-2023-004521. Monthly benefit $3,800, 90-day waiting period.', confidence: 'High' },
+      { anchor: '§2', title: 'Advisor copied', body: 'Jean-Philippe Morin notified per Empire Life service standards — named handler Victor Ramon assigned.', confidence: 'High' },
+    ],
+  }),
+  doc('doc_emp_di_employer', DI, 'Employer physician statement — Maple Tech Solutions.pdf', 'Medical', {
+    status: 'Pending Review',
+    uploaded: 'May 17, 2026',
+    uploadedAt: '2026-05-17',
+    source: 'Employer HR',
+    claimant: 'Marc Tremblay',
+    linkedRequirementId: 'req_emp_di_003',
+    linkedRequirement: 'Employer physician statement',
+    followUps: 2,
+    reqContext: 'Physician statement from employer HR for software development role. Required to confirm inability to perform own occupation.',
+    aiSummary: 'Statement received but does not explicitly state unable to perform software development duties — chase clarification.',
+    insights: [
+      { anchor: 'p.1', title: 'Occupation wording gap', body: 'Statement states "unable to work" without referencing own-occupation duties.', confidence: 'Medium' },
+      { anchor: 'p.1', title: 'Dates align with onset', body: 'Covers 18 Feb 2026 onward — consistent with waiting period end.', confidence: 'High' },
+    ],
+  }),
+  doc('doc_emp_di_specialist', DI, 'Specialist letter — orthopaedic (Dr. Nguyen).pdf', 'Medical', {
+    status: 'Pending Review',
+    uploaded: 'May 16, 2026',
+    uploadedAt: '2026-05-16',
+    source: 'Medical provider',
+    claimant: 'Marc Tremblay',
+    linkedRequirementId: 'req_emp_di_004',
+    linkedRequirement: 'Specialist letter — orthopaedic',
+    reqContext: 'Orthopaedic specialist letter regarding rotator cuff tear.',
+    aiSummary: 'Specialist confirms rotator cuff injury; no full-time software development until reassessment Jul 2026.',
+    insights: [
+      { anchor: '§Clinical', title: 'Own-occupation support', body: 'Cannot sustain prolonged keyboard/computer work — aligns with DI definition.', confidence: 'High' },
+    ],
+  }),
+
+  doc('doc_emp_ci_fnol', CI, 'CI claim registration — Sophie Chen.pdf', 'Claim', {
+    uploaded: 'Apr 8, 2026',
+    uploadedAt: '2026-04-08',
+    claimant: 'Sophie Chen',
+    linkedRequirementId: 'req_emp_ci_001',
+    linkedRequirement: 'FNOL — advisor notification',
+    aiSummary: 'Advisor-reported CI notification; claim registered same day.',
+  }),
+  doc('doc_emp_ci_diagnosis', CI, 'Specialist diagnosis letter — Sophie Chen (oncology).pdf', 'Medical', {
+    uploaded: 'May 5, 2026',
+    uploadedAt: '2026-05-05',
+    source: 'BC Cancer Agency',
+    claimant: 'Sophie Chen',
+    linkedRequirementId: 'req_emp_ci_002',
+    linkedRequirement: 'Specialist diagnosis letter',
+    reqContext: 'Written diagnosis from Canadian oncology specialist — primary evidence for CI payout.',
+    aiSummary: 'Meets Empire Life CI definition — invasive ductal carcinoma. Full $125,000 payout recommended.',
+    aiConfidence: 0.93,
+    insights: [
+      { anchor: '§Diagnosis', title: 'Definition satisfied', body: 'Invasive ductal carcinoma — listed under Empire Life CI definitions.', confidence: 'High' },
+      { anchor: '§Staging', title: 'Full benefit appropriate', body: 'Stage IIA — full coverage amount recommended.', confidence: 'High' },
+    ],
+  }),
+  doc('doc_emp_ci_pathology', CI, 'Pathology report — Vancouver Coastal Health.pdf', 'Medical', {
+    uploaded: 'May 6, 2026',
+    uploadedAt: '2026-05-06',
+    claimant: 'Sophie Chen',
+    linkedRequirementId: 'req_emp_ci_002',
+    linkedRequirement: 'Specialist diagnosis letter',
+    aiSummary: 'Pathology corroborates specialist letter.',
+  }),
+  doc('doc_emp_ci_support', CI, 'Advisor support plan — Sophie Chen.pdf', 'Claim', {
+    uploaded: 'May 10, 2026',
+    uploadedAt: '2026-05-10',
+    claimant: 'Sophie Chen',
+    linkedRequirementId: 'req_emp_ci_004',
+    linkedRequirement: 'Advisor support plan',
+    aiSummary: 'Advisor support pathway documented; treatment updates scheduled.',
+  }),
+
+  doc('doc_emp_life_death_cert', LIFE, 'Death certificate — Robert MacDonald.pdf', 'Legal', {
+    uploaded: 'Apr 30, 2026',
+    uploadedAt: '2026-04-30',
+    claimant: 'Margaret MacDonald',
+    linkedRequirementId: 'req_emp_life_001',
+    linkedRequirement: 'Death certificate',
+    aiSummary: 'Death certificate verified. Cause: cardiac arrest.',
+  }),
+  doc('doc_emp_life_funeral', LIFE, 'Funeral invoice — MacDonald family.pdf', 'Financial', {
+    uploaded: 'May 2, 2026',
+    uploadedAt: '2026-05-02',
+    claimant: 'Margaret MacDonald',
+    linkedRequirementId: 'req_emp_life_002',
+    linkedRequirement: 'Compassionate advance ($15,000)',
+    aiSummary: 'Invoice $14,200 — compassionate advance paid.',
+  }),
+  doc('doc_emp_life_probate', LIFE, 'Probate application draft — MacDonald estate.pdf', 'Legal', {
+    status: 'Pending Review',
+    uploaded: 'May 15, 2026',
+    uploadedAt: '2026-05-15',
+    claimant: 'Margaret MacDonald',
+    linkedRequirementId: 'req_emp_life_003',
+    linkedRequirement: 'Estate documentation — probate certificate',
+    followUps: 1,
+    aiSummary: 'Probate certificate not yet issued — final $385,000 on hold.',
+  }),
+  doc('doc_emp_life_bank', LIFE, 'Beneficiary bank verification — Margaret MacDonald.pdf', 'Financial', {
+    uploaded: 'May 1, 2026',
+    uploadedAt: '2026-05-01',
+    claimant: 'Margaret MacDonald',
+    linkedRequirementId: 'req_emp_life_004',
+    linkedRequirement: 'Beneficiary bank details',
+    aiSummary: 'EFT verified — used for compassionate advance.',
+  }),
+
+  doc('doc_emp_nb_app', NB, 'Application — Amélie Dubois (Solution 20).pdf', 'Financial', {
+    uploaded: 'May 8, 2026',
+    uploadedAt: '2026-05-08',
+    source: 'Empire Life Advisor Portal',
+    claimant: 'Amélie Dubois',
+    linkedRequirementId: 'req_emp_nb_001',
+    linkedRequirement: 'Application & advisor needs analysis',
+    aiSummary: '$500,000 Solution 20 participating; non-smoker.',
+  }),
+  doc('doc_emp_nb_needs', NB, 'Advisor needs analysis — Amélie Dubois.pdf', 'Financial', {
+    uploaded: 'May 8, 2026',
+    uploadedAt: '2026-05-08',
+    source: 'Jean-Philippe Morin — Morin Financial Group',
+    claimant: 'Amélie Dubois',
+    linkedRequirementId: 'req_emp_nb_001',
+    linkedRequirement: 'Application & advisor needs analysis',
+    aiSummary: 'Needs analysis supports participating whole life coverage.',
+  }),
+  doc('doc_emp_nb_mib', NB, 'MIB search results — Amélie Dubois.pdf', 'Financial', {
+    uploaded: 'May 9, 2026',
+    uploadedAt: '2026-05-09',
+    linkedRequirementId: 'req_emp_nb_003',
+    linkedRequirement: 'MIB search',
+    aiSummary: 'MIB clear — no adverse alerts.',
+  }),
+  doc('doc_emp_nb_aps_request', NB, 'APS request — Clinique Médicale du Plateau.pdf', 'Medical', {
+    status: 'Pending Review',
+    uploaded: 'May 12, 2026',
+    uploadedAt: '2026-05-12',
+    source: 'Underwriting',
+    claimant: 'Amélie Dubois',
+    linkedRequirementId: 'req_emp_nb_002',
+    linkedRequirement: 'Attending physician statement (APS)',
+    followUps: 2,
+    aiSummary: 'APS ordered — not returned; blocks final decision.',
+  }),
+  doc('doc_emp_nb_financial', NB, 'Financial questionnaire — Amélie Dubois.pdf', 'Financial', {
+    uploaded: 'May 9, 2026',
+    uploadedAt: '2026-05-09',
+    claimant: 'Amélie Dubois',
+    linkedRequirementId: 'req_emp_nb_004',
+    linkedRequirement: 'Financial questionnaire',
+    aiSummary: 'Financial questionnaire complete — affordability confirmed.',
+  }),
+
+  doc('doc_emp_nb_s_app', NB_S, 'Application — Liam O\'Brien (Solution 10).pdf', 'Financial', {
+    uploaded: 'May 14, 2026',
+    uploadedAt: '2026-05-14',
+    claimant: 'Liam O\'Brien',
+    linkedRequirementId: 'req_emp_nb_s_001',
+    linkedRequirement: 'Application — Solution 10 term',
+    aiSummary: 'Solution 10 term $250,000; Adult-Short + PHI path; clean disclosures.',
+  }),
+  doc('doc_emp_nb_s_questionnaire', NB_S, 'Adult-Short health questionnaire — Liam O\'Brien.pdf', 'Financial', {
+    uploaded: 'May 15, 2026',
+    uploadedAt: '2026-05-15',
+    claimant: 'Liam O\'Brien',
+    linkedRequirementId: 'req_emp_nb_s_002',
+    linkedRequirement: 'Adult-Short health questionnaire',
+    aiSummary: 'No adverse disclosures; eligible for Adult-Short + PHI path.',
+  }),
+  doc('doc_emp_nb_s_tele_schedule', NB_S, 'Tele-interview schedule — Liam O\'Brien.pdf', 'Financial', {
+    uploaded: 'May 16, 2026',
+    uploadedAt: '2026-05-16',
+    claimant: 'Liam O\'Brien',
+    linkedRequirementId: 'req_emp_nb_s_003',
+    linkedRequirement: 'Tele-interview',
+    aiSummary: 'Interview scheduled 22 May 2026 14:00 MT.',
+  }),
+
+  doc('doc_emp_nb_g_app', NB_G, 'Application — Patricia Singh (Guaranteed Life Protect).pdf', 'Financial', {
+    uploaded: 'May 18, 2026',
+    uploadedAt: '2026-05-18',
+    claimant: 'Patricia Singh',
+    linkedRequirementId: 'req_emp_nb_g_001',
+    linkedRequirement: 'Application — Guaranteed Life Protect',
+    aiSummary: 'Guaranteed Life Protect $50,000; guaranteed issue; no medical or lifestyle questions.',
+  }),
+  doc('doc_emp_nb_g_pad', NB_G, 'PAD authorization — Patricia Singh.pdf', 'Financial', {
+    status: 'Pending Review',
+    uploaded: 'May 19, 2026',
+    uploadedAt: '2026-05-19',
+    claimant: 'Patricia Singh',
+    linkedRequirementId: 'req_emp_nb_g_003',
+    linkedRequirement: 'Pre-authorized debit authorization',
+    aiSummary: 'PAD form received — awaiting bank confirmation.',
+  }),
+];

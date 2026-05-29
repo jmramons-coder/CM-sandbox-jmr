@@ -8,6 +8,7 @@ import {
   resolveCaseRouteId,
 } from './demoCaseIds';
 import { GUARDIAN_DEMO_CASE_IDS, GUARDIAN_DATASET_ID } from './guardianDemoCaseIds';
+import { EMPIRE_DEMO_CASE_IDS, EMPIRE_DATASET_ID } from './empireDemoCaseIds';
 
 describe('resolveCaseRouteId', () => {
   const sbliDataset = filterDatasetBySettings(
@@ -17,6 +18,10 @@ describe('resolveCaseRouteId', () => {
   const guardianDataset = filterDatasetBySettings(
     getSystemDataset(GUARDIAN_DATASET_ID),
     { ...DEFAULT_DATA_SOURCE_SETTINGS, activeDatasetId: GUARDIAN_DATASET_ID },
+  );
+  const empireDataset = filterDatasetBySettings(
+    getSystemDataset(EMPIRE_DATASET_ID),
+    { ...DEFAULT_DATA_SOURCE_SETTINGS, activeDatasetId: EMPIRE_DATASET_ID },
   );
 
   it('keeps a valid SBLI case id', () => {
@@ -42,6 +47,18 @@ describe('resolveCaseRouteId', () => {
   it('redirects SBLI bookmark to Guardian default when Guardian dataset is active', () => {
     expect(resolveCaseRouteId(DEMO_CASE_IDS.wopClaim, guardianDataset)).toBe(
       GUARDIAN_DEMO_CASE_IDS.incomeProtectionClaim,
+    );
+  });
+
+  it('keeps a valid Empire case id', () => {
+    expect(resolveCaseRouteId(EMPIRE_DEMO_CASE_IDS.disabilityClaim, empireDataset)).toBe(
+      EMPIRE_DEMO_CASE_IDS.disabilityClaim,
+    );
+  });
+
+  it('redirects SBLI bookmark to Empire default when Empire dataset is active', () => {
+    expect(resolveCaseRouteId(DEMO_CASE_IDS.wopClaim, empireDataset)).toBe(
+      EMPIRE_DEMO_CASE_IDS.disabilityClaim,
     );
   });
 });

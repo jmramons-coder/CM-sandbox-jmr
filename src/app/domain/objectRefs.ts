@@ -15,7 +15,7 @@ export type WorkObjectKind =
 export type CaseKind = 'claim' | 'new_business' | 'customer_service' | 'agent_onboarding';
 
 /** Nature of claim when `caseKind === 'claim'` (orthogonal to product / `caseTypeCode`). */
-export type ClaimSubType = 'death' | 'disability_benefit' | 'waiver_of_premium' | 'death_benefit' | 'full_underwriting' | 'simplified_underwriting';
+export type ClaimSubType = 'death' | 'disability_benefit' | 'waiver_of_premium' | 'death_benefit' | 'full_underwriting' | 'simplified_underwriting' | 'guaranteed_underwriting';
 
 export type DataMode = 'mock' | 'scenario' | 'local_database' | 'remote_database';
 

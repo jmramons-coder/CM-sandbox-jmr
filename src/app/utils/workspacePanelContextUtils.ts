@@ -27,6 +27,10 @@ export function requestPanelContextId(requestId: string) {
   return `request:${requestId}`;
 }
 
+export function userPanelContextId(userId: string) {
+  return `user:${userId}`;
+}
+
 export type WorkspacePanelContextKind = 'task' | 'document' | 'requirement' | 'request' | 'other';
 
 export function workspacePanelContextKind(activeContextId: string): WorkspacePanelContextKind {

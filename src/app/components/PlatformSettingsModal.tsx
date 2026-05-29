@@ -34,6 +34,7 @@ import {
   Sun,
   Trash2,
   Upload,
+  Users,
   X,
 } from 'lucide-react';
 import {
@@ -3880,6 +3881,7 @@ const MODULE_ROUTES: Record<ModuleId, string[]> = {
   cases: ['/cases'],
   folders: ['/folders'],
   finances: ['/finances'],
+  users: ['/team'],
   tasks: ['/tasks'],
   requests: ['/requests'],
   documents: ['/documents'],
@@ -3906,6 +3908,7 @@ const MODULE_DEFS: ModuleMeta[] = [
   { id: 'cases', icon: Briefcase },
   { id: 'folders', icon: FolderOpen },
   { id: 'finances', icon: HandCoins },
+  { id: 'users', icon: Users },
   { id: 'tasks', icon: Sliders },
   { id: 'requests', icon: Inbox },
   { id: 'documents', icon: FileText },

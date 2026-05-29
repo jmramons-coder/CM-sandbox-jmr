@@ -125,6 +125,7 @@ export function DynamicDocumentSidePanel({
   const activeHighlightRef = useRef<HTMLButtonElement | null>(null);
   const activeInsightRef = useRef<HTMLButtonElement | null>(null);
   const [connectorPath, setConnectorPath] = useState<{ d: string; endX: number; endY: number } | null>(null);
+  const [pageSurfaceSize, setPageSurfaceSize] = useState({ width: 440, height: 660 });
 
   const activePageIndex = document.pages.findIndex((page) => page.number === activePageNumber);
   const activePage = document.pages[activePageIndex] ?? document.pages[0];
@@ -215,22 +216,28 @@ export function DynamicDocumentSidePanel({
     setIsDocumentPanning(false);
   };
 
-  const selectInsight = (insight: DynamicDocumentInsight) => {
+  const activateInsight = (insightId: string) => {
+    const insight = document.evidence.find((item) => item.id === insightId);
+    if (!insight) return;
     setDocumentZoom(0.9);
     setPendingAnchorId(insight.id);
     setActivePageNumber(insight.page);
     onInsightChange(insight.id);
   };
 
+  const selectInsight = (insight: DynamicDocumentInsight) => {
+    activateInsight(insight.id);
+  };
+
   useEffect(() => {
     if (!open) return;
-    const firstInsight = document.evidence[0];
-    if (!firstInsight) return;
+    const insight =
+      document.evidence.find((item) => item.id === activeInsightId) ?? document.evidence[0];
+    if (!insight) return;
     setDocumentZoom(0.9);
-    setPendingAnchorId(firstInsight.id);
-    setActivePageNumber(firstInsight.page);
-    onInsightChange(firstInsight.id);
-  }, [open]);
+    setPendingAnchorId(insight.id);
+    setActivePageNumber(insight.page);
+  }, [open, document.documentId, activeInsightId, document.evidence]);
 
   const updateConnectorPath = () => {
     const root = connectorRootRef.current;
@@ -277,8 +284,8 @@ export function DynamicDocumentSidePanel({
       };
       const targetZoom = 0.9;
       const nextPan = clampDocumentPan({
-        x: (0.5 - anchorCenter.x) * 684 * targetZoom,
-        y: (0.5 - anchorCenter.y) * 1024 * targetZoom,
+        x: (0.5 - anchorCenter.x) * pageSurfaceSize.width * targetZoom,
+        y: (0.5 - anchorCenter.y) * pageSurfaceSize.height * targetZoom,
       }, targetZoom);
       setDocumentZoom(targetZoom);
       documentPanRef.current = nextPan;
@@ -296,7 +303,7 @@ export function DynamicDocumentSidePanel({
     }
     documentPanRef.current = { x: 0, y: 0 };
     setDocumentPan({ x: 0, y: 0 });
-  }, [activePageNumber, document.evidence, documentZoom, pendingAnchorId]);
+  }, [activePageNumber, document.evidence, documentZoom, pageSurfaceSize.height, pageSurfaceSize.width, pendingAnchorId]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(updateConnectorPath);
@@ -377,7 +384,7 @@ export function DynamicDocumentSidePanel({
                 hasPreviousPage={hasPreviousPage}
                 isAnchorNavigating={isAnchorNavigating}
                 isDocumentPanning={isDocumentPanning}
-                onInsightChange={onInsightChange}
+                onInsightActivate={activateInsight}
                 onInsightSelect={selectInsight}
                 onNextPage={() => setActivePageNumber(document.pages[activePageIndex + 1].number)}
                 onPreviousPage={() => setActivePageNumber(document.pages[activePageIndex - 1].number)}
@@ -390,6 +397,7 @@ export function DynamicDocumentSidePanel({
                 onZoomIn={zoomIn}
                 onZoomOut={zoomOut}
                 onPageChange={setActivePageNumber}
+                onPageSurfaceSizeChange={setPageSurfaceSize}
                 scoringContext={document.scoringContext}
                 visibleEvidence={visibleEvidence}
                 onActionClick={handleDocumentActionClick}
@@ -413,7 +421,7 @@ export function DynamicDocumentSidePanel({
                 hasPreviousPage={hasPreviousPage}
                 isAnchorNavigating={isAnchorNavigating}
                 isDocumentPanning={isDocumentPanning}
-                onInsightChange={onInsightChange}
+                onInsightActivate={activateInsight}
                 onNextPage={() => setActivePageNumber(document.pages[activePageIndex + 1].number)}
                 onPreviousPage={() => setActivePageNumber(document.pages[activePageIndex - 1].number)}
                 onPointerCancel={stopDocumentPan}
@@ -425,6 +433,7 @@ export function DynamicDocumentSidePanel({
                 onZoomIn={zoomIn}
                 onZoomOut={zoomOut}
                 onPageChange={setActivePageNumber}
+                onPageSurfaceSizeChange={setPageSurfaceSize}
                 visibleEvidence={visibleEvidence}
               />
 
@@ -657,7 +666,7 @@ function DocumentCanvas({
   hasPreviousPage,
   isAnchorNavigating,
   isDocumentPanning,
-  onInsightChange,
+  onInsightActivate,
   onNextPage,
   onPointerCancel,
   onPointerDown,
@@ -670,6 +679,7 @@ function DocumentCanvas({
   onZoomOut,
   mobilePreview = false,
   onPageChange,
+  onPageSurfaceSizeChange,
   visibleEvidence,
 }: {
   activePage: DynamicDocumentPage;
@@ -685,7 +695,7 @@ function DocumentCanvas({
   hasPreviousPage: boolean;
   isAnchorNavigating: boolean;
   isDocumentPanning: boolean;
-  onInsightChange: (id: string) => void;
+  onInsightActivate: (id: string) => void;
   onNextPage: () => void;
   onPointerCancel: (event?: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
@@ -697,8 +707,22 @@ function DocumentCanvas({
   onZoomIn: () => void;
   onZoomOut: () => void;
   onPageChange: (pageNumber: number) => void;
+  onPageSurfaceSizeChange: (size: { width: number; height: number }) => void;
   visibleEvidence: DynamicDocumentInsight[];
 }) {
+  const frameMaxWidth = mobilePreview ? 280 : 440;
+  const frameMaxHeight = mobilePreview ? 420 : 660;
+
+  const reportSurfaceSize = (img: HTMLImageElement) => {
+    const { naturalWidth, naturalHeight } = img;
+    if (!naturalWidth || !naturalHeight) return;
+    const scale = Math.min(frameMaxWidth / naturalWidth, frameMaxHeight / naturalHeight, 1);
+    onPageSurfaceSizeChange({
+      width: Math.round(naturalWidth * scale),
+      height: Math.round(naturalHeight * scale),
+    });
+  };
+
   return (
     <div className={`relative z-10 min-h-0 overflow-visible bg-white ${mobilePreview ? 'h-full' : ''}`}>
       <div
@@ -726,7 +750,7 @@ function DocumentCanvas({
         />
 
         <div
-          className={`relative shrink-0 bg-white shadow-[0_1px_2px_rgba(27,28,30,0.08)] will-change-transform ${
+          className={`relative flex shrink-0 items-center justify-center bg-white shadow-[0_1px_2px_rgba(27,28,30,0.08)] will-change-transform ${
             mobilePreview ? 'h-[min(420px,50vh)] w-[min(280px,72vw)]' : 'h-[660px] w-[440px]'
           }`}
           style={{
@@ -738,23 +762,23 @@ function DocumentCanvas({
           }}
         >
           {activePage.image?.trim() ? (
-          <img
-            src={activePage.image}
-            alt={`${document.documentTitle}, page ${activePage.number}: ${activePage.label}`}
-            className="block h-full w-full select-none object-fill"
-            draggable={false}
-          />
-          ) : (
-            <DocumentFileUnavailableState document={document} compact={mobilePreview} />
-          )}
-          {visibleEvidence.map((item) => {
-            const isActive = activeInsightId === item.id;
-            return (
-              <button
-                ref={isActive ? activeHighlightRef : undefined}
-                key={item.id}
-                type="button"
-                onClick={() => onInsightChange(item.id)}
+            <div className="relative max-h-full max-w-full">
+              <img
+                src={activePage.image}
+                alt={`${document.documentTitle}, page ${activePage.number}: ${activePage.label}`}
+                className="block max-h-full max-w-full select-none object-contain"
+                style={{ maxHeight: frameMaxHeight, maxWidth: frameMaxWidth }}
+                draggable={false}
+                onLoad={(event) => reportSurfaceSize(event.currentTarget)}
+              />
+              {visibleEvidence.map((item) => {
+                const isActive = activeInsightId === item.id;
+                return (
+                  <button
+                    ref={isActive ? activeHighlightRef : undefined}
+                    key={item.id}
+                    type="button"
+                    onClick={() => onInsightActivate(item.id)}
                 onMouseDown={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
                 className={`group absolute z-10 rounded-[3px] border-0 bg-brand-blue/[0.11] transition-colors hover:bg-brand-blue/[0.15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f5a200]/35 ${
@@ -769,9 +793,13 @@ function DocumentCanvas({
                     className="pointer-events-none absolute inset-0 rounded-[3px] ring-1 ring-inset ring-[#f5a200]/30"
                   />
                 ) : null}
-              </button>
-            );
-          })}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <DocumentFileUnavailableState document={document} compact={mobilePreview} />
+          )}
         </div>
         <DocumentPageRail
           activePageNumber={activePageNumber}
@@ -911,18 +939,29 @@ function DocumentInsightPanel({
             </div>
           ) : null}
 
-          <CollapsibleDetailSection title="Evidence" subtitle={`${document.evidence.length} anchors`} className="mt-3" defaultOpen>
-            <div className="space-y-2">
-              {document.evidence.map((insight) => (
-                <InsightCard
-                  key={insight.id}
-                  cardRef={activeInsightId === insight.id ? activeInsightRef : undefined}
-                  insight={insight}
-                  isActive={activeInsightId === insight.id}
-                  onSelect={() => onInsightSelect(insight)}
-                />
-              ))}
-            </div>
+          <CollapsibleDetailSection
+            title="Evidence"
+            subtitle={document.evidence.length > 0 ? `${document.evidence.length} anchors` : 'No anchors'}
+            className="mt-3"
+            defaultOpen
+          >
+            {document.evidence.length > 0 ? (
+              <div className="space-y-2">
+                {document.evidence.map((insight) => (
+                  <InsightCard
+                    key={insight.id}
+                    cardRef={activeInsightId === insight.id ? activeInsightRef : undefined}
+                    insight={insight}
+                    isActive={activeInsightId === insight.id}
+                    onSelect={() => onInsightSelect(insight)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-[6px] border border-border-soft bg-[#fbfcfd] px-3 py-3 text-[12px] leading-relaxed text-text-secondary">
+                No AI anchors are available for this document yet. You can still review the file preview and summary above.
+              </p>
+            )}
           </CollapsibleDetailSection>
         </div>
 
@@ -1034,7 +1073,7 @@ type DocumentMobileLayoutProps = {
   hasPreviousPage: boolean;
   isAnchorNavigating: boolean;
   isDocumentPanning: boolean;
-  onInsightChange: (id: string) => void;
+  onInsightActivate: (id: string) => void;
   onInsightSelect: (insight: DynamicDocumentInsight) => void;
   onNextPage: () => void;
   onPointerCancel: (event?: ReactPointerEvent<HTMLDivElement>) => void;
@@ -1047,6 +1086,7 @@ type DocumentMobileLayoutProps = {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onPageChange: (pageNumber: number) => void;
+  onPageSurfaceSizeChange: (size: { width: number; height: number }) => void;
   scoringContext?: DocumentScoringContext;
   visibleEvidence: DynamicDocumentInsight[];
   onActionClick?: (actionId: string) => void;
@@ -1067,7 +1107,7 @@ function DocumentMobileLayout({
   hasPreviousPage,
   isAnchorNavigating,
   isDocumentPanning,
-  onInsightChange,
+  onInsightActivate,
   onInsightSelect,
   onNextPage,
   onPointerCancel,
@@ -1080,6 +1120,7 @@ function DocumentMobileLayout({
   onZoomIn,
   onZoomOut,
   onPageChange,
+  onPageSurfaceSizeChange,
   scoringContext,
   visibleEvidence,
   onActionClick,
@@ -1129,7 +1170,7 @@ function DocumentMobileLayout({
                 isAnchorNavigating={isAnchorNavigating}
                 isDocumentPanning={isDocumentPanning}
                 mobilePreview
-                onInsightChange={onInsightChange}
+                onInsightActivate={onInsightActivate}
                 onNextPage={onNextPage}
                 onPreviousPage={onPreviousPage}
                 onPointerCancel={onPointerCancel}
@@ -1141,6 +1182,7 @@ function DocumentMobileLayout({
                 onZoomIn={onZoomIn}
                 onZoomOut={onZoomOut}
                 onPageChange={onPageChange}
+                onPageSurfaceSizeChange={onPageSurfaceSizeChange}
                 visibleEvidence={visibleEvidence}
               />
           </section>

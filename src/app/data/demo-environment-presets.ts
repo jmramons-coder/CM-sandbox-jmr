@@ -3,8 +3,10 @@ import { generatedDatasetRepository } from './generatedDatasetRepository';
 import equisoftPreset from './demo-environments/equisoft.preset.json';
 import sbliPreset from './demo-environments/sbli.preset.json';
 import guardianPreset from './demo-environments/guardian.preset.json';
+import empirePreset from './demo-environments/empire.preset.json';
 import {
   DEMO_ENV_EQUISOFT_ID,
+  DEMO_ENV_EMPIRE_ID,
   DEMO_ENV_GUARDIAN_ID,
   DEMO_ENV_SBLI_ID,
   SHARED_DEMO_DATASET_ID,
@@ -13,13 +15,15 @@ import {
 } from './demo-environment-deploy';
 import { DEFAULT_DATA_SOURCE_SETTINGS } from '../domain/objectRefs';
 import { GUARDIAN_DATASET_ID } from './guardianDemoCaseIds';
+import { EMPIRE_DATASET_ID } from './empireDemoCaseIds';
 
-export { DEMO_ENV_EQUISOFT_ID, DEMO_ENV_SBLI_ID, DEMO_ENV_GUARDIAN_ID, SHARED_DEMO_DATASET_ID };
+export { DEMO_ENV_EQUISOFT_ID, DEMO_ENV_SBLI_ID, DEMO_ENV_GUARDIAN_ID, DEMO_ENV_EMPIRE_ID, SHARED_DEMO_DATASET_ID };
 
 const BUILT_IN_DEMO_ENVIRONMENT_IDS = new Set([
   DEMO_ENV_EQUISOFT_ID,
   DEMO_ENV_SBLI_ID,
   DEMO_ENV_GUARDIAN_ID,
+  DEMO_ENV_EMPIRE_ID,
 ]);
 
 export function isBuiltInDemoEnvironment(id: string): boolean {
@@ -30,6 +34,7 @@ export const SEEDED_DEMO_ENVIRONMENTS: SavedDemoConfiguration[] = [
   hydrateDeployablePreset(equisoftPreset as DeployableDemoPresetFile),
   hydrateDeployablePreset(sbliPreset as DeployableDemoPresetFile),
   hydrateDeployablePreset(guardianPreset as DeployableDemoPresetFile),
+  hydrateDeployablePreset(empirePreset as DeployableDemoPresetFile),
 ];
 
 const STALE_DEMO_NAME_PATTERN =
@@ -66,10 +71,18 @@ export function applyActiveDemoEnvironment(
   }
   const activeDatasetId =
     target.settings.dataSource?.activeDatasetId ??
-    (activeId === DEMO_ENV_GUARDIAN_ID ? GUARDIAN_DATASET_ID : SHARED_DEMO_DATASET_ID);
+    (activeId === DEMO_ENV_GUARDIAN_ID
+      ? GUARDIAN_DATASET_ID
+      : activeId === DEMO_ENV_EMPIRE_ID
+        ? EMPIRE_DATASET_ID
+        : SHARED_DEMO_DATASET_ID);
   const displayCurrency =
     target.settings.dataSource?.displayCurrency ??
-    (activeDatasetId === GUARDIAN_DATASET_ID ? 'GBP' : 'USD');
+    (activeDatasetId === GUARDIAN_DATASET_ID
+      ? 'GBP'
+      : activeDatasetId === EMPIRE_DATASET_ID
+        ? 'CAD'
+        : 'USD');
 
   return {
     ...target.settings,

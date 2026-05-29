@@ -1,6 +1,12 @@
 import type { CaseKind, CaseRecord, ObjectRef, WorkObjectKind, DisplayCurrency } from '../domain/objectRefs';
 import { GUARDIAN_DATASET } from './guardian-dataset';
+import { EMPIRE_DATASET } from './empire-dataset';
 import { SBLI_DATASET } from './sbli-dataset';
+import type {
+  PlatformUserRole,
+  PlatformUserStatus,
+  TrainingRecord,
+} from '../domain/access/platformUser';
 import type {
   RequestCategory,
   RequestLinkedCase,
@@ -87,6 +93,23 @@ export interface AgentContract {
   carrier: string;
   status: 'draft' | 'active' | 'terminated';
   effectiveDate?: string;
+}
+
+export interface PlatformUserRecord {
+  id: string;
+  kind: 'user';
+  name: string;
+  initials: string;
+  email: string;
+  role: PlatformUserRole;
+  status: PlatformUserStatus;
+  band: number;
+  maxAuthority: number | null;
+  teamIds: string[];
+  teamLabels: string[];
+  managerId?: string;
+  maxConcurrentTasks: number;
+  training: TrainingRecord[];
 }
 
 export interface AgentRecord {
@@ -395,6 +418,8 @@ export interface SystemDataset {
   clients: ClientRecord[];
   policies: PolicyRecord[];
   agents: AgentRecord[];
+  /** Platform users (assessors, managers) — roster for assignees, Team module, and workload. */
+  users?: PlatformUserRecord[];
   applications: ApplicationRecord[];
   tasks: DatasetTaskRecord[];
   requirements: DatasetRequirementRecord[];
@@ -414,4 +439,5 @@ export const MULTI_CASE_DEMO_DATASET: SystemDataset = SBLI_DATASET;
 export const SYSTEM_DATASETS: SystemDataset[] = [
   MULTI_CASE_DEMO_DATASET,
   GUARDIAN_DATASET,
+  EMPIRE_DATASET,
 ];

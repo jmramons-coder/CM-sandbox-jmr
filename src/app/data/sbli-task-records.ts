@@ -4008,5 +4008,103 @@ export const SBLI_DOCUMENT_EVIDENCE_RECORDS: DocumentEvidenceRecord[] = [
         "label": "Contestability review — MIB vs. application"
       }
     ]
+  },
+  {
+    "id": "evidence_doc_death_cert_cd44",
+    "kind": "document_evidence",
+    "documentId": "doc_death_cert_cd44",
+    "title": "Certified Death Certificate.pdf",
+    "summary": "Certified death certificate confirms date and cause of death for Thomas Dupont.",
+    "pages": [
+      {
+        "number": 1,
+        "image": "/evidence-medical-report-page.png",
+        "label": "Page 1"
+      }
+    ],
+    "findings": [
+      {
+        "id": "doc_death_cert_cd44_anchor_1",
+        "severity": "High",
+        "title": "Date of death confirmed",
+        "quote": "Date of death: March 12, 2026",
+        "reasoning": "Certified record shows death date consistent with claim notification timeline.",
+        "impact": "Supports FNOL date alignment for the death benefit claim."
+      },
+      {
+        "id": "doc_death_cert_cd44_anchor_2",
+        "severity": "High",
+        "title": "Cause of death recorded",
+        "quote": "Cause: Acute myocardial infarction (I21.9)",
+        "reasoning": "Primary cause matches attending physician statement and MIB cardiac history.",
+        "impact": "Required for contestability and benefit determination on CD44-6679812."
+      }
+    ],
+    "linkedObjects": [
+      {
+        "kind": "document",
+        "id": "doc_death_cert_cd44",
+        "label": "Certified Death Certificate.pdf"
+      },
+      {
+        "kind": "case",
+        "id": "CD44-6679812",
+        "label": "CD44-6679812"
+      },
+      {
+        "kind": "requirement",
+        "id": "req_sd_002",
+        "label": "Certified Death Certificate"
+      }
+    ]
+  },
+  {
+    "id": "evidence_doc_aps_cd44",
+    "kind": "document_evidence",
+    "documentId": "doc_aps_cd44",
+    "title": "Attending Physician Statement.pdf",
+    "summary": "APS corroborates cause of death and prior cardiac history for Thomas Dupont.",
+    "pages": [
+      {
+        "number": 1,
+        "image": "/evidence-medical-report-page.png",
+        "label": "Page 1"
+      }
+    ],
+    "findings": [
+      {
+        "id": "doc_aps_cd44_anchor_1",
+        "severity": "High",
+        "title": "Cause of death consistent",
+        "quote": "Immediate cause: Acute myocardial infarction",
+        "reasoning": "Physician statement aligns with certified death certificate primary cause.",
+        "impact": "Closes medical causation loop for the death claim."
+      },
+      {
+        "id": "doc_aps_cd44_anchor_2",
+        "severity": "Medium",
+        "title": "Prior cardiac history noted",
+        "quote": "History of hypertension and prior angina",
+        "reasoning": "Prior conditions were disclosed on application; no new undisclosed condition identified.",
+        "impact": "Supports contestability review outcome when paired with MIB comparison."
+      }
+    ],
+    "linkedObjects": [
+      {
+        "kind": "document",
+        "id": "doc_aps_cd44",
+        "label": "Attending Physician Statement.pdf"
+      },
+      {
+        "kind": "case",
+        "id": "CD44-6679812",
+        "label": "CD44-6679812"
+      },
+      {
+        "kind": "requirement",
+        "id": "req_sd_003",
+        "label": "Attending Physician Statement (APS)"
+      }
+    ]
   }
 ];

@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Sliders,
   Trash2,
+  Users,
 } from 'lucide-react';
 import { AiCueSparkle } from '../AiCueSparkle';
 import { BrandingHeaderPreview } from '../BrandingHeaderPreview';
@@ -43,6 +44,7 @@ const DEMO_MODULE_DEFS: ModuleMeta[] = [
   { id: 'cases', icon: Briefcase },
   { id: 'folders', icon: FolderOpen },
   { id: 'finances', icon: HandCoins },
+  { id: 'users', icon: Users },
   { id: 'tasks', icon: Sliders },
   { id: 'requests', icon: Inbox },
   { id: 'documents', icon: FileText },

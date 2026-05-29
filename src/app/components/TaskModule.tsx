@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
 import { Plus, X, Clock, ChevronDown, Kanban, List, MoreVertical, Users, Lock, Check, ArrowLeftRight, ClipboardList } from 'lucide-react';
+import {
+  MODULE_TABLE_ROW_KEBAB_ENABLED,
+  moduleTableStatusStickyRightPx,
+} from '../constants/moduleTableRowActions';
 import { useLocation, useNavigate } from 'react-router';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
 import { AiInsightInline, FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
@@ -612,13 +616,23 @@ export function TaskModule() {
             />
           ) : (
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              {(() => {
+                const showTaskRowActionsColumn = MODULE_TABLE_ROW_KEBAB_ENABLED || isOnTeamTasks;
+                const taskTableMinWidth =
+                  (isOnTeamTasks ? TASK_TABLE_MIN_WIDTH_TEAM : TASK_TABLE_MIN_WIDTH) -
+                  (showTaskRowActionsColumn ? 0 : TASK_TABLE_ACTIONS_WIDTH);
+                const taskStatusStickyRight = showTaskRowActionsColumn
+                  ? moduleTableStatusStickyRightPx(TASK_TABLE_ACTIONS_WIDTH)
+                  : undefined;
+                return (
+              <>
               <div
                 ref={setTaskTableScrollEl}
                 className={moduleTableScrollContainerClass(hasHorizontalOverflow, 'flex-1 bg-white')}
               >
                 <table
                   className={MODULE_TABLE_LAYOUT_CLASS}
-                  style={{ minWidth: isOnTeamTasks ? TASK_TABLE_MIN_WIDTH_TEAM : TASK_TABLE_MIN_WIDTH }}
+                  style={{ minWidth: taskTableMinWidth }}
                 >
                   <colgroup>
                     <col style={{ width: TASK_TABLE_STICKY_COL.checkboxWidth }} />
@@ -629,7 +643,7 @@ export function TaskModule() {
                     {isOnTeamTasks ? <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} /> : null}
                     <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} />
                     <col style={{ width: TASK_TABLE_STATUS_WIDTH }} />
-                    <col style={{ width: TASK_TABLE_ACTIONS_WIDTH }} />
+                    {showTaskRowActionsColumn ? <col style={{ width: TASK_TABLE_ACTIONS_WIDTH }} /> : null}
                   </colgroup>
                   <thead className="sticky top-0 z-[30] bg-surface-primary">
                     <tr>
@@ -703,7 +717,7 @@ export function TaskModule() {
                         style={{
                           width: TASK_TABLE_STATUS_WIDTH,
                           minWidth: TASK_TABLE_STATUS_WIDTH,
-                          ...(taskTableRightSticky ? { right: TASK_TABLE_ACTIONS_WIDTH } : {}),
+                          ...(taskTableRightSticky && taskStatusStickyRight != null ? { right: taskStatusStickyRight } : {}),
                         }}
                       >
                         {taskTableRightSticky && showRightStickyEdge ? (
@@ -714,6 +728,7 @@ export function TaskModule() {
                           <ReorderIcon isActive={sortColumn === 'status'} />
                         </button>
                       </th>
+                      {showTaskRowActionsColumn ? (
                       <th
                         className={`relative h-12 min-h-12 border-b border-border-default bg-surface-primary p-0 align-middle ${
                           taskTableRightSticky ? 'sticky top-0 right-0 z-[34] w-[48px] min-w-[48px] max-w-[48px]' : 'w-12 min-w-12 max-w-12'
@@ -729,6 +744,7 @@ export function TaskModule() {
                           </>
                         ) : null}
                       </th>
+                      ) : null}
                     </tr>
                   </thead>
                   <tbody>
@@ -849,7 +865,7 @@ export function TaskModule() {
                             style={{
                               width: TASK_TABLE_STATUS_WIDTH,
                               minWidth: TASK_TABLE_STATUS_WIDTH,
-                              ...(taskTableRightSticky ? { right: TASK_TABLE_ACTIONS_WIDTH } : {}),
+                              ...(taskTableRightSticky && taskStatusStickyRight != null ? { right: taskStatusStickyRight } : {}),
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >
@@ -858,6 +874,7 @@ export function TaskModule() {
                             ) : null}
                             <LozengeTag label={task.status} type={getStatusLozengeType(task.status, 'task')} subtle />
                           </td>
+                          {showTaskRowActionsColumn ? (
                           <td
                             className={`relative box-border min-h-12 border-b border-border-default p-0 align-middle ${
                               taskTableRightSticky
@@ -876,13 +893,14 @@ export function TaskModule() {
                                 <button onClick={(e) => { e.stopPropagation(); handleManagerRelease(task, e); }} className="text-brand-blue hover:text-text-heading" title="Release">
                                   <ArrowLeftRight className="h-4 w-4" />
                                 </button>
-                              ) : (
+                              ) : MODULE_TABLE_ROW_KEBAB_ENABLED ? (
                                 <button onClick={(e) => e.stopPropagation()} className="text-text-secondary hover:text-text-primary">
                                   <MoreVertical className="h-4 w-4" />
                                 </button>
-                              )}
+                              ) : null}
                             </div>
                           </td>
+                          ) : null}
                         </tr>
                       );
                     })}
@@ -891,6 +909,9 @@ export function TaskModule() {
               </div>
 
               <ModuleTablePaginationFooter total={sortedTasks.length} labelStyle={fontVar} />
+              </>
+                );
+              })()}
             </div>
           )}
         </div>

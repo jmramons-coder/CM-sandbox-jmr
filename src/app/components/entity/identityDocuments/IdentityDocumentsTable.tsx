@@ -8,6 +8,7 @@ import {
   MoreVertical,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { MODULE_TABLE_ROW_KEBAB_ENABLED } from '../../../constants/moduleTableRowActions';
 import type { IdentityDocumentRecord } from '../../../domain/identityDocuments';
 import type { IdentityDocumentPermissions } from '../../../domain/identityDocumentPermissions';
 import { getExpiryDisplayStatus } from '../../../utils/identityDocumentValidation';
@@ -76,10 +77,12 @@ export function IdentityDocumentsTable({
                   </span>
                 </ModuleTableHeaderCell>
               ))}
-              <th
-                aria-hidden
-                className="w-[36px] border-b border-border-soft bg-white px-2 py-2"
-              />
+              {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+                <th
+                  aria-hidden
+                  className="w-[36px] border-b border-border-soft bg-white px-2 py-2"
+                />
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -214,16 +217,18 @@ function IdentityDocumentRow({
           {record.additionalInformation ?? '—'}
         </span>
       </td>
-      <td className="border-b border-border-soft px-2 py-3 text-right">
-        <RowActionsMenu
-          record={record}
-          permissions={permissions}
-          isUnmasked={isUnmasked}
-          onUnmaskChange={onUnmaskChange}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
-      </td>
+      {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
+        <td className="border-b border-border-soft px-2 py-3 text-right">
+          <RowActionsMenu
+            record={record}
+            permissions={permissions}
+            isUnmasked={isUnmasked}
+            onUnmaskChange={onUnmaskChange}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </td>
+      ) : null}
     </tr>
   );
 }

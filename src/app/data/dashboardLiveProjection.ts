@@ -425,7 +425,7 @@ export function buildLiveBriefAction(
   fallback: DashboardBriefAction,
 ): DashboardBriefAction {
   if (roleView === 'manager') {
-    return { label: fallback.label, route: '/tasks' };
+    return { label: fallback.label, route: '/team' };
   }
   if (focus.caseId) {
     return {

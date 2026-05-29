@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
-import { Check, Database, LayoutGrid, List, Download, ExternalLink, FileText, Upload } from 'lucide-react';
+import { Check, Database, LayoutGrid, List, FileText, Upload } from 'lucide-react';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
 import { FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
 import { SearchBar } from './ds';
@@ -15,6 +15,7 @@ import {
   MOBILE_SIDE_PANEL_SCRIM_Z_CLASS,
   MOBILE_SIDE_PANEL_Z_CLASS,
 } from './WorkspaceSidePanelChrome';
+import { moduleTableStatusStickyRightClass } from '../constants/moduleTableRowActions';
 import {
   MODULE_TABLE_LAYOUT_CLASS,
   MODULE_TABLE_ROW_INTERACTIVE_CLASS,
@@ -56,9 +57,9 @@ import { DocumentMiniPreviewThumb } from './DocumentMiniPreviewThumb';
 
 const DOC_TABLE_CHECKBOX_COL_WIDTH = MODULE_TABLE_CHECKBOX_COL_WIDTH;
 const DOC_TABLE_NAME_COL_WIDTH = 320;
-const DOC_TABLE_STATUS_COL_WIDTH = 120;
-const DOC_TABLE_ACTIONS_COL_WIDTH = 80;
-const DOC_TABLE_ACTIONS_CELL_CLASS = 'pl-2 pr-5';
+/** Fits longest document status lozenge ("Pending Review") without clipping. */
+const DOC_TABLE_STATUS_COL_WIDTH = 148;
+const DOC_TABLE_STATUS_CELL_CLASS = 'px-3 pr-6 whitespace-nowrap';
 /** Extra gap between sticky Document column and Summary. */
 const DOC_TABLE_DOCUMENT_COL_CLASS = 'pl-1 pr-4';
 const DOC_TABLE_SUMMARY_COL_CLASS = 'pl-5 pr-2';
@@ -71,8 +72,7 @@ const DOC_TABLE_MIN_WIDTH =
   150 +
   120 +
   120 +
-  DOC_TABLE_STATUS_COL_WIDTH +
-  DOC_TABLE_ACTIONS_COL_WIDTH;
+  DOC_TABLE_STATUS_COL_WIDTH;
 
 function documentHasAiInsight(doc: CaseDocument) {
   return Boolean(doc.aiSummary || doc.aiAction);
@@ -373,6 +373,10 @@ export function DocumentModule() {
     }
     return selectedDocument ? toDynamicDocumentData(selectedDocument, activeDataset) : null;
   }, [activeDataset, activePanelContextId, documents, selectedDocument]);
+  const [activeInsightId, setActiveInsightId] = useState('');
+  useEffect(() => {
+    setActiveInsightId(selectedDocumentData?.evidence[0]?.id ?? '');
+  }, [selectedDocumentData?.documentId]);
   const showDocumentPanel =
     Boolean(selectedDocumentData && panelContexts.length > 0) && (!isCompactShell || sidePanelOpen);
 
@@ -400,8 +404,8 @@ export function DocumentModule() {
           if (!open) clearDocumentPanelContext(activePanelContextId || documentPanelContextId(selectedDocumentData.documentId));
         }}
         document={selectedDocumentData}
-        activeInsightId={selectedDocumentData.evidence[0]?.id ?? ''}
-        onInsightChange={() => undefined}
+        activeInsightId={activeInsightId}
+        onInsightChange={setActiveInsightId}
         panelWidth={panelWidth}
         isResizing={false}
         onResizeStart={() => undefined}
@@ -548,9 +552,12 @@ export function DocumentModule() {
               >
                 {/*
                   Column order matches Case documents tab: left stickies, scrollable middle,
-                  then Status + Actions stickied on the right (must be last in DOM order).
+                  then Status stickied on the right (must be last in DOM order).
                 */}
-                <table className={MODULE_TABLE_LAYOUT_CLASS} style={{ minWidth: DOC_TABLE_MIN_WIDTH }}>
+                <table
+                  className={MODULE_TABLE_LAYOUT_CLASS}
+                  style={{ width: '100%', minWidth: DOC_TABLE_MIN_WIDTH }}
+                >
                   <colgroup>
                     <col style={{ width: DOC_TABLE_CHECKBOX_COL_WIDTH }} />
                     <col style={{ width: DOC_TABLE_NAME_COL_WIDTH }} />
@@ -559,7 +566,6 @@ export function DocumentModule() {
                     <col style={{ width: 120 }} />
                     <col style={{ width: 120 }} />
                     <col style={{ width: DOC_TABLE_STATUS_COL_WIDTH }} />
-                    <col style={{ width: DOC_TABLE_ACTIONS_COL_WIDTH }} />
                   </colgroup>
                   <thead className="sticky top-0 z-[30] bg-surface-primary">
                     <tr>
@@ -605,12 +611,10 @@ export function DocumentModule() {
                         </button>
                       </th>
                       <th
-                        className={`relative sticky top-0 z-[34] border-b border-border-default bg-surface-primary py-3 pl-2 pr-1 text-left align-middle text-sm font-normal text-text-secondary ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                        className={`relative sticky top-0 z-[34] border-b border-border-default bg-surface-primary py-3 text-left align-middle text-sm font-normal text-text-secondary ${DOC_TABLE_STATUS_CELL_CLASS} ${moduleTableStatusStickyRightClass(80)} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                         style={{
-                          right: DOC_TABLE_ACTIONS_COL_WIDTH,
                           width: DOC_TABLE_STATUS_COL_WIDTH,
                           minWidth: DOC_TABLE_STATUS_COL_WIDTH,
-                          maxWidth: DOC_TABLE_STATUS_COL_WIDTH,
                         }}
                       >
                         {showRightStickyEdge ? (
@@ -620,16 +624,6 @@ export function DocumentModule() {
                           Status
                           <ReorderIcon isActive={sortColumn === 'status'} />
                         </button>
-                      </th>
-                      <th
-                        className={`relative sticky top-0 right-0 z-[34] h-12 min-h-12 border-b border-border-default bg-surface-primary py-0 align-middle ${DOC_TABLE_ACTIONS_CELL_CLASS}`}
-                        style={{ width: DOC_TABLE_ACTIONS_COL_WIDTH, minWidth: DOC_TABLE_ACTIONS_COL_WIDTH, maxWidth: DOC_TABLE_ACTIONS_COL_WIDTH }}
-                      >
-                        <span
-                          aria-hidden
-                          className="pointer-events-none absolute inset-y-0 left-0 z-[9] h-full min-h-12 w-[calc(100%+3px)] bg-surface-primary"
-                        />
-                        <span className="sr-only">Actions</span>
                       </th>
                     </tr>
                   </thead>
@@ -664,11 +658,17 @@ export function DocumentModule() {
                               <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                             ) : null}
                             <div className="flex min-w-0 max-w-full items-stretch gap-2.5">
-                              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                                <LozengeTag label={doc.category} type="Neutral" subtle className="max-w-full shrink-0" />
+                              <div className="flex min-w-0 flex-1 flex-col">
                                 <TableTruncatedLabel
                                   text={doc.name}
                                   className="w-full max-w-full text-[13px] font-semibold text-text-primary"
+                                />
+                                <LozengeTag
+                                  label={doc.category}
+                                  type="Neutral"
+                                  subtle
+                                  size="compact"
+                                  className="mt-1.5 max-w-full shrink-0"
                                 />
                               </div>
                               <DocumentMiniPreviewThumb
@@ -719,46 +719,21 @@ export function DocumentModule() {
                             <DocumentSourceTag source={doc.source} />
                           </td>
                           <td
-                            className={`relative sticky z-[14] border-b border-border-default py-3 pl-2 pr-1 align-top ${cellSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                            className={`relative sticky z-[14] border-b border-border-default py-3 ${DOC_TABLE_STATUS_CELL_CLASS} ${TABLE_CELL_ALIGN_CLASS} ${cellSurface} ${moduleTableStatusStickyRightClass(80)} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                             style={{
-                              right: DOC_TABLE_ACTIONS_COL_WIDTH,
                               width: DOC_TABLE_STATUS_COL_WIDTH,
                               minWidth: DOC_TABLE_STATUS_COL_WIDTH,
-                              maxWidth: DOC_TABLE_STATUS_COL_WIDTH,
                             }}
                           >
                             {showRightStickyEdge ? (
                               <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                             ) : null}
-                            <LozengeTag label={doc.status} type={getStatusLozengeType(doc.status, 'document')} subtle />
-                          </td>
-                          <td
-                            className={`relative sticky right-0 z-[14] box-border min-h-12 border-b border-border-default py-0 align-middle ${DOC_TABLE_ACTIONS_CELL_CLASS} ${cellSurface}`}
-                            style={{ width: DOC_TABLE_ACTIONS_COL_WIDTH, minWidth: DOC_TABLE_ACTIONS_COL_WIDTH, maxWidth: DOC_TABLE_ACTIONS_COL_WIDTH }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <span
-                              aria-hidden
-                              className={`pointer-events-none absolute inset-y-0 left-0 z-[0] h-full w-[calc(100%+3px)] ${cellSurface}`}
+                            <LozengeTag
+                              label={doc.status}
+                              type={getStatusLozengeType(doc.status, 'document')}
+                              subtle
+                              size="compact"
                             />
-                            <div className="relative z-10 flex h-full min-h-12 items-center justify-end gap-0.5">
-                              <button
-                                type="button"
-                                className="rounded p-1 text-text-secondary hover:bg-surface-muted hover:text-text-heading"
-                                title="Download"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Download className="h-4 w-4" />
-                              </button>
-                              <button
-                                type="button"
-                                className="rounded p-1 text-text-secondary hover:bg-surface-muted hover:text-text-heading"
-                                title="Open in new tab"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </button>
-                            </div>
                           </td>
                         </tr>
                       );

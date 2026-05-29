@@ -150,6 +150,10 @@
         "label": "Finanzas",
         "description": "Operaciones financieras, señales de facturación y pagos. Próximamente."
       },
+      "users": {
+        "label": "Equipo",
+        "description": "Plantilla, carga de trabajo, capacitación, disponibilidad y reasignación para gestores."
+      },
       "tasks": {
         "label": "Tareas",
         "description": "Lista unificada de tareas de todos los casos, con prioridad, vencimientos y estado."

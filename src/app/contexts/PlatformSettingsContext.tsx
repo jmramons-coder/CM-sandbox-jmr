@@ -74,6 +74,7 @@ export type ModuleId =
   | 'cases'
   | 'folders'
   | 'finances'
+  | 'users'
   | 'tasks'
   | 'requests'
   | 'documents'
@@ -89,6 +90,7 @@ export const DEFAULT_MODULES: ModuleSettings = {
   cases: true,
   folders: false,
   finances: false,
+  users: true,
   tasks: true,
   requests: false,
   documents: true,

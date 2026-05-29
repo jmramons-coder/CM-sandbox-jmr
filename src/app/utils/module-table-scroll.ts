@@ -52,3 +52,17 @@ export function moduleTableRowSurface({
 
 /** Row wrapper: group hover is driven by cell surfaces above, not tr:hover. */
 export const MODULE_TABLE_ROW_INTERACTIVE_CLASS = 'group cursor-pointer';
+
+/** Sticky header row — must stack above body sticky edge cells (z-[6]). */
+export const MODULE_TABLE_THEAD_CLASS = 'sticky top-0 z-[30] bg-surface-primary';
+
+/** Header cells that pin on horizontal scroll — also pin vertically above tbody. */
+export const MODULE_TABLE_TH_STICKY_EDGE_CLASS =
+  'sticky top-0 z-[35] border-b border-border-default bg-surface-primary';
+
+/** Header cells in the scrolling middle — still pin vertically on vertical scroll. */
+export const MODULE_TABLE_TH_SCROLL_CLASS =
+  'sticky top-0 z-[30] border-b border-border-default bg-surface-primary';
+
+/** Body sticky edge cells — must stay below header stack (z-30+). */
+export const MODULE_TABLE_TD_STICKY_EDGE_CLASS = 'sticky z-[2]';

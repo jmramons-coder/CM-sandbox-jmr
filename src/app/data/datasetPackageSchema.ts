@@ -305,6 +305,9 @@ export function validateDatasetPackage(value: unknown): DatasetValidationSummary
       if (subType === 'simplified_underwriting' && caseRecord.caseTypeId && caseRecord.caseTypeId !== 'ct_nb_simplified') {
         warnings.push(`Case ${caseRecord.id}: simplified_underwriting should use caseTypeId ct_nb_simplified when set.`);
       }
+      if (subType === 'guaranteed_underwriting' && caseRecord.caseTypeId && caseRecord.caseTypeId !== 'ct_nb_guaranteed') {
+        warnings.push(`Case ${caseRecord.id}: guaranteed_underwriting should use caseTypeId ct_nb_guaranteed when set.`);
+      }
     }
 
     const linkedMainEntity = caseRecord.linkedObjects?.some((ref) => ['client', 'policy', 'agent'].includes(ref.kind));
