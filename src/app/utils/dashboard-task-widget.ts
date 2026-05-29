@@ -150,14 +150,31 @@ export function resolveDashboardTaskEvidenceRoute(task: Task, dataset: SystemDat
   return `/cases/${caseId}#tab=documents&doc=${encodeURIComponent(documentId)}`;
 }
 
+export function resolveTaskEvidenceDocumentIds(task: Task, dataset: SystemDataset): string[] {
+  const ids = new Set<string>();
+  if (task.panelContext?.evidenceDocumentId) ids.add(task.panelContext.evidenceDocumentId);
+  task.evidenceDocuments?.forEach((document) => ids.add(document.id));
+  task.linkedObjects?.forEach((object) => {
+    if (object.kind === 'document') ids.add(object.id);
+  });
+  task.objectRefs?.forEach((object) => {
+    if (object.kind === 'document') ids.add(object.id);
+  });
+
+  const linkedRequirementIds = [
+    ...(task.linkedObjects?.filter((object) => object.kind === 'requirement').map((object) => object.id) ?? []),
+    ...(task.objectRefs?.filter((object) => object.kind === 'requirement').map((object) => object.id) ?? []),
+  ];
+  linkedRequirementIds.forEach((requirementId) => {
+    const requirement = dataset.requirements.find((row) => row.id === requirementId);
+    requirement?.linkedDocs?.forEach((documentId) => ids.add(documentId));
+  });
+
+  return Array.from(ids);
+}
+
 export function resolveTaskEvidenceDocumentId(task: Task, dataset: SystemDataset): string | undefined {
-  if (task.panelContext?.evidenceDocumentId) return task.panelContext.evidenceDocumentId;
-  const fromList = task.evidenceDocuments?.[0]?.id;
-  if (fromList) return fromList;
-  return (
-    task.linkedObjects?.find((object) => object.kind === 'document')?.id
-    ?? task.objectRefs?.find((object) => object.kind === 'document')?.id
-  );
+  return resolveTaskEvidenceDocumentIds(task, dataset)[0];
 }
 
 export function resolveTaskEvidencePreview(
@@ -174,8 +191,12 @@ export function resolveTaskEvidenceButtonLabel(
   evidence?: DynamicDocumentData | null,
 ): string {
   const name = (evidence?.documentTitle ?? task.evidenceDocuments?.[0]?.name ?? 'document').toLowerCase();
+  if (name.includes('application')) return 'View application';
+  if (name.includes('questionnaire') || name.includes('needs analysis')) return 'View questionnaire';
+  if (name.includes('fnol') || name.includes('registration')) return 'View FNOL';
   if (name.includes('aps') || name.includes('physician')) return 'View APS';
   if (name.includes('fce') || name.includes('capacity')) return 'View FCE';
-  if (name.includes('report') || name.includes('medical')) return 'View report';
+  if (name.includes('death certificate')) return 'View death certificate';
+  if (name.includes('report') || name.includes('medical') || name.includes('diagnosis')) return 'View report';
   return 'View evidence';
 }

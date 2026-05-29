@@ -1,9 +1,9 @@
 import type {
-  CaseGeneralInformationAiSummary,
   CaseGeneralInformationCard,
   CaseGeneralInformationCollapsible,
   CaseInformationSection,
 } from '../../domain/objectRefs';
+import type { CaseBriefContent } from '../../domain/caseBrief';
 import type { UnderwritingScoring } from '../../domain/objectRefs';
 import {
   deriveHumanNet,
@@ -14,7 +14,7 @@ import {
   type ScoringItemType,
   type ScoringRow,
 } from '../../domain/scoring';
-import { SidePanelAiSummary } from '../AiSummaryWithConfidenceCard';
+import { DailyBriefCard } from '../DailyBriefCard';
 
 function CaseInfoGrid({
   fields,
@@ -229,7 +229,7 @@ function GeneralInformationRichView({
 }
 
 export type CaseOverviewTabProps = {
-  aiSummary?: CaseGeneralInformationAiSummary;
+  caseBrief?: CaseBriefContent | null;
   richCards: CaseGeneralInformationCard[];
   richCollapsibles: CaseGeneralInformationCollapsible[];
   structuredSections: CaseInformationSection[];
@@ -241,7 +241,7 @@ export type CaseOverviewTabProps = {
 };
 
 export function CaseOverviewTab({
-  aiSummary,
+  caseBrief,
   richCards,
   richCollapsibles,
   structuredSections,
@@ -253,13 +253,7 @@ export function CaseOverviewTab({
 }: CaseOverviewTabProps) {
   return (
     <div className="max-w-[1200px] space-y-4">
-      {aiSummary?.text ? (
-        <SidePanelAiSummary
-          text={aiSummary.text}
-          confidence={aiSummary.confidence}
-          generatedAt={aiSummary.generatedAt}
-        />
-      ) : null}
+      {caseBrief ? <DailyBriefCard content={caseBrief} /> : null}
       {richCards.length > 0 || richCollapsibles.length > 0 ? (
         <GeneralInformationRichView
           cards={richCards}

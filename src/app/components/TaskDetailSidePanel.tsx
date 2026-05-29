@@ -29,6 +29,10 @@ import {
   taskPanelContextId,
 } from '../utils/workspacePanelContextUtils';
 import { resolveDocumentPreviewUrl } from '../utils/sbli-document-assets';
+import {
+  resolveTaskEvidenceButtonLabel,
+  resolveTaskEvidenceDocumentIds,
+} from '../utils/dashboard-task-widget';
 
 export type TaskPanelNavigationPayload = {
   contexts: WorkspacePanelContext[];
@@ -150,14 +154,10 @@ function EmpowerTaskDetailContent({
     });
     updateDataSource({ activeDatasetId: result.datasetId });
   };
-  const evidenceDocumentIds = useMemo(() => {
-    const ids = [
-      ...(task.evidenceDocuments?.map((document) => document.id) ?? []),
-      task.panelContext?.evidenceDocumentId,
-      task.linkedObjects?.find((item) => item.kind === 'document')?.id,
-    ].filter((id): id is string => Boolean(id));
-    return Array.from(new Set(ids));
-  }, [task.evidenceDocuments, task.linkedObjects, task.panelContext?.evidenceDocumentId]);
+  const evidenceDocumentIds = useMemo(
+    () => resolveTaskEvidenceDocumentIds(task, activeDataset),
+    [activeDataset, task],
+  );
   const [activeEvidenceDocumentId, setActiveEvidenceDocumentId] = useState(evidenceDocumentIds[0]);
   useEffect(() => {
     setActiveEvidenceDocumentId((current) => current && evidenceDocumentIds.includes(current) ? current : evidenceDocumentIds[0]);
@@ -187,6 +187,8 @@ function EmpowerTaskDetailContent({
     task.taskType.includes('Review proposed appointment');
   const isTeamTaskAvailable = isOnTeamTasks && !task.pickedUpBy;
   const isTeamTaskLocked = isOnTeamTasks && !!task.pickedUpBy;
+  const isCompletedTask = task.status === 'Completed' || task.status === 'Complete' || task.status === 'Done';
+  const evidenceActionLabel = resolveTaskEvidenceButtonLabel(task, taskDocumentData);
 
   const caseId = task.caseId || 'N/A';
   const claimantName = task.claimantName || (dataSource.legacyMockOverlayEnabled ? 'Billy Bud' : 'N/A');
@@ -492,6 +494,16 @@ function EmpowerTaskDetailContent({
           </>
         ) : (
           <>
+            {evidenceDocumentIds.length && !isCompletedTask ? (
+              <button
+                type="button"
+                onClick={() => openDocumentView()}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-blue px-4 py-2 text-sm font-semibold leading-none text-brand-blue transition-colors hover:bg-surface-selected"
+              >
+                <FileText className="h-3.5 w-3.5 shrink-0" />
+                {evidenceActionLabel}
+              </button>
+            ) : null}
             {(task.actions?.length ? task.actions : [
               { type: 'complete' as const, label: 'Complete', isPrimary: true },
               { type: 'add_requirement' as const, label: 'Add requirement' },
@@ -499,6 +511,14 @@ function EmpowerTaskDetailContent({
               <button
                 key={action.type}
                 onClick={() => {
+                  if (
+                    evidenceDocumentIds.length
+                    && isCompletedTask
+                    && (action.type === 'complete' || action.label.toLowerCase().includes('view'))
+                  ) {
+                    openDocumentView();
+                    return;
+                  }
                   if (action.type === 'complete' || action.type === 'complete_return' || action.type === 'send_approver') {
                     onCompleteTask?.(task);
                     return;
@@ -508,7 +528,11 @@ function EmpowerTaskDetailContent({
                 className={actionButtonClass(action)}
               >
                 {action.type === 'add_requirement' ? <Plus className="h-3.5 w-3.5 shrink-0" /> : null}
-                {action.label}
+                {evidenceDocumentIds.length
+                && isCompletedTask
+                && (action.type === 'complete' || action.label.toLowerCase().includes('view'))
+                  ? evidenceActionLabel
+                  : action.label}
               </button>
             ))}
           </>

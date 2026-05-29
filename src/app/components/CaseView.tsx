@@ -93,6 +93,7 @@ import { CaseDocumentsTable } from './cases/CaseDocumentsTable';
 import { CaseRequirementsTable } from './cases/CaseRequirementsTable';
 import { CaseTasksTable } from './cases/CaseTasksTable';
 import { CaseOverviewTab } from './cases/CaseOverviewTab';
+import { buildCaseBrief } from '../data/caseBrief';
 import { CaseRequirementModal } from './cases/CaseRequirementModal';
 import { ScoreItemModal, UnderwritingScoringTab } from './cases/CaseScoringPanel';
 import { CaseLegacyWorkflowStepper } from './cases/CaseLegacyWorkflowStepper';
@@ -1078,6 +1079,40 @@ export function CaseView({
     return prioritizeCreatedTask(datasetRows);
   }, [activeDataset, canUseLegacyCaseFallbacks, data.id, data.phase, data.decisionTabState, newCaseTaskReady, overdueTaskReady, overdueTaskCompleted, dataVersion, createdTaskId]);
 
+  const caseBrief = useMemo(() => {
+    const primarySlot = data.workflowMeta?.contextBar?.[0];
+    const clientHeadline = [
+      primarySlot?.value ?? data.primaryPartyName ?? data.claimantName,
+      data.workflowMeta?.breadcrumb?.replace(/^Claim ·\s*/i, '') ?? data.caseTypeLabel,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+
+    return buildCaseBrief({
+      caseId: data.id,
+      clientHeadline,
+      aiSummary: data.generalInformation?.aiSummary,
+      requirements: data.requirements.map((req) => ({
+        id: req.id,
+        datasetRequirementId: req.datasetRequirementId,
+        name: req.name,
+        status: req.status,
+        linkedTasks: req.linkedTasks,
+        blockingImpact: req.blockingImpact,
+      })),
+      tasks: contextualTasks.map((row) => ({
+        id: row.id,
+        label:
+          (row.task as { label?: string } | undefined)?.label ??
+          row.task?.taskType ??
+          row.taskType ??
+          row.id,
+        status: row.status,
+        aiGenerated: row.aiGenerated ?? row.task?.aiGenerated,
+      })),
+    });
+  }, [contextualTasks, data]);
+
   useEffect(() => {
     const hash = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash;
     if (!hash) return;
@@ -1897,7 +1932,7 @@ export function CaseView({
         )}
         {activeTab === 'overview' && (
           <CaseOverviewTab
-            aiSummary={data.generalInformation?.aiSummary}
+            caseBrief={caseBrief}
             richCards={richGeneralInfoCards}
             richCollapsibles={richGeneralInfoCollapsibles}
             structuredSections={structuredGeneralSections}

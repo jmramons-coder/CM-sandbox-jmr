@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import git from 'isomorphic-git';
-import http from 'isomorphic-git/http/node';
+import http from 'isomorphic-git/http/node/index.cjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const REMOTE_URL =

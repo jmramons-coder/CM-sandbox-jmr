@@ -131,28 +131,63 @@ export const GUARDIAN_TASK_RECORDS: DatasetTaskRecord[] = [
   task('task_gdn_life_004', LIFE, 'Send adviser update — Northbridge', 'Completed', 'Normal', 'initial_triage', {}),
 
   task('task_gdn_nb_001', NB, 'Complete application triage', 'Completed', 'Normal', 'application', {
-    linkedObjects: [{ kind: 'request', id: 'REQ-GDN-2026-002', label: 'NB application' }],
+    aiSummary: 'Application and fact find reviewed. MIB clear; GP report ordered.',
+    evidenceDocuments: [
+      { id: 'doc_gdn_nb_app', name: 'Application — Priya Sharma', size: 'Metadata', category: 'Financial', aiSummary: 'Life & CI application triaged.', followUps: 0 },
+      { id: 'doc_gdn_nb_fact_find', name: 'Adviser fact find', size: 'Metadata', category: 'Financial', aiSummary: 'Fact find supports cover amount.', followUps: 0 },
+    ],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_gdn_nb_001', label: 'Application & fact find' },
+      { kind: 'document', id: 'doc_gdn_nb_app', label: 'Application' },
+      { kind: 'document', id: 'doc_gdn_nb_fact_find', label: 'Fact find' },
+      { kind: 'request', id: 'REQ-GDN-2026-002', label: 'NB application' },
+    ],
+    actions: [{ type: 'complete', label: 'View application', isPrimary: true }],
   }),
   task('task_gdn_nb_002', NB, 'Order and chase GP report', 'In Queue', 'High', 'req_gathering', {
     aiSummary: 'Reading Medical Centre — GP report overdue since 19 May.',
     alert: { type: 'sla', message: 'GP report overdue' },
     evidenceDocuments: [{ id: 'doc_gdn_nb_gp_request', name: 'GP report request', size: 'Metadata', category: 'Medical', aiSummary: 'Awaiting surgery response.', followUps: 3 }],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_gdn_nb_002', label: 'GP report' },
+      { kind: 'document', id: 'doc_gdn_nb_gp_request', label: 'GP report request' },
+    ],
   }),
   task('task_gdn_nb_003', NB, 'Review MIB results', 'Completed', 'Normal', 'application', {
     evidenceDocuments: [{ id: 'doc_gdn_nb_mib', name: 'MIB search', size: 'Metadata', category: 'Financial', aiSummary: 'Clear.', followUps: 0 }],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_gdn_nb_003', label: 'MIB search' },
+      { kind: 'document', id: 'doc_gdn_nb_mib', label: 'MIB search' },
+    ],
+    actions: [{ type: 'complete', label: 'View MIB', isPrimary: true }],
   }),
   task('task_gdn_nb_004', NB, 'Validate children’s CI rider', 'Completed', 'Normal', 'application', {
     evidenceDocuments: [{ id: 'doc_gdn_nb_children_ci', name: 'Children CI form', size: 'Metadata', category: 'Financial', aiSummary: 'Two children listed.', followUps: 0 }],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_gdn_nb_004', label: 'Children CI rider' },
+      { kind: 'document', id: 'doc_gdn_nb_children_ci', label: 'Children CI form' },
+    ],
+    actions: [{ type: 'complete', label: 'View form', isPrimary: true }],
   }),
   task('task_gdn_nb_006', NB, 'Complete tele-interview', 'Completed', 'Normal', 'application', {
     assignee: 'Richard Daniels',
     aiSummary: 'Tele-interview 14 May — no adverse disclosures; standard lifestyle.',
     evidenceDocuments: [{ id: 'doc_gdn_nb_tele_interview', name: 'Tele-interview notes', size: 'Metadata', category: 'Medical', aiSummary: 'Clean pass.', followUps: 0 }],
-    linkedObjects: [{ kind: 'requirement', id: 'req_gdn_nb_005', label: 'Tele-interview' }],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_gdn_nb_005', label: 'Tele-interview' },
+      { kind: 'document', id: 'doc_gdn_nb_tele_interview', label: 'Tele-interview notes' },
+    ],
+    actions: [{ type: 'complete', label: 'View notes', isPrimary: true }],
   }),
 
   task('task_gdn_nb_s_001', NB_S, 'Review Life Essentials application', 'Completed', 'Normal', 'application', {
-    linkedObjects: [{ kind: 'request', id: 'REQ-GDN-2026-005', label: 'Life Essentials app' }],
+    evidenceDocuments: [{ id: 'doc_gdn_nb_s_app', name: 'Application — Oliver Hughes', size: 'Metadata', category: 'Financial', aiSummary: 'Life Essentials application reviewed.', followUps: 0 }],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_gdn_nb_s_001', label: 'Application' },
+      { kind: 'document', id: 'doc_gdn_nb_s_app', label: 'Application' },
+      { kind: 'request', id: 'REQ-GDN-2026-005', label: 'Life Essentials app' },
+    ],
+    actions: [{ type: 'complete', label: 'View application', isPrimary: true }],
   }),
   task('task_gdn_nb_s_002', NB_S, 'Conduct tele-interview', 'To Do', 'Normal', 'tele-interview', {
     dueDate: '2026-05-19',

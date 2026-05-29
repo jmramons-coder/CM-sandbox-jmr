@@ -1,6 +1,8 @@
 import {
   AlertTriangle,
+  CheckSquare,
   ClipboardCheck,
+  ClipboardList,
   Clock,
   ListTodo,
   type LucideIcon,
@@ -12,6 +14,7 @@ import type {
   DailyBriefContent,
   DailyBriefHighlightIcon,
   DailyBriefHighlightTone,
+  DailyBriefLinkKind,
   DailyBriefSegment,
 } from '../domain/dailyBrief';
 
@@ -26,6 +29,11 @@ const CUE_ICONS: Record<DailyBriefHighlightIcon, LucideIcon> = {
   focus: ListTodo,
   decision: ClipboardCheck,
   progress: Clock,
+};
+
+const LINK_KIND_ICONS: Partial<Record<DailyBriefLinkKind, LucideIcon>> = {
+  task: CheckSquare,
+  requirement: ClipboardList,
 };
 
 const CUE_TONE_CLASS: Record<DailyBriefHighlightTone, string> = {
@@ -61,19 +69,30 @@ function InlineBriefCue({
 function InlineBriefLink({
   label,
   route,
+  kind,
   onNavigate,
 }: {
   label: string;
   route: string;
+  kind: DailyBriefLinkKind;
   onNavigate: (route: string) => void;
 }) {
+  const KindIcon = LINK_KIND_ICONS[kind];
+
   return (
     <button
       type="button"
       onClick={() => onNavigate(route)}
-      className="mx-[0.2em] inline cursor-pointer border-0 bg-transparent p-0 text-[14px] font-normal leading-[1.7] text-brand-blue underline underline-offset-2 transition-colors duration-200 hover:text-brand-blue-hover sm:text-[15px] sm:leading-[1.75]"
+      className="mx-[0.2em] inline-flex cursor-pointer items-baseline gap-0.5 border-0 bg-transparent p-0 text-[14px] font-normal leading-[1.7] text-brand-blue underline underline-offset-2 transition-colors duration-200 hover:text-brand-blue-hover sm:text-[15px] sm:leading-[1.75]"
     >
-      {label}
+      <span className="underline underline-offset-2">{label}</span>
+      {KindIcon ? (
+        <KindIcon
+          className="size-3 shrink-0 translate-y-[0.08em] text-brand-blue/65 no-underline"
+          strokeWidth={2.25}
+          aria-hidden
+        />
+      ) : null}
     </button>
   );
 }
@@ -106,6 +125,7 @@ function BriefSentence({
             key={`l-${index}-${segment.route}`}
             label={segment.label}
             route={segment.route}
+            kind={segment.kind}
             onNavigate={onNavigate}
           />
         );
@@ -141,7 +161,14 @@ export function DailyBriefCard({ content, className = '' }: DailyBriefCardProps)
             <AiCueSparkle size={12} className="!text-brand-accent" spinOnParentHover />
             {content.title}
           </span>
-          <MiniAiSourceBadge />
+          <div className="flex shrink-0 items-center gap-2">
+            {typeof content.confidence === 'number' ? (
+              <span className="rounded-full border border-white/80 bg-white/70 px-2 py-0.5 text-[10px] font-semibold text-text-secondary shadow-[0_1px_2px_rgba(27,28,30,0.04)] backdrop-blur-sm">
+                {content.confidence}% confidence
+              </span>
+            ) : null}
+            <MiniAiSourceBadge />
+          </div>
         </div>
 
         <BriefSentence segments={segments} onNavigate={navigate} />

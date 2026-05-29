@@ -19,7 +19,7 @@ export type DailyBriefContextId =
   | 'documents'
   | 'ai-actions';
 
-export type DailyBriefLinkKind = 'case' | 'task' | 'request' | 'document';
+export type DailyBriefLinkKind = 'case' | 'task' | 'requirement' | 'request' | 'document';
 
 export type DailyBriefSegment =
   | { type: 'text'; value: string }
@@ -61,6 +61,8 @@ export type DailyBriefContent = {
   text: string;
   /** `dynamic` today; reserved for future `ai` provider. */
   source: 'dynamic' | 'fallback';
+  /** Optional model confidence (case brief, module summaries). */
+  confidence?: number;
 };
 
 export type BuildDailyBriefParams = {
