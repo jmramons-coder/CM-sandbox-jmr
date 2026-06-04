@@ -278,7 +278,6 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
       { label: 'Coverage amount', value: '$500,000' },
       { label: 'Preliminary risk class', value: 'Standard NT' },
       { label: 'Outstanding requirements', value: 'APS · Blood & urine · Scuba questionnaire' },
-      { label: 'AI confidence', value: '73%' },
     ],
     aiRecommendation: {
       text: 'Preliminary standard terms. Rx report shows treated hyperlipidemia and hypertension — APS recommended before final offer. Defer formal decision until APS and labs received, or issue rated terms if underwriting chooses to proceed.',

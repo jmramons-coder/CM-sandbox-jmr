@@ -88,11 +88,11 @@ function DecisionSummaryWithConfidence({ text, confidence }: { text: string; con
 }
 
 function DecisionAiAssessmentBar({ flow }: { flow: CaseDecisionFlow }) {
-  const confidence = flow.aiRecommendation.confidence;
   const recommendedOption = getRecommendedDecisionOption(flow);
   return (
     <section className="shrink-0 border-t border-border-soft bg-white px-5 py-4">
-      <DecisionSummaryWithConfidence text={flow.aiRecommendation.text} confidence={confidence} />
+      <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Summary</p>
+      <p className="mt-2 text-[12px] leading-relaxed text-text-primary">{flow.aiRecommendation.text}</p>
       {recommendedOption ? (
         <div className="mt-4 border-t border-border-soft pt-4">
           <RecommendedActionCallout option={recommendedOption} />
