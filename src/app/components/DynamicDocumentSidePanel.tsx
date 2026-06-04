@@ -928,17 +928,6 @@ function DocumentInsightPanel({
       <div className="flex h-full min-h-0 flex-col bg-white">
         <div className="app-scrollbar min-h-0 flex-1 overflow-y-auto p-3" onScroll={onScroll}>
           <AiSummaryBanner text={document.summary.text} />
-          {document.summary.contextTitle || document.summary.contextText ? (
-            <div className="mt-3 rounded-[6px] border border-border-soft bg-[#fbfcfd] p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Requirement context</p>
-              {document.summary.contextTitle ? (
-                <p className="mt-1 text-[13px] font-semibold text-text-primary">{document.summary.contextTitle}</p>
-              ) : null}
-              {document.summary.contextText ? (
-                <p className="mt-1 text-[12px] leading-relaxed text-text-secondary">{document.summary.contextText}</p>
-              ) : null}
-            </div>
-          ) : null}
 
           <CollapsibleDetailSection
             title="Evidence"
@@ -1133,17 +1122,6 @@ function DocumentMobileLayout({
       <div className="app-scrollbar min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-4 px-4 py-4">
           <AiSummaryBanner text={document.summary.text} />
-          {document.summary.contextTitle || document.summary.contextText ? (
-            <div className="mt-3 rounded-[6px] border border-border-soft bg-[#fbfcfd] p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Requirement context</p>
-              {document.summary.contextTitle ? (
-                <p className="mt-1 text-[13px] font-semibold text-text-primary">{document.summary.contextTitle}</p>
-              ) : null}
-              {document.summary.contextText ? (
-                <p className="mt-1 text-[12px] leading-relaxed text-text-secondary">{document.summary.contextText}</p>
-              ) : null}
-            </div>
-          ) : null}
 
           <section aria-label="Evidence insights">
             <div className="mb-2 flex items-center justify-between gap-2">

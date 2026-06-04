@@ -151,9 +151,9 @@ export const EMPIRE_CASE_RECORDS: CaseRecord[] = [
     participants: [{ kind: 'client', id: 'CLI-EMP-005', label: 'Amélie Dubois', role: 'applicant' }],
     linkedObjects: [],
     moduleSummaries: [
-      { module: 'requirements', label: 'Requirements', total: 4, completed: 2, attention: 1 },
-      { module: 'tasks', label: 'Tasks', total: 3, completed: 1, attention: 2 },
-      { module: 'documents', label: 'Documents', total: 5, completed: 3, attention: 1 },
+      { module: 'requirements', label: 'Requirements', total: 5, completed: 2, attention: 2 },
+      { module: 'tasks', label: 'Tasks', total: 9, completed: 6, attention: 2 },
+      { module: 'documents', label: 'Documents', total: 9, completed: 7, attention: 1 },
     ],
     facts: [
       { id: 'emp-nb-app', label: 'Application', value: 'APP-4401', category: 'identifier', importance: 'primary' },

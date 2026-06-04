@@ -18,6 +18,10 @@ function task(
   extra: Partial<DatasetTaskRecord> = {},
 ): DatasetTaskRecord {
   const description = extra.description ?? extra.aiSummary ?? label;
+  const summary = extra.summary ?? {
+    description,
+    checklist: [`Review ${label}`, 'Update case notes when complete'],
+  };
   return {
     id,
     kind: 'task',
@@ -45,7 +49,7 @@ function task(
     aiSummary: extra.aiSummary,
     description,
     ...extra,
-    summary: extra.summary,
+    summary,
     linkedObjects: [
       { kind: 'case', id: caseId, label: caseId },
       ...(extra.linkedObjects ?? []).filter((ref) => ref.kind !== 'case'),
@@ -208,7 +212,7 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
   task('task_emp_nb_010', NB, 'Order MIB search', 'Completed', 'Normal', 'application', {
     assignee: 'System',
     assigneeKind: 'team',
-    executionMode: 'manual',
+    executionMode: 'automated',
     aiGenerated: false,
     hasAI: false,
     origin: 'System',
@@ -226,7 +230,7 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
   task('task_emp_nb_011', NB, 'Order blood and urine', 'Completed', 'Normal', 'application', {
     assignee: 'System',
     assigneeKind: 'team',
-    executionMode: 'manual',
+    executionMode: 'automated',
     aiGenerated: false,
     hasAI: false,
     origin: 'System',
@@ -240,7 +244,7 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
   task('task_emp_nb_012', NB, 'Order Rx report', 'Completed', 'Normal', 'application', {
     assignee: 'System',
     assigneeKind: 'team',
-    executionMode: 'manual',
+    executionMode: 'automated',
     aiGenerated: false,
     hasAI: false,
     origin: 'System',
@@ -258,7 +262,7 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
   task('task_emp_nb_013', NB, 'Send scuba questionnaire', 'Completed', 'Normal', 'application', {
     assignee: 'AI Agent',
     assigneeKind: 'team',
-    executionMode: 'manual',
+    executionMode: 'semi_auto',
     aiGenerated: true,
     hasAI: true,
     createdDate: '2026-05-08',
@@ -267,6 +271,22 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
     aiSummary: 'AI flagged recreational scuba diving on application — questionnaire sent to advisor portal at submission.',
     linkedObjects: [{ kind: 'requirement', id: 'req_emp_nb_007', label: 'Scuba Questionnaire' }],
     actions: [{ type: 'complete', label: 'View', isPrimary: true }],
+  }),
+  task('task_emp_nb_014', NB, 'Chase scuba questionnaire', 'In Queue', 'Normal', 'application', {
+    assignee: 'System',
+    assigneeKind: 'team',
+    executionMode: 'automated',
+    aiGenerated: false,
+    hasAI: false,
+    origin: 'System',
+    createdDate: '2026-05-12',
+    dueDate: '2026-05-15',
+    aiSummary: 'Automated follow-up — scuba questionnaire still outstanding; reminder sent to advisor 12 May.',
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_emp_nb_007', label: 'Scuba Questionnaire' },
+      { kind: 'document', id: 'doc_emp_nb_scuba_reminder', label: 'Scuba reminder email' },
+    ],
+    actions: [{ type: 'complete', label: 'View chase log', isPrimary: true }],
   }),
   task('task_emp_nb_015', NB, 'Review Rx report — recommend APS', 'Completed', 'High', 'req_gathering', {
     assignee: 'AI Agent',
@@ -299,15 +319,73 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
     },
     evidenceDocuments: [
       { id: 'doc_emp_nb_rx', name: 'Rx report — IntelliScript', size: 'Metadata', category: 'Medical', aiSummary: 'Lisinopril and amlodipine on file — treated hypertension.', followUps: 0 },
-      { id: 'doc_emp_nb_aps_request', name: 'APS request (draft)', size: 'Metadata', category: 'Medical', aiSummary: 'Draft order to Clinique Médicale du Plateau — pending underwriter release.', followUps: 0 },
     ],
     linkedObjects: [
       { kind: 'requirement', id: 'req_emp_nb_002', label: 'APS' },
       { kind: 'requirement', id: 'req_emp_nb_006', label: 'RX report' },
       { kind: 'document', id: 'doc_emp_nb_rx', label: 'Rx report' },
-      { kind: 'document', id: 'doc_emp_nb_aps_request', label: 'APS request (draft)' },
+      { kind: 'task', id: 'task_emp_nb_016', label: 'Approve APS order' },
     ],
     actions: [{ type: 'complete', label: 'View recommendation', isPrimary: true }],
+  }),
+  task('task_emp_nb_016', NB, 'Approve APS order', 'Completed', 'High', 'req_gathering', {
+    assignee: 'Victor Ramon',
+    assigneeKind: 'user',
+    executionMode: 'manual',
+    aiGenerated: false,
+    hasAI: false,
+    createdDate: '2026-05-11',
+    dueDate: '2026-05-11',
+    completedDate: '2026-05-11',
+    aiSummary: 'Underwriter approved AI-recommended APS after Rx review — lisinopril and amlodipine for treated hypertension.',
+    evidenceDocuments: [
+      { id: 'doc_emp_nb_rx', name: 'Rx report — IntelliScript', size: 'Metadata', category: 'Medical', aiSummary: 'Rx trigger for APS approval.', followUps: 0 },
+    ],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_emp_nb_002', label: 'APS' },
+      { kind: 'requirement', id: 'req_emp_nb_006', label: 'RX report' },
+      { kind: 'task', id: 'task_emp_nb_015', label: 'Review Rx — recommend APS' },
+      { kind: 'task', id: 'task_emp_nb_017', label: 'Order APS' },
+    ],
+    actions: [{ type: 'complete', label: 'View approval', isPrimary: true }],
+  }),
+  task('task_emp_nb_017', NB, 'Order APS — Clinique Médicale du Plateau', 'Completed', 'High', 'req_gathering', {
+    assignee: 'Victor Ramon',
+    assigneeKind: 'user',
+    executionMode: 'manual',
+    aiGenerated: false,
+    hasAI: false,
+    createdDate: '2026-05-11',
+    dueDate: '2026-05-11',
+    completedDate: '2026-05-11',
+    aiSummary: 'APS request sent to Clinique Médicale du Plateau same day as Rx return and underwriter approval.',
+    evidenceDocuments: [
+      { id: 'doc_emp_nb_aps_request', name: 'APS request — Clinique Médicale du Plateau', size: 'Metadata', category: 'Medical', aiSummary: 'APS order released to physician.', followUps: 0 },
+    ],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_emp_nb_002', label: 'APS' },
+      { kind: 'document', id: 'doc_emp_nb_aps_request', label: 'APS request' },
+      { kind: 'task', id: 'task_emp_nb_016', label: 'Approve APS order' },
+      { kind: 'task', id: 'task_emp_nb_018', label: 'APS follow-up' },
+    ],
+    actions: [{ type: 'complete', label: 'View APS request', isPrimary: true }],
+  }),
+  task('task_emp_nb_018', NB, 'APS follow-up — physician chase', 'In Queue', 'Normal', 'req_gathering', {
+    assignee: 'System',
+    assigneeKind: 'team',
+    executionMode: 'automated',
+    aiGenerated: false,
+    hasAI: false,
+    origin: 'System',
+    createdDate: '2026-05-11',
+    dueDate: '2026-05-22',
+    aiSummary: 'Automated chase schedule active — APS ordered 11 May; first physician follow-up due if not received.',
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_emp_nb_002', label: 'APS' },
+      { kind: 'document', id: 'doc_emp_nb_aps_request', label: 'APS request' },
+      { kind: 'task', id: 'task_emp_nb_017', label: 'Order APS' },
+    ],
+    actions: [{ type: 'complete', label: 'View follow-up schedule', isPrimary: true }],
   }),
 
   task('task_emp_nb_s_001', NB_S, 'Review Solution 10 application & questionnaire', 'Completed', 'Normal', 'application', {

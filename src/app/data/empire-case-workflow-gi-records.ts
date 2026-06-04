@@ -186,7 +186,7 @@ export const EMPIRE_CASE_WORKFLOW_GI_RECORDS: Record<string, EmpireCaseWorkflowG
       contextBar: [
         { slot: 1, label: 'Applicant', value: 'Amélie Dubois', sub: null, valueColor: null },
         { slot: 2, label: 'Product', value: 'Solution 20 participating', sub: '$500,000', subType: 'descriptor', valueColor: null },
-        { slot: 3, label: 'MIB', value: 'Clear', sub: null, valueColor: null },
+        { slot: 3, label: 'Decision', value: 'Standard · Non-smoker', sub: '0 pts', subType: 'descriptor', valueColor: null },
         { slot: 4, label: 'SLA', value: '27 May 2026', sub: null, valueColor: 'warning' },
       ],
       subwayStages: [
@@ -201,7 +201,7 @@ export const EMPIRE_CASE_WORKFLOW_GI_RECORDS: Record<string, EmpireCaseWorkflowG
     generalInformation: {
       sections: [],
       aiSummary: {
-        text: 'Amélie Dubois applied for $500,000 Solution 20 participating whole life via Empire Life advisor portal. Non-smoker, BMI 25. Application initial review completed 8 May; MIB, blood/urine, and Rx ordered by system at submission. Rx received 11 May — AI recommends APS for lisinopril and amlodipine (treated hypertension); underwriter approval pending. Scuba questionnaire still outstanding. Preliminary standard terms anticipated pending medical evidence.',
+        text: 'Amélie Dubois applied for $500,000 Solution 20 participating whole life via the Empire Life advisor portal. Non-smoker, age 44; preliminary standard terms pending APS and paramedical results.',
         confidence: 73,
         generatedAt: '2026-05-17',
       },
@@ -252,7 +252,9 @@ export const EMPIRE_CASE_WORKFLOW_GI_RECORDS: Record<string, EmpireCaseWorkflowG
           ],
         },
       ],
-      collapsibles: [],
+      collapsibles: [
+        { id: 'uw_status', title: 'Underwriting status', subtitle: 'APS ordered 11 May · labs and scuba outstanding' },
+      ],
     },
   },
   [EMPIRE_DEMO_CASE_IDS.nbSimplified]: {

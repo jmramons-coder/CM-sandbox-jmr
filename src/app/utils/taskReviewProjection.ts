@@ -435,9 +435,18 @@ export function resolveTaskTableAiDigest(
   return empty;
 }
 
-export function taskExecutionModeLabel(mode: TaskExecutionMode | undefined): string | null {
-  if (mode === 'semi_auto') return 'Semi-auto';
+export function taskExecutionModeLabel(
+  mode: TaskExecutionMode | undefined,
+  assignee?: string,
+): string | null {
+  if (mode === 'automated') return 'Automated';
+  if (mode === 'semi_auto') return 'AI-assisted';
   if (mode === 'exception') return 'Needs review';
+  if (mode === 'manual') {
+    if (assignee === 'System') return 'Automated';
+    if (assignee === 'AI Agent') return 'AI-assisted';
+    return 'Human';
+  }
   return null;
 }
 

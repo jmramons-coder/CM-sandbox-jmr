@@ -22,10 +22,11 @@ import { ModuleTablePaginationFooter } from '../ModuleTablePaginationFooter';
 import { SummaryTableColumnHeader, TaskTableFirstColumnCell } from '../ModuleCellHelpers';
 import { TaskTableAiDigestCell } from '../tasks/TaskTableAiDigestCell';
 import { TaskTableAssigneeCell } from '../tasks/TaskTableAssigneeCell';
+import { TaskTableExecutionCell } from '../tasks/TaskTableExecutionCell';
 import { TaskTableStatusCell } from '../tasks/TaskTableStatusCell';
 import type { CaseContextTaskRow } from './CaseTabMobileCards';
 
-const CASE_TASKS_TABLE_MIN_WIDTH = 1120;
+const CASE_TASKS_TABLE_MIN_WIDTH = 1200;
 
 type CaseTasksTableProps = {
   rows: CaseContextTaskRow[];
@@ -74,6 +75,9 @@ export function CaseTasksTable({
               >
                 Assignee
               </th>
+              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} min-w-[96px] px-2 py-3 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>
+                Execution
+              </th>
               <th
                 className={`relative border-b border-border-default py-3 pl-2 pr-4 text-left align-middle text-sm font-medium text-text-secondary ${moduleTableStatusStickyRightClass(64)} ${MODULE_TABLE_TH_STICKY_EDGE_CLASS} ${tableScroll.showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
               >
@@ -93,7 +97,7 @@ export function CaseTasksTable({
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={MODULE_TABLE_ROW_KEBAB_ENABLED ? 8 : 7} className="px-6 py-16 text-center">
+                <td colSpan={MODULE_TABLE_ROW_KEBAB_ENABLED ? 9 : 8} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <ListChecks className="h-8 w-8 text-[#dbdee1]" />
                     <p className="text-sm font-medium text-text-muted">
@@ -152,6 +156,9 @@ export function CaseTasksTable({
                   <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary ${cellSurface}`}>{row.dueDate}</td>
                   <td className={`min-w-[112px] border-b border-border-default px-2 py-3 ${cellSurface}`}>
                     <TaskTableAssigneeCell task={resolved} />
+                  </td>
+                  <td className={`min-w-[96px] border-b border-border-default px-2 py-3 ${cellSurface}`}>
+                    <TaskTableExecutionCell task={resolved} />
                   </td>
                   <td
                     className={`relative border-b border-border-default py-3 pl-2 pr-4 align-top text-sm ${moduleTableStatusStickyRightClass(64)} z-[6] ${cellSurface} ${tableScroll.showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}

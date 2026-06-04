@@ -66,6 +66,7 @@ import { DynamicDocumentSidePanel, type DynamicDocumentData } from './DynamicDoc
 import { AiActivityToast, type AiActivitySequence } from './AiActivityToast';
 import { deleteScoringItem, upsertScoringItem, type ScoringItemType } from '../domain/scoring';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
+import { buildCaseDocumentPanelData } from '../utils/buildCaseDocumentPanelData';
 import { getDefaultSidePanelWidth, getDocumentSidePanelWidth, resolveDocumentSidePanelWidth } from '../utils/sidepanel-width';
 import { useDataSourceSettings, usePlatformSettings, useResolvedSystemDataset } from '../contexts/PlatformSettingsContext';
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter';
@@ -569,7 +570,10 @@ export function CaseView({
   );
   const workflowMeta = data.workflowMeta;
   const workflowContextSlots = workflowMeta?.contextBar ? [...workflowMeta.contextBar].sort((a, b) => a.slot - b.slot) : [];
-  const isApplicantContextSlot = (label: string) => label.trim().toLowerCase() === 'applicant';
+  const isScoringContextSlot = (label: string) => {
+    const normalized = label.trim().toLowerCase();
+    return normalized === 'scoring' || normalized === 'decision';
+  };
   const richGeneralInfoCards = data.generalInformation?.cards ?? [];
   const richGeneralInfoCollapsibles = data.generalInformation?.collapsibles ?? [];
   const structuredGeneralSections =
@@ -947,8 +951,13 @@ export function CaseView({
   }, [taskDetailPanelResizing]);
 
   useEffect(() => {
+    const ctx = activeCasePanelContextId;
+    if (ctx.startsWith('document:') && activeTab === 'documents') return;
+    if (ctx.startsWith('task:') && activeTab === 'tasks') return;
+    if (ctx.startsWith('requirement:') && activeTab === 'requirements') return;
+    if (ctx.startsWith('scoring:') && activeTab === 'scoring') return;
     closeCaseSidePanel();
-  }, [activeTab, data.id, closeCaseSidePanel]);
+  }, [activeCasePanelContextId, activeTab, data.id, closeCaseSidePanel]);
 
   useEffect(() => {
     setActiveTab('overview');
@@ -1915,20 +1924,9 @@ export function CaseView({
           {workflowContextSlots.length ? (
             <div className="grid grid-cols-2 divide-x divide-y divide-[#e8eaed] rounded-t-lg bg-white lg:grid-cols-4 lg:divide-y-0">
               {workflowContextSlots.map((slot) => {
-                if (scoringSidePanelEnabled && scoringDraft && isApplicantContextSlot(slot.label)) {
+                if (scoringSidePanelEnabled && scoringDraft && isScoringContextSlot(slot.label)) {
                   return (
-                    <div key={slot.slot} className="grid min-w-0 grid-cols-2 gap-4 px-4 py-3 sm:px-5">
-                      <div className="min-w-0">
-                        <SectionLabel>{slot.label}</SectionLabel>
-                        <span className={`block truncate text-[15px] font-semibold ${richValueClass(slot.valueColor)}`}>
-                          {slot.value}
-                        </span>
-                        {slot.sub ? (
-                          <span className={`mt-0.5 block truncate text-[11px] ${slot.subType === 'reference_link' ? 'text-brand-blue underline underline-offset-2' : 'text-text-muted'}`}>
-                            {slot.sub}
-                          </span>
-                        ) : null}
-                      </div>
+                    <div key={slot.slot} className="flex min-w-0 flex-col justify-center px-4 py-3 sm:px-5">
                       <CaseScoringApplicantAffordance
                         scoring={scoringDraft}
                         onOpen={openScoringPanel}
@@ -1952,20 +1950,11 @@ export function CaseView({
             </div>
           ) : null}
           <div className={`${workflowContextSlots.length ? 'hidden' : 'grid'} grid-cols-2 divide-x divide-y divide-[#e8eaed] rounded-t-lg bg-white lg:grid-cols-4 lg:divide-y-0`}>
-          <div className={`${workflowContextSlots.length ? 'hidden' : ''} ${scoringSidePanelEnabled && scoringDraft ? 'grid min-w-0 grid-cols-2 gap-4 px-4 py-3 sm:px-5' : 'flex min-w-0 flex-col justify-center px-4 py-3'}`}>
-            <div className="min-w-0">
-              <SectionLabel>{primaryPartyMetric?.label ?? 'Applicant'}</SectionLabel>
-              <span className="block truncate text-[15px] font-semibold text-text-primary">
-                {primaryPartyMetric?.value ?? primaryPartyDisplayName}
-              </span>
-            </div>
-            {scoringSidePanelEnabled && scoringDraft ? (
-              <CaseScoringApplicantAffordance
-                scoring={scoringDraft}
-                onOpen={openScoringPanel}
-                active={scoringPanelActive}
-              />
-            ) : null}
+          <div className={`${workflowContextSlots.length ? 'hidden' : ''} flex min-w-0 flex-col justify-center px-4 py-3`}>
+            <SectionLabel>{primaryPartyMetric?.label ?? 'Applicant'}</SectionLabel>
+            <span className="block truncate text-[15px] font-semibold text-text-primary">
+              {primaryPartyMetric?.value ?? primaryPartyDisplayName}
+            </span>
           </div>
           <div className="flex min-w-0 flex-col justify-center px-4 py-3">
             <SectionLabel>{planMetric?.label ?? 'Plan'}</SectionLabel>
@@ -2192,6 +2181,7 @@ export function CaseView({
                 setScrollEl={setDocumentsTableScrollEl}
                 onOpenDocument={(row) => openCaseDocumentPanel(documentToCaseContextRow(row))}
                 onOpenRequirementTab={() => setActiveTab('requirements')}
+                hideAiBadges={activeDataset.id === 'empire-ca-demo'}
               />
             )}
 
@@ -2410,6 +2400,8 @@ export function CaseView({
               documents={selectedRequirementDocuments}
               tasks={selectedRequirementTasks}
               scoring={scoringDraft}
+              hideScoringWidget={scoringSidePanelEnabled}
+              requirementActionPreset={activeDataset.id === 'empire-ca-demo' ? 'empire_nb' : undefined}
               onOpenScoring={() => openScoringPanel()}
               onOpenDocument={(document) => {
                 openCaseDocumentPanel(documentToCaseContextRow(document));
@@ -2442,7 +2434,7 @@ export function CaseView({
             />
           ) : null}
           {activeCasePanelContextId.startsWith('scoring:') && scoringDraft ? (
-            <CaseScoringSidePanel scoring={scoringDraft} />
+            <CaseScoringSidePanel scoring={scoringDraft} onChange={updateScoring} />
           ) : null}
         </WorkspaceObjectSidePanel>
       ) : null}

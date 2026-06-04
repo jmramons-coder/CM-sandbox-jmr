@@ -83,6 +83,7 @@ export const EMPIRE_SCORING_RECORDS: Record<string, UnderwritingScoring> = {
         positiveScore: '—',
         negativeScore: '+10',
         notes: 'AI recommends APS for treated HBP and HC',
+        notesAuthor: 'ai',
       },
       {
         id: 'ra_aps',
@@ -90,7 +91,8 @@ export const EMPIRE_SCORING_RECORDS: Record<string, UnderwritingScoring> = {
         assessment: 'Recommended to get more info on HBP and HC',
         positiveScore: '—',
         negativeScore: '—',
-        notes: 'Pending underwriter order',
+        notes: 'Pending physician response',
+        notesAuthor: 'ai',
         pending: true,
       },
     ],

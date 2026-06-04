@@ -321,6 +321,7 @@ export type UnderwritingRequirementAssessment = {
   positiveScore?: string;
   negativeScore?: string;
   notes?: string;
+  notesAuthor?: 'ai' | 'underwriter';
   pending?: boolean;
 };
 

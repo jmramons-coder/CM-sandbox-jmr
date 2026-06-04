@@ -206,6 +206,12 @@ export const EMPIRE_SIMPLE_TASK_RECORDS: DatasetTaskRecord[] = [
           },
         ],
       },
+      ofacScreening: {
+        provider: 'LexisNexis Bridger Insight XG',
+        result: 'Clear',
+        screenedAt: 'May 14, 2026',
+        detail: 'No SDN or consolidated list matches for Eleanor Whitfield and Ottawa address.',
+      },
     },
     evidenceDocuments: [
       {

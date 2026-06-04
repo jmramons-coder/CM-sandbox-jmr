@@ -144,6 +144,27 @@ export const EMPIRE_CLIENT_RECORDS: ClientRecord[] = [
     linkedObjects: [
       { kind: 'case', id: EMPIRE_DEMO_CASE_IDS.nbFullUw, label: 'New business — Full underwriting' },
       { kind: 'application', id: 'APP-4401', label: 'Solution 20 — Amélie Dubois' },
+      { kind: 'client', id: 'CLI-EMP-005B', label: 'Luc Dubois', role: 'additional_insured' },
+    ],
+  },
+  {
+    id: 'CLI-EMP-005B',
+    kind: 'client',
+    name: 'Luc Dubois',
+    type: 'person',
+    status: 'active',
+    category: 'additional_insured',
+    summary: 'Additional insured (child term rider) — declined pending avocation clarification.',
+    profile: {
+      gender: 'Male',
+      dob: '2010-06-12',
+      age: 15,
+      smoker: 'Non-smoker',
+      location: 'Montréal, QC',
+    },
+    linkedObjects: [
+      { kind: 'client', id: 'CLI-EMP-005', label: 'Amélie Dubois', role: 'primary_insured' },
+      { kind: 'case', id: EMPIRE_DEMO_CASE_IDS.nbFullUw, label: 'New business — Full underwriting' },
     ],
   },
   {

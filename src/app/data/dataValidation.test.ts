@@ -147,7 +147,34 @@ describe('dataset validation gates', () => {
     expect(dataset!.assistantResponses).toHaveLength(7);
     expect(dataset!.activityEvents).toHaveLength(6);
     expect(dataset!.documents.some((doc) => doc.id === 'doc_emp_addr_change_form' && doc.fileAvailable === true)).toBe(true);
-    expect(dataset!.documents.filter((doc) => doc.id !== 'doc_emp_addr_change_form').every((doc) => doc.fileAvailable === false)).toBe(true);
+    for (const documentId of [
+      'doc_emp_nb_app',
+      'doc_emp_nb_needs',
+      'doc_emp_nb_mib',
+      'doc_emp_nb_lab_req',
+      'doc_emp_nb_rx',
+      'doc_emp_nb_scuba_sent',
+      'doc_emp_nb_scuba_reminder',
+      'doc_emp_nb_aps_request',
+      'doc_emp_nb_add_ins_decline',
+    ]) {
+      expect(dataset!.documents.some((doc) => doc.id === documentId && doc.fileAvailable === true)).toBe(true);
+    }
+    const empirePreviewIds = new Set([
+      'doc_emp_addr_change_form',
+      'doc_emp_nb_app',
+      'doc_emp_nb_needs',
+      'doc_emp_nb_mib',
+      'doc_emp_nb_lab_req',
+      'doc_emp_nb_rx',
+      'doc_emp_nb_scuba_sent',
+      'doc_emp_nb_scuba_reminder',
+      'doc_emp_nb_aps_request',
+      'doc_emp_nb_add_ins_decline',
+    ]);
+    expect(
+      dataset!.documents.filter((doc) => !empirePreviewIds.has(doc.id)).every((doc) => doc.fileAvailable === false),
+    ).toBe(true);
     expect(getSystemDataset('empire-ca-demo').tasks[0]?.id).toBe('task_emp_addr_001');
 
     const nbSubTypes = dataset!.cases

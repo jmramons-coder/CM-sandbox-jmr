@@ -18,6 +18,14 @@ function statusLabel(status: string) {
 }
 
 function sourceLabel(source: string) {
+  const labels: Record<string, string> = {
+    nb_rules_engine: 'New business rules',
+    paramed_network: 'Paramed network',
+    milliman_intelliscript: 'Milliman IntelliScript',
+    ai_rule_engine: 'AI rule engine',
+    empire_claims: 'Empire Claims',
+  };
+  if (labels[source]) return labels[source];
   return source.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
@@ -52,7 +60,18 @@ function contextIcon(type?: RequirementContextType) {
   return Database;
 }
 
-function actionLabels(status: CaseRequirement['status']) {
+function empireNbActionLabels(status: CaseRequirement['status']) {
+  if (isFulfilledStatus(status)) {
+    return { primary: 'View full record', secondary: ['Re-open requirement'] as string[] };
+  }
+  return {
+    primary: 'Receipt',
+    secondary: ['Waive', 'Upload document', 'Extend due date'],
+  };
+}
+
+function actionLabels(status: CaseRequirement['status'], preset?: 'empire_nb') {
+  if (preset === 'empire_nb') return empireNbActionLabels(status);
   switch (status) {
     case 'Overdue':
     case 'overdue':
@@ -81,32 +100,37 @@ function actionLabels(status: CaseRequirement['status']) {
 export function RequirementContextBody({
   caseId,
   documents = [],
+  hideScoringWidget = false,
   onOpenDocument,
   onOpenScoring,
   onOpenTask,
   requirement,
+  requirementActionPreset,
   scoring,
   tasks = [],
 }: {
   caseId: string;
   documents?: CaseDocument[];
+  hideScoringWidget?: boolean;
   onOpenScoring?: () => void;
   onOpenDocument?: (document: CaseDocument) => void;
   onOpenTask?: (task: Task) => void;
   requirement: CaseRequirement;
+  requirementActionPreset?: 'empire_nb';
   scoring?: UnderwritingScoring;
   tasks?: Task[];
 }) {
   const [activeTab, setActiveTab] = useState<RequirementPanelTab>('overview');
   const fulfilled = isFulfilledStatus(requirement.status);
   const overdue = isOverdueStatus(requirement.status);
-  const actions = actionLabels(requirement.status);
+  const actions = actionLabels(requirement.status, requirementActionPreset);
+  const receivedDocuments = fulfilled ? documents : [];
   const ContextIcon = contextIcon(requirement.context?.type);
   const history = [...(requirement.history ?? [])].sort((a, b) => b.date.localeCompare(a.date));
   const criteria = requirement.fulfillmentCriteria ?? [];
   const requirementId = String(requirement.datasetRequirementId ?? requirement.id);
   const relationshipCount = tasks.length;
-  const contextItemCount = documents.length + (requirement.context ? 1 : 0);
+  const contextItemCount = (requirement.context ? 1 : 0) + (fulfilled ? receivedDocuments.length : 0);
 
   const panelTabs = useMemo(
     () => [
@@ -186,9 +210,21 @@ export function RequirementContextBody({
 
               <SidePanelSummaryBox>
                 <p className="text-[12px] leading-relaxed text-text-primary">
-                  {requirement.aiSummary ?? requirement.notes ?? 'Review this requirement and its linked evidence before progressing the case.'}
+                  {requirement.aiSummary ?? 'Review this requirement and its linked evidence before progressing the case.'}
                 </p>
               </SidePanelSummaryBox>
+
+              {requirementActionPreset === 'empire_nb' ? (
+                <section className="overflow-hidden rounded-lg border border-border-soft bg-white">
+                  <div className="border-b border-border-soft px-4 py-3">
+                    <p className="text-[13px] font-semibold text-text-primary">Internal notes</p>
+                    <p className="mt-0.5 text-[11px] text-text-secondary">Underwriting team only</p>
+                  </div>
+                  <p className="px-4 py-3 text-[12px] leading-relaxed text-text-secondary">
+                    {requirement.notes?.trim() || 'No internal notes recorded.'}
+                  </p>
+                </section>
+              ) : null}
 
               <div className="grid gap-2 sm:grid-cols-2">
                 <StatCard label="Category" value={requirement.category} />
@@ -220,7 +256,9 @@ export function RequirementContextBody({
                 </div>
               </section>
 
-              <ScoringMiniWidget scoring={scoring} onOpenScoring={onOpenScoring} />
+              {!hideScoringWidget ? (
+                <ScoringMiniWidget scoring={scoring} onOpenScoring={onOpenScoring} />
+              ) : null}
             </div>
           ) : null}
 
@@ -256,14 +294,18 @@ export function RequirementContextBody({
                 )}
               </section>
 
-              {documents.length ? (
-                <section className="overflow-hidden rounded-lg border border-border-soft bg-white">
-                  <div className="border-b border-border-soft px-4 py-3">
-                    <p className="text-[13px] font-semibold text-text-primary">Evidence</p>
-                    <p className="mt-0.5 text-[11px] text-text-secondary">{documents.length} linked document(s)</p>
-                  </div>
+              <section className="overflow-hidden rounded-lg border border-border-soft bg-white">
+                <div className="border-b border-border-soft px-4 py-3">
+                  <p className="text-[13px] font-semibold text-text-primary">Received documents</p>
+                  <p className="mt-0.5 text-[11px] text-text-secondary">
+                    {fulfilled
+                      ? `${receivedDocuments.length} document(s) on file`
+                      : 'Documents appear here once the requirement is receipted'}
+                  </p>
+                </div>
+                {receivedDocuments.length ? (
                   <div className="divide-y divide-border-soft">
-                    {documents.map((document) => (
+                    {receivedDocuments.map((document) => (
                       <button
                         key={document.id}
                         type="button"
@@ -278,16 +320,18 @@ export function RequirementContextBody({
                           <span className="mt-0.5 block text-[11px] text-text-secondary">
                             {document.fileType ?? 'Document'} · {document.fileSize} · Uploaded {document.uploaded}
                           </span>
-                          <span className="mt-1 block line-clamp-2 text-[11px] leading-relaxed text-text-muted">{document.aiSummary}</span>
                         </span>
-                        <LozengeTag label={document.status} type={document.status === 'Validated' ? 'Success' : 'Warning'} subtle />
                       </button>
                     ))}
                   </div>
-                </section>
-              ) : null}
+                ) : (
+                  <p className="px-4 py-6 text-[12px] text-text-secondary">
+                    No received documents yet.
+                  </p>
+                )}
+              </section>
 
-              {!requirement.context && !documents.length ? (
+              {!requirement.context && !fulfilled ? (
                 <p className="rounded-lg border border-border-soft bg-white px-4 py-6 text-[12px] text-text-secondary">
                   No context or evidence recorded for this requirement yet.
                 </p>

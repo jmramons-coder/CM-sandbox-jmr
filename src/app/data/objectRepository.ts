@@ -351,6 +351,7 @@ function toDocument(dataset: SystemDataset, row: DatasetDocumentRecord): CaseDoc
     source: row.source ?? (row.fileAvailable ? 'dataset_import' : 'metadata_only'),
     claimant: row.claimant,
     reqContext: row.reqContext,
+    tableDescription: row.tableDescription,
     insights: row.insights,
     followUps: row.followUps,
     insight: row.insight,

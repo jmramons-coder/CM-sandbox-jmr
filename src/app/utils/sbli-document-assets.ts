@@ -1,4 +1,5 @@
 import { getActiveDemoConfigurationId } from '../data/datasetResolutionContext';
+import { getEmpireDocumentPreviewUrl } from './empire-document-assets';
 
 const DEMO_SBLI_ENVIRONMENT_ID = 'demo-sbli';
 
@@ -84,6 +85,8 @@ export function resolveDocumentPreviewUrl(options: {
     if (equisoft) return equisoft;
   }
   if (options.fileUrl?.trim()) return options.fileUrl.trim();
+  const empire = getEmpireDocumentPreviewUrl(options.documentId, options.filename);
+  if (empire) return empire;
   const sbli = getSbliDocumentPreviewUrl(options.documentId, options.filename);
   if (sbli) return sbli;
   const pageImage = options.pageImage?.trim();

@@ -198,7 +198,7 @@ export interface TaskPanelAction {
 }
 
 /** How the task expects human involvement. */
-export type TaskExecutionMode = 'semi_auto' | 'manual' | 'exception';
+export type TaskExecutionMode = 'semi_auto' | 'manual' | 'exception' | 'automated';
 
 /** Canonical semi-auto review payload — one verdict, optional crew reasoning steps. */
 export type TaskCrewFindingTone = 'success' | 'warning' | 'info';
@@ -276,6 +276,13 @@ export interface TaskReviewPayload {
   addressPolicyScope?: AddressChangePolicyScopePayload;
   /** Semi-auto address change — user picks canonical address before approving. */
   addressDecision?: AddressChangeDecisionPayload;
+  /** OFAC / sanctions screening result for address-change and similar service tasks. */
+  ofacScreening?: {
+    provider: string;
+    result: string;
+    screenedAt: string;
+    detail?: string;
+  };
 }
 
 // Task Interface
@@ -673,6 +680,7 @@ export interface CaseDocument {
   uploadedAt?: string | null;
   claimant?: string;
   reqContext?: string;
+  tableDescription?: string;
   insights?: Array<{
     anchor: string;
     title: string;

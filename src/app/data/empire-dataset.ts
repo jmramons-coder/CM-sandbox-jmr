@@ -20,6 +20,9 @@ import { EMPIRE_REQUEST_RECORDS } from './empire-request-records';
 import { EMPIRE_ASSISTANT_RESPONSES } from './empire-assistant-responses';
 import { EMPIRE_ACTIVITY_RECORDS } from './empire-activity-records';
 import { applyEmpireAddressChangeOverlay } from './empireAddressChangeOverlay';
+import type { DatasetDocumentRecord } from './multi-case-dataset';
+import type { DocumentEvidenceRecord } from './multi-case-dataset';
+import { getEmpireDocumentPreviewUrl } from '../utils/empire-document-assets';
 
 function tabIdFromLabel(label: string): CaseTabConfiguration {
   const normalized = label.toLowerCase();
@@ -53,6 +56,27 @@ function fieldFromContextSlot(slot: { slot: number; label: string; value: string
     type: slot.valueColor ? 'status' : 'text',
     enabled: true,
     muted: false,
+  };
+}
+
+function withEmpireDocumentAssets(document: DatasetDocumentRecord): DatasetDocumentRecord {
+  const previewUrl = getEmpireDocumentPreviewUrl(document.id, document.filename);
+  if (!previewUrl) return document;
+  return {
+    ...document,
+    fileUrl: previewUrl,
+    fileAvailable: true,
+    placeholderReason: undefined,
+    fileSize: document.fileSize === 'Metadata only' ? 'Preview' : document.fileSize,
+  };
+}
+
+function withEmpireEvidenceAssets(evidence: DocumentEvidenceRecord): DocumentEvidenceRecord {
+  const previewUrl = getEmpireDocumentPreviewUrl(evidence.documentId);
+  if (!previewUrl) return evidence;
+  return {
+    ...evidence,
+    pages: evidence.pages.map((page) => ({ ...page, image: page.image ?? previewUrl })),
   };
 }
 
@@ -137,7 +161,7 @@ export const EMPIRE_DATASET: SystemDataset = applyEmpireAddressChangeOverlay({
   enabledBusinessLines: ['claim', 'new_business'],
   generationProfileId: 'empire-ca-seed',
   targetRecordCount: 155,
-  documentMode: 'metadata_only',
+  documentMode: 'sample_files',
   displayCurrency: 'CAD',
   description: 'Empire Life branded demo dataset. Claims and new-business coverage in CAD; advisor-led distribution via empire.ca/advisor.',
   objectDomains: [
@@ -158,12 +182,12 @@ export const EMPIRE_DATASET: SystemDataset = applyEmpireAddressChangeOverlay({
   applications: EMPIRE_APPLICATION_RECORDS,
   tasks: EMPIRE_TASK_RECORDS,
   requirements: EMPIRE_REQUIREMENT_RECORDS,
-  documents: EMPIRE_DOCUMENT_RECORDS,
+  documents: EMPIRE_DOCUMENT_RECORDS.map(withEmpireDocumentAssets),
   requests: EMPIRE_REQUEST_RECORDS,
   communications: [],
   notes: [],
   activityEvents: EMPIRE_ACTIVITY_RECORDS,
-  documentEvidence: EMPIRE_DOCUMENT_EVIDENCE_RECORDS,
+  documentEvidence: EMPIRE_DOCUMENT_EVIDENCE_RECORDS.map(withEmpireEvidenceAssets),
   assistantResponses: EMPIRE_ASSISTANT_RESPONSES,
   aiActions: [],
   legacyMockOverlayEnabled: false,

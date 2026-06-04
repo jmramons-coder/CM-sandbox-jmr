@@ -36,6 +36,14 @@ export function formatScoringRiskLabel(scoring: UnderwritingScoring): string {
   return titleCaseRiskClass(riskClass);
 }
 
+/** Plain-language risk class for compact UI (e.g. "Standard NT" → "Standard · Non-smoker"). */
+export function formatScoringDisplayRiskLabel(scoring: UnderwritingScoring): string {
+  const raw = formatScoringRiskLabel(scoring);
+  if (/\sNT$/i.test(raw)) return raw.replace(/\sNT$/i, ' · Non-smoker');
+  if (/\sT$/i.test(raw)) return raw.replace(/\sT$/i, ' · Smoker');
+  return raw;
+}
+
 export function formatScoringCellValue(value?: string): string {
   if (!value || value.trim() === '') return '—';
   return value;

@@ -276,6 +276,7 @@ export interface DatasetDocumentRecord {
   source?: string;
   claimant?: string;
   reqContext?: string;
+  tableDescription?: string;
   insights?: Array<{
     anchor: string;
     title: string;

@@ -84,9 +84,30 @@ export const MOCK_DOCUMENT_EVIDENCE: Record<string, DynamicDocumentData> = {
   },
 };
 
+function buildFallbackDocumentPage(
+  documentId: string,
+  document: SystemDataset['documents'][number] | undefined,
+  evidence: SystemDataset['documentEvidence'][number] | undefined,
+): DynamicDocumentData['pages'] {
+  return [
+    {
+      number: 1,
+      image: resolveDocumentPreviewUrl({
+        documentId,
+        filename: document?.filename,
+        fileUrl: document?.fileUrl,
+        fileAvailable: document?.fileAvailable,
+        pageImage: evidence?.pages[0]?.image,
+        legacyFallback: '/request-adress_change-dd2100ce-bebe-4031-ab3a-45dc96d1e07b.png',
+      }),
+      label: document?.label ?? evidence?.pages[0]?.label ?? 'Document metadata',
+    },
+  ];
+}
+
 function getDatasetDocumentEvidence(documentId: string, dataset?: SystemDataset): DynamicDocumentData | null {
   if (!dataset) return null;
-  const evidence = dataset.documentEvidence.find((item) => item.documentId === documentId);
+  const evidence = dataset.documentEvidence?.find((item) => item.documentId === documentId);
   const document = dataset.documents.find((item) => item.id === documentId);
   if (!evidence && !document) return null;
   const caseId = document?.linkedObjects?.find((ref) => ref.kind === 'case')?.id;
@@ -114,39 +135,27 @@ function getDatasetDocumentEvidence(documentId: string, dataset?: SystemDataset)
     linkedRequirement: document?.linkedRequirement ?? 'Dataset evidence',
     linkedRequirementHref: caseId ? `/cases/${caseId}#tab=requirements` : '/cases',
     received: document?.uploaded ?? 'N/A',
-    totalPages: evidence?.pages.length ?? 1,
-    pages: evidence?.pages.map((page) => ({
-      number: page.number,
-      image: resolveDocumentPreviewUrl({
-        documentId,
-        filename: document?.filename,
-        fileUrl: document?.fileUrl,
-        fileAvailable: document?.fileAvailable,
-        pageImage: page.image,
-        legacyFallback: '/request-adress_change-dd2100ce-bebe-4031-ab3a-45dc96d1e07b.png',
-      }),
-      label: page.label,
-    })) ?? [
-      {
-        number: 1,
-        image: resolveDocumentPreviewUrl({
-          documentId,
-          filename: document?.filename,
-          fileUrl: document?.fileUrl,
-          fileAvailable: document?.fileAvailable,
-          legacyFallback: '/request-adress_change-dd2100ce-bebe-4031-ab3a-45dc96d1e07b.png',
-        }),
-        label: document?.label ?? 'Document metadata',
-      },
-    ],
+    totalPages: evidence?.pages.length || 1,
+    pages: evidence?.pages?.length
+      ? evidence.pages.map((page) => ({
+          number: page.number,
+          image: resolveDocumentPreviewUrl({
+            documentId,
+            filename: document?.filename,
+            fileUrl: document?.fileUrl,
+            fileAvailable: document?.fileAvailable,
+            pageImage: page.image,
+            legacyFallback: '/request-adress_change-dd2100ce-bebe-4031-ab3a-45dc96d1e07b.png',
+          }),
+          label: page.label,
+        }))
+      : buildFallbackDocumentPage(documentId, document, evidence),
     summary: {
       label: 'Dataset evidence summary',
       status: document?.status ?? 'Metadata',
       text: evidence?.summary ?? document?.aiSummary ?? document?.placeholderReason ?? 'Dataset document metadata is available.',
-      contextTitle: 'Why this document matters',
-      contextText: document?.reqContext ?? `This evidence is linked to ${caseRecord?.title ?? caseId ?? 'the active data context'}.`,
     },
-    evidence: evidence?.findings.map((finding, index) => ({
+    evidence: evidence?.findings?.map((finding, index) => ({
       id: finding.id,
       marker: index + 1,
       page: 1,

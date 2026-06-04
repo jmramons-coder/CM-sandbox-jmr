@@ -26,6 +26,7 @@ import {
   buildInitialAddressPolicyScopeSelection,
   TaskAddressPolicyScopeSection,
 } from './tasks/TaskAddressPolicyScopeSection';
+import { TaskOfacScreeningSection } from './tasks/TaskOfacScreeningSection';
 import { isNb66RecommendRequirementsTask } from '../data/nb66RequirementGatheringActions';
 import { TaskPanelLeanContext } from './TaskPanelLeanContext';
 import { TaskEvidencePreviewCard } from './TaskEvidencePreviewCard';
@@ -234,6 +235,8 @@ function EmpowerTaskDetailContent({
   const hasAddressDecision = Boolean(addressDecision?.options.length);
   const addressPolicyScope = taskReview.addressPolicyScope;
   const hasAddressPolicyScope = Boolean(addressPolicyScope?.policies.length);
+  const ofacScreening = taskReview.ofacScreening;
+  const hasOfacScreening = Boolean(ofacScreening);
   const hideAddressChangeDetailsSections =
     (dataSource.activeDatasetId === DEFAULT_DATASET_ID
       || dataSource.activeDatasetId.startsWith(`${DEFAULT_DATASET_ID}-workspace-copy-`))
@@ -447,6 +450,10 @@ function EmpowerTaskDetailContent({
           />
 
           <TaskPanelLeanContext task={task} />
+
+          {hasOfacScreening && ofacScreening ? (
+            <TaskOfacScreeningSection screening={ofacScreening} className="mt-4" />
+          ) : null}
 
           {hasAddressPolicyScope && addressPolicyScope && !hideAddressChangeDetailsSections ? (
             <TaskAddressPolicyScopeSection

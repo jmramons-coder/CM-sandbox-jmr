@@ -165,7 +165,7 @@ export function CaseDocumentMobileCard({
     >
       <div className="min-w-0 flex-1 p-4">
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          {documentHasAiInsight(row) ? <MiniAiSourceBadge /> : null}
+          {documentHasAiInsight(row) ? <MiniAiSourceBadge size="compact" /> : null}
           <LozengeTag label={row.category} type="Neutral" subtle size="compact" />
         </div>
 

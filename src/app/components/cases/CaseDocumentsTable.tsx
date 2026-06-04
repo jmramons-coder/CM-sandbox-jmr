@@ -43,8 +43,8 @@ function documentHasAiInsight(doc: Pick<CaseDocument, 'aiSummary' | 'insight' | 
   return Boolean(doc.aiInsight || doc.aiSummary || doc.insight || doc.aiAction);
 }
 
-function documentTableDescription(doc: Pick<CaseDocument, 'reqContext' | 'aiSummary' | 'insight'>): string {
-  return doc.reqContext?.trim() || doc.aiSummary?.trim() || doc.insight?.trim() || '—';
+function documentTableDescription(doc: Pick<CaseDocument, 'tableDescription' | 'reqContext' | 'aiSummary' | 'insight'>): string {
+  return doc.tableDescription?.trim() || doc.reqContext?.trim() || doc.aiSummary?.trim() || doc.insight?.trim() || '—';
 }
 
 type CaseDocumentsTableProps = {
@@ -55,6 +55,7 @@ type CaseDocumentsTableProps = {
   setScrollEl: (el: HTMLDivElement | null) => void;
   onOpenDocument: (row: CaseDocument) => void;
   onOpenRequirementTab?: () => void;
+  hideAiBadges?: boolean;
 };
 
 export function CaseDocumentsTable({
@@ -65,6 +66,7 @@ export function CaseDocumentsTable({
   setScrollEl,
   onOpenDocument,
   onOpenRequirementTab,
+  hideAiBadges = false,
 }: CaseDocumentsTableProps) {
   const { showLeftStickyEdge } = tableScroll;
 
@@ -140,7 +142,7 @@ export function CaseDocumentsTable({
                     <div className="flex min-w-0 max-w-full items-stretch gap-2.5">
                       <div className="flex min-w-0 flex-1 flex-col gap-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          {documentHasAiInsight(row) ? <MiniAiSourceBadge /> : null}
+                          {!hideAiBadges && documentHasAiInsight(row) ? <MiniAiSourceBadge size="compact" /> : null}
                           <LozengeTag label={row.category} type="Neutral" subtle size="compact" />
                         </div>
                         <TableTruncatedLabel

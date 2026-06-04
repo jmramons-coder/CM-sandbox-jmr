@@ -1,15 +1,57 @@
+import { useEffect, useState } from 'react';
 import { ChevronRight, Gauge } from 'lucide-react';
-import type { UnderwritingRequirementAssessment, UnderwritingScoring } from '../domain/objectRefs';
+import type { UnderwritingRequirementAssessment, UnderwritingScoring } from '../../domain/objectRefs';
 import { SidePanelSummaryBox } from '../AiSummaryWithConfidenceCard';
 import { normalizeScoring } from '../../domain/scoring';
 import {
   formatScoringCellValue,
   formatScoringCompactSummary,
+  formatScoringDisplayRiskLabel,
   formatScoringHeaderSummary,
   formatScoringRiskLabel,
 } from '../../utils/underwritingScoringPresentation';
 
-function AssessmentTableRow({ row }: { row: UnderwritingRequirementAssessment }) {
+function AssessmentNotesCell({
+  row,
+  onNotesChange,
+}: {
+  row: UnderwritingRequirementAssessment;
+  onNotesChange: (id: string, notes: string, author: 'ai' | 'underwriter') => void;
+}) {
+  const [value, setValue] = useState(row.notes ?? '');
+  const author = row.notesAuthor ?? 'ai';
+  const noteClass = author === 'ai' ? 'text-brand-accent' : 'text-text-primary';
+
+  useEffect(() => {
+    setValue(row.notes ?? '');
+  }, [row.id, row.notes]);
+
+  if (row.pending && !value) {
+    return <span className="text-[12px] text-text-muted">—</span>;
+  }
+
+  return (
+    <textarea
+      value={value}
+      onChange={(event) => {
+        const next = event.target.value;
+        setValue(next);
+        onNotesChange(row.id, next, 'underwriter');
+      }}
+      rows={2}
+      className={`w-full min-w-[120px] resize-y rounded-md border border-border-soft bg-white px-2 py-1.5 text-[12px] leading-relaxed outline-none focus:border-brand-blue/40 ${noteClass}`}
+      placeholder="Add underwriting notes…"
+    />
+  );
+}
+
+function AssessmentTableRow({
+  row,
+  onNotesChange,
+}: {
+  row: UnderwritingRequirementAssessment;
+  onNotesChange: (id: string, notes: string, author: 'ai' | 'underwriter') => void;
+}) {
   return (
     <tr className={`border-b border-border-soft last:border-b-0 ${row.pending ? 'bg-[#fbfcfd]' : ''}`}>
       <td className="px-3 py-2.5 align-top">
@@ -27,8 +69,8 @@ function AssessmentTableRow({ row }: { row: UnderwritingRequirementAssessment })
       <td className="px-3 py-2.5 align-top text-[12px] font-semibold text-brand-red">
         {formatScoringCellValue(row.negativeScore)}
       </td>
-      <td className="px-3 py-2.5 align-top text-[12px] leading-relaxed text-text-secondary">
-        {formatScoringCellValue(row.notes)}
+      <td className="px-3 py-2.5 align-top">
+        <AssessmentNotesCell row={row} onNotesChange={onNotesChange} />
       </td>
     </tr>
   );
@@ -50,14 +92,34 @@ function ScoringPointsKpi({ scoring }: { scoring: UnderwritingScoring }) {
   );
 }
 
-export function CaseScoringSidePanel({ scoring }: { scoring: UnderwritingScoring }) {
+export function CaseScoringSidePanel({
+  scoring,
+  onChange,
+}: {
+  scoring: UnderwritingScoring;
+  onChange?: (next: UnderwritingScoring) => void;
+}) {
   const assessments = scoring.requirementAssessments ?? [];
   const aiNarrative = scoring.aiComparison?.narrative;
+
+  const handleNotesChange = (id: string, notes: string, author: 'ai' | 'underwriter') => {
+    if (!onChange) return;
+    onChange({
+      ...scoring,
+      requirementAssessments: assessments.map((row) =>
+        row.id === id ? { ...row, notes, notesAuthor: author } : row,
+      ),
+    });
+  };
+
+  const handleUnderwriterNotesChange = (underwriterNotes: string) => {
+    onChange?.({ ...scoring, underwriterNotes });
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-surface-primary">
       <div className="border-b border-border-soft bg-white px-5 py-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Current scoring</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Underwriting decision</p>
         <p className="mt-1 text-[20px] font-semibold text-text-primary">{formatScoringRiskLabel(scoring)}</p>
         {scoring.pending?.length ? (
           <p className="mt-2 text-[12px] text-text-secondary">
@@ -70,12 +132,12 @@ export function CaseScoringSidePanel({ scoring }: { scoring: UnderwritingScoring
         {aiNarrative ? (
           <SidePanelSummaryBox label="AI assessment">
             <div className="flex items-start gap-4">
-              <p className="min-w-0 flex-1 text-[12px] leading-relaxed text-text-primary">{aiNarrative}</p>
+              <p className="min-w-0 flex-1 text-[12px] leading-relaxed text-brand-accent">{aiNarrative}</p>
               <ScoringPointsKpi scoring={scoring} />
             </div>
           </SidePanelSummaryBox>
         ) : (
-          <SidePanelSummaryBox label="Scoring summary">
+          <SidePanelSummaryBox label="Decision summary">
             <div className="flex justify-end">
               <ScoringPointsKpi scoring={scoring} />
             </div>
@@ -86,7 +148,7 @@ export function CaseScoringSidePanel({ scoring }: { scoring: UnderwritingScoring
           <div className="border-b border-border-soft px-4 py-3">
             <p className="text-[13px] font-semibold text-text-primary">Requirement assessments</p>
             <p className="mt-0.5 text-[11px] text-text-muted">
-              Findings by requirement — positive and negative score impacts
+              AI notes in accent · underwriter edits in default text
             </p>
           </div>
           {assessments.length ? (
@@ -103,7 +165,7 @@ export function CaseScoringSidePanel({ scoring }: { scoring: UnderwritingScoring
                 </thead>
                 <tbody>
                   {assessments.map((row) => (
-                    <AssessmentTableRow key={row.id} row={row} />
+                    <AssessmentTableRow key={row.id} row={row} onNotesChange={handleNotesChange} />
                   ))}
                 </tbody>
               </table>
@@ -115,12 +177,16 @@ export function CaseScoringSidePanel({ scoring }: { scoring: UnderwritingScoring
           )}
         </section>
 
-        {scoring.underwriterNotes ? (
-          <section className="rounded-xl border border-border-soft bg-white px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Underwriter notes</p>
-            <p className="mt-2 text-[12px] leading-relaxed text-text-primary">{scoring.underwriterNotes}</p>
-          </section>
-        ) : null}
+        <section className="rounded-xl border border-border-soft bg-white px-4 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Underwriter notes</p>
+          <textarea
+            value={scoring.underwriterNotes ?? ''}
+            onChange={(event) => handleUnderwriterNotesChange(event.target.value)}
+            rows={3}
+            className="mt-2 w-full resize-y rounded-md border border-border-soft bg-white px-3 py-2 text-[12px] leading-relaxed text-text-primary outline-none focus:border-brand-blue/40"
+            placeholder="Document your decision rationale…"
+          />
+        </section>
       </div>
     </div>
   );
@@ -135,40 +201,56 @@ export function CaseScoringApplicantAffordance({
   onOpen: () => void;
   active?: boolean;
 }) {
+  const normalized = normalizeScoring(scoring);
   const summary = formatScoringHeaderSummary(scoring);
   const points = formatScoringCompactSummary(scoring);
-  const riskLabel = formatScoringRiskLabel(scoring);
+  const rateLabel = formatScoringDisplayRiskLabel(scoring);
+  const netValue = normalized.netScore ?? 0;
 
   return (
     <button
       type="button"
       data-keep-sidepanel
       onClick={onOpen}
-      title={`Scoring — ${summary}`}
-      aria-label={`Open scoring — ${summary}`}
+      title={`Decision — ${summary}`}
+      aria-label={`Open decision notes — ${summary}`}
       aria-pressed={active}
-      className={`group/score flex min-w-0 flex-1 flex-col justify-center rounded-md px-1 py-2 text-left transition-colors ${
-        active ? 'bg-brand-accent-light/40' : 'hover:bg-[#fcfbff]'
-      }`}
+      className="group/score flex min-w-0 w-full flex-col text-left transition-colors"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <span className="inline-flex items-center gap-1.5">
-            <Gauge
-              className={`size-3.5 shrink-0 ${active ? 'text-brand-accent' : 'text-text-muted group-hover/score:text-brand-accent'}`}
-              strokeWidth={2.25}
-              aria-hidden
-            />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Scoring</span>
-          </span>
-          <span className="mt-1 block truncate text-[11px] font-medium text-text-secondary">{riskLabel}</span>
-          <span className="mt-1 inline-flex items-center gap-0.5 text-[11px] font-semibold text-brand-blue group-hover/score:underline">
-            Details
-            <ChevronRight className="size-3.5" aria-hidden />
-          </span>
-        </div>
-        <span className="shrink-0 text-[15px] font-semibold tabular-nums leading-none text-text-primary">{points} pts</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <Gauge
+            className={`size-3.5 shrink-0 ${active ? 'text-text-primary' : 'text-text-muted'}`}
+            strokeWidth={2.25}
+            aria-hidden
+          />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Decision</span>
+        </span>
+        <span
+          className={`shrink-0 text-[15px] font-semibold tabular-nums leading-none ${
+            netValue > 0
+              ? 'text-brand-red'
+              : netValue < 0
+                ? 'text-brand-green'
+                : 'text-text-primary'
+          }`}
+        >
+          {points} pts
+        </span>
       </div>
+
+      <p className="mt-1 truncate text-[15px] font-semibold leading-tight text-text-primary">{rateLabel}</p>
+
+      <p className="mt-0.5 text-[11px] text-text-muted">
+        <span className="text-brand-red">+{normalized.debitTotal} debits</span>
+        {' · '}
+        <span className="text-brand-green">−{normalized.creditTotal} credits</span>
+      </p>
+
+      <span className="mt-1 inline-flex items-center gap-0.5 text-[11px] font-semibold text-brand-blue group-hover/score:underline">
+        View details
+        <ChevronRight className="size-3.5" aria-hidden />
+      </span>
     </button>
   );
 }
@@ -191,8 +273,8 @@ export function CaseScoringHeaderButton({
       type="button"
       data-keep-sidepanel
       onClick={onOpen}
-      title={`Scoring — ${summary}`}
-      aria-label={`Open scoring — ${summary}`}
+      title={`Decision — ${summary}`}
+      aria-label={`Open decision notes — ${summary}`}
       aria-pressed={active}
       className={`group/score inline-flex items-center justify-center gap-1.5 rounded-full border transition-colors ${
         active

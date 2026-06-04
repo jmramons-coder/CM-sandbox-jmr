@@ -131,7 +131,7 @@ function DocumentListCard({
     >
       <div className="min-w-0 flex-1 p-4">
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          {documentHasAiInsight(doc) ? <MiniAiSourceBadge /> : null}
+          {documentHasAiInsight(doc) ? <MiniAiSourceBadge size="compact" /> : null}
           <LozengeTag label={doc.category} type="Neutral" subtle size="compact" />
           <DocumentValidatedIconTag status={doc.status} />
         </div>
@@ -659,17 +659,20 @@ export function DocumentModule() {
                               <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                             ) : null}
                             <div className="flex min-w-0 max-w-full items-stretch gap-2.5">
-                              <div className="flex min-w-0 flex-1 flex-col">
+                              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  {documentHasAiInsight(doc) ? <MiniAiSourceBadge size="compact" /> : null}
+                                  <LozengeTag
+                                    label={doc.category}
+                                    type="Neutral"
+                                    subtle
+                                    size="compact"
+                                    className="max-w-full shrink-0"
+                                  />
+                                </div>
                                 <TableTruncatedLabel
                                   text={doc.name}
                                   className="w-full max-w-full text-[13px] font-semibold text-text-primary"
-                                />
-                                <LozengeTag
-                                  label={doc.category}
-                                  type="Neutral"
-                                  subtle
-                                  size="compact"
-                                  className="mt-1.5 max-w-full shrink-0"
                                 />
                               </div>
                               <DocumentMiniPreviewThumb
