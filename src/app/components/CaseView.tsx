@@ -409,6 +409,14 @@ export function CaseView({
     data.underwritingScoring = next;
     bumpData();
   }, [bumpData, data]);
+  const updateRequirementNotes = useCallback((requirementId: CaseRequirement['id'], notes: string) => {
+    const target = data.requirements.find((row) => row.id === requirementId);
+    if (target) target.notes = notes || undefined;
+    setSelectedRequirement((prev) => (
+      prev && prev.id === requirementId ? { ...prev, notes: notes || undefined } : prev
+    ));
+    bumpData();
+  }, [bumpData, data]);
   const openScoreModal = useCallback((type: ScoringItemType, item?: UnderwritingScoringItem) => {
     setScoreModal({ type, item });
   }, []);
@@ -2169,6 +2177,7 @@ export function CaseView({
                 tableScroll={requirementsTableScroll}
                 setScrollEl={setRequirementsTableScrollEl}
                 onOpenRequirement={openRequirementPanel}
+                followUpDateColumnLabel={activeDataset.id === 'empire-ca-demo' ? 'Order date' : undefined}
               />
             )}
 
@@ -2402,6 +2411,7 @@ export function CaseView({
               scoring={scoringDraft}
               hideScoringWidget={scoringSidePanelEnabled}
               requirementActionPreset={activeDataset.id === 'empire-ca-demo' ? 'empire_nb' : undefined}
+              onNotesChange={(notes) => updateRequirementNotes(selectedRequirement.id, notes)}
               onOpenScoring={() => openScoringPanel()}
               onOpenDocument={(document) => {
                 openCaseDocumentPanel(documentToCaseContextRow(document));

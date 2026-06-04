@@ -32,6 +32,7 @@ type CaseRequirementsTableProps = {
   tableScroll: TableHorizontalScrollState;
   setScrollEl: (el: HTMLDivElement | null) => void;
   onOpenRequirement: (row: CaseRequirement) => void;
+  followUpDateColumnLabel?: string;
 };
 
 export function CaseRequirementsTable({
@@ -42,6 +43,7 @@ export function CaseRequirementsTable({
   tableScroll,
   setScrollEl,
   onOpenRequirement,
+  followUpDateColumnLabel = 'Follow-Up',
 }: CaseRequirementsTableProps) {
   const { showLeftStickyEdge, showRightStickyEdge } = tableScroll;
 
@@ -63,7 +65,7 @@ export function CaseRequirementsTable({
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Category</th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Stage</th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Due Date</th>
-              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Follow-Up</th>
+              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>{followUpDateColumnLabel}</th>
               <th className={`max-w-[160px] ${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Notes</th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>External Source</th>
               <th

@@ -10,6 +10,7 @@ import { ModuleTabsBar } from './ModuleTabsBar';
 import { getRequirementStatusLozengeType } from '../utils/status-display';
 import { LozengeTag } from './LozengeTag';
 import { ScoringMiniWidget } from './ScoringMiniWidget';
+import { appToast } from '../utils/app-toast';
 
 type RequirementPanelTab = 'overview' | 'context' | 'relationships' | 'activity';
 
@@ -60,6 +61,26 @@ function contextIcon(type?: RequirementContextType) {
   return Database;
 }
 
+const INTERNAL_NOTES_MAX = 250;
+
+function formatRequirementDate(value?: string) {
+  if (!value || value === 'TBD') return '—';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return new Date(`${value}T12:00:00`).toLocaleDateString('en-CA', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+  return value;
+}
+
+function requirementOrderDate(requirement: CaseRequirement) {
+  return requirement.followUpDate && requirement.followUpDate !== 'TBD'
+    ? requirement.followUpDate
+    : requirement.dueDate;
+}
+
 function empireNbActionLabels(status: CaseRequirement['status']) {
   if (isFulfilledStatus(status)) {
     return { primary: 'View full record', secondary: ['Re-open requirement'] as string[] };
@@ -68,6 +89,35 @@ function empireNbActionLabels(status: CaseRequirement['status']) {
     primary: 'Receipt',
     secondary: ['Waive', 'Upload document', 'Extend due date'],
   };
+}
+
+function handleRequirementAction(action: string, requirementName: string, preset?: 'empire_nb') {
+  if (preset !== 'empire_nb') {
+    appToast.neutral(`${action} — recorded for demo`);
+    return;
+  }
+  switch (action) {
+    case 'Receipt':
+      appToast.success(`${requirementName} receipted — document matched and summarized`);
+      break;
+    case 'Waive':
+      appToast.success(`${requirementName} waived`);
+      break;
+    case 'Upload document':
+      appToast.neutral('Document uploaded — matched to requirement and queued for summary');
+      break;
+    case 'Extend due date':
+      appToast.neutral('Due date extended by 7 days');
+      break;
+    case 'View full record':
+      appToast.neutral('Opening full requirement record');
+      break;
+    case 'Re-open requirement':
+      appToast.warning(`${requirementName} re-opened for follow-up`);
+      break;
+    default:
+      appToast.neutral(`${action} — recorded for demo`);
+  }
 }
 
 function actionLabels(status: CaseRequirement['status'], preset?: 'empire_nb') {
@@ -101,6 +151,7 @@ export function RequirementContextBody({
   caseId,
   documents = [],
   hideScoringWidget = false,
+  onNotesChange,
   onOpenDocument,
   onOpenScoring,
   onOpenTask,
@@ -112,6 +163,7 @@ export function RequirementContextBody({
   caseId: string;
   documents?: CaseDocument[];
   hideScoringWidget?: boolean;
+  onNotesChange?: (notes: string) => void;
   onOpenScoring?: () => void;
   onOpenDocument?: (document: CaseDocument) => void;
   onOpenTask?: (task: Task) => void;
@@ -121,6 +173,7 @@ export function RequirementContextBody({
   tasks?: Task[];
 }) {
   const [activeTab, setActiveTab] = useState<RequirementPanelTab>('overview');
+  const [notesDraft, setNotesDraft] = useState(requirement.notes ?? '');
   const fulfilled = isFulfilledStatus(requirement.status);
   const overdue = isOverdueStatus(requirement.status);
   const actions = actionLabels(requirement.status, requirementActionPreset);
@@ -155,6 +208,21 @@ export function RequirementContextBody({
     setActiveTab('overview');
   }, [requirementId]);
 
+  useEffect(() => {
+    setNotesDraft(requirement.notes ?? '');
+  }, [requirementId, requirement.notes]);
+
+  const commitNotes = () => {
+    if (!onNotesChange) return;
+    const trimmed = notesDraft.trim();
+    if (trimmed === (requirement.notes ?? '').trim()) return;
+    onNotesChange(trimmed);
+    appToast.success('Internal notes saved');
+  };
+
+  const showOrderDate = requirementActionPreset === 'empire_nb';
+  const orderDateLabel = formatRequirementDate(requirementOrderDate(requirement));
+
   return (
     <>
       <div className="shrink-0 bg-white px-6">
@@ -166,7 +234,7 @@ export function RequirementContextBody({
             <span className="ml-auto shrink-0 font-mono text-[12px] font-semibold text-text-muted/70">{requirementId}</span>
           </div>
           <h2 className="text-[18px] font-semibold leading-tight text-text-heading">{requirement.name}</h2>
-          <dl className="mt-4 grid overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px] sm:grid-cols-4">
+          <dl className={`mt-4 grid overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px] ${showOrderDate ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
             <MetaItem
               icon={<ClipboardList className="size-3" />}
               label="Stage"
@@ -186,7 +254,10 @@ export function RequirementContextBody({
                 </span>
               )}
             />
-            <MetaItem icon={<Clock className="size-3" />} label="Due date" value={requirement.dueDate} urgent={overdue} />
+            {showOrderDate ? (
+              <MetaItem icon={<Clock className="size-3" />} label="Order date" value={orderDateLabel} />
+            ) : null}
+            <MetaItem icon={<Clock className="size-3" />} label="Due date" value={formatRequirementDate(requirement.dueDate)} urgent={overdue} />
             <MetaItem icon={<UserRound className="size-3" />} label="Responsible" value={requirement.responsibleParty ?? 'Not assigned'} />
             <MetaItem icon={<Database className="size-3" />} label="Source" value={sourceLabel(requirement.source)} />
           </dl>
@@ -220,16 +291,30 @@ export function RequirementContextBody({
                     <p className="text-[13px] font-semibold text-text-primary">Internal notes</p>
                     <p className="mt-0.5 text-[11px] text-text-secondary">Underwriting team only</p>
                   </div>
-                  <p className="px-4 py-3 text-[12px] leading-relaxed text-text-secondary">
-                    {requirement.notes?.trim() || 'No internal notes recorded.'}
-                  </p>
+                  <div className="px-4 py-3">
+                    <textarea
+                      className="w-full resize-y rounded-md border border-border-default bg-white p-3 text-[12px] leading-relaxed text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-blue/40 disabled:cursor-not-allowed disabled:bg-surface-muted"
+                      placeholder="Add internal notes about this requirement…"
+                      rows={3}
+                      maxLength={INTERNAL_NOTES_MAX}
+                      value={notesDraft}
+                      readOnly={!onNotesChange}
+                      onChange={(event) => setNotesDraft(event.target.value)}
+                      onBlur={commitNotes}
+                    />
+                    <p className="mt-1 text-[11px] text-text-muted">
+                      {notesDraft.length}/{INTERNAL_NOTES_MAX} characters
+                      {onNotesChange ? ' · saved on blur' : ''}
+                    </p>
+                  </div>
                 </section>
               ) : null}
 
               <div className="grid gap-2 sm:grid-cols-2">
                 <StatCard label="Category" value={requirement.category} />
                 <StatCard label="Stage" value={formatStage(requirement.stage)} />
-                <StatCard label="Due date" value={requirement.dueDate} urgent={overdue} />
+                {showOrderDate ? <StatCard label="Order date" value={orderDateLabel} /> : null}
+                <StatCard label="Due date" value={formatRequirementDate(requirement.dueDate)} urgent={overdue} />
                 <StatCard label="Source system" value={sourceLabel(requirement.source)} />
                 <StatCard label="Responsible party" value={requirement.responsibleParty ?? 'Not assigned'} className="sm:col-span-2" />
               </div>
@@ -404,11 +489,20 @@ export function RequirementContextBody({
       </div>
 
       <div className="shrink-0 space-y-2 border-t border-border-default bg-white p-4">
-        <button className="inline-flex w-full items-center justify-center rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold leading-none text-white transition-colors hover:bg-brand-blue-hover">
+        <button
+          type="button"
+          onClick={() => handleRequirementAction(actions.primary, requirement.name, requirementActionPreset)}
+          className="inline-flex w-full items-center justify-center rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold leading-none text-white transition-colors hover:bg-brand-blue-hover"
+        >
           {actions.primary}
         </button>
         {actions.secondary.map((label) => (
-          <button key={label} className="inline-flex w-full items-center justify-center rounded-full border border-border-default px-4 py-2 text-sm font-semibold leading-none text-text-secondary transition-colors hover:bg-surface-muted">
+          <button
+            key={label}
+            type="button"
+            onClick={() => handleRequirementAction(label, requirement.name, requirementActionPreset)}
+            className="inline-flex w-full items-center justify-center rounded-full border border-border-default px-4 py-2 text-sm font-semibold leading-none text-text-secondary transition-colors hover:bg-surface-muted"
+          >
             {label}
           </button>
         ))}

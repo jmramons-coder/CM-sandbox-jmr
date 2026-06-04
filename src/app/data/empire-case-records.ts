@@ -152,7 +152,7 @@ export const EMPIRE_CASE_RECORDS: CaseRecord[] = [
     linkedObjects: [],
     moduleSummaries: [
       { module: 'requirements', label: 'Requirements', total: 5, completed: 2, attention: 2 },
-      { module: 'tasks', label: 'Tasks', total: 9, completed: 6, attention: 2 },
+      { module: 'tasks', label: 'Tasks', total: 10, completed: 8, attention: 2 },
       { module: 'documents', label: 'Documents', total: 9, completed: 7, attention: 1 },
     ],
     facts: [

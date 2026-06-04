@@ -252,9 +252,7 @@ export const EMPIRE_CASE_WORKFLOW_GI_RECORDS: Record<string, EmpireCaseWorkflowG
           ],
         },
       ],
-      collapsibles: [
-        { id: 'uw_status', title: 'Underwriting status', subtitle: 'APS ordered 11 May · labs and scuba outstanding' },
-      ],
+      collapsibles: [],
     },
   },
   [EMPIRE_DEMO_CASE_IDS.nbSimplified]: {

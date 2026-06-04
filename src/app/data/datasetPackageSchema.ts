@@ -350,9 +350,6 @@ export function validateDatasetPackage(value: unknown): DatasetValidationSummary
       if (!caseRecord.generalInformation.aiSummary?.text) {
         errors.push(`Case ${caseRecord.id} generalInformation.aiSummary.text is required.`);
       }
-      if (!caseRecord.generalInformation.collapsibles?.length) {
-        errors.push(`Case ${caseRecord.id} generalInformation.collapsibles must not be empty.`);
-      }
       caseRecord.generalInformation.cards.forEach((card) => {
         if (card.type === 'key_value_grid' && !card.fields.length) {
           errors.push(`Case ${caseRecord.id} GI card ${card.id} must include fields.`);

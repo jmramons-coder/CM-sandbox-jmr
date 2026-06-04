@@ -192,10 +192,15 @@ export const EMPIRE_REQUIREMENT_RECORDS: DatasetRequirementRecord[] = [
       type: 'application',
       label: 'Paramedical labs',
       description: 'Standard full-underwriting labs ordered May 8, 2026 with application submission.',
-      kv: [{ label: 'Lab network', value: 'Dynacare — Ottawa ON' }],
+      kv: [
+        { label: 'Lab network', value: 'Dynacare — Ottawa ON' },
+        { label: 'Ordered', value: '8 May 2026 · System' },
+      ],
     },
     history: [
-      { date: '2026-05-08', action: 'Lab requisition ordered at submission', user: 'System', dot: 'amber' },
+      { date: '2026-05-08', action: 'Requirement created at application submission', user: 'System', dot: 'blue' },
+      { date: '2026-05-08', action: 'Blood and urine profile ordered via Dynacare', user: 'System', dot: 'amber' },
+      { date: '2026-05-08', action: 'Lab requisition sent to paramed network — awaiting collection', user: 'System', dot: 'amber' },
     ],
   }),
   req('req_emp_nb_006', NB, 'RX (prescription medication) report', 'Fulfilled', 'application', {
