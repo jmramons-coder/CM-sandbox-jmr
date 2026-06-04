@@ -31,6 +31,7 @@ function postApprovalRequirement(
     trigger,
     phase: 'post-approval',
     notes,
+    aiGenerated: source === 'ai_rule_engine' || /\bai\b/i.test(trigger),
   };
 }
 

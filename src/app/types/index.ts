@@ -114,7 +114,7 @@ export interface TaskPanelContext {
   };
 }
 
-export type TaskAlertType = 'overdue' | 'blocking' | 'warning' | 'info';
+export type TaskAlertType = 'overdue' | 'blocking' | 'warning' | 'info' | 'sla';
 
 export interface TaskAlert {
   type: TaskAlertType;
@@ -197,6 +197,87 @@ export interface TaskPanelAction {
   isPrimary?: boolean;
 }
 
+/** How the task expects human involvement. */
+export type TaskExecutionMode = 'semi_auto' | 'manual' | 'exception';
+
+/** Canonical semi-auto review payload — one verdict, optional crew reasoning steps. */
+export type TaskCrewFindingTone = 'success' | 'warning' | 'info';
+
+export interface TaskCrewFinding {
+  text: string;
+  tone?: TaskCrewFindingTone;
+}
+
+export interface TaskCrewStep {
+  id: string;
+  title: string;
+  agent?: string;
+  completedAt?: string;
+  status?: 'completed' | 'in_progress' | 'pending';
+  findings: TaskCrewFinding[];
+  rationale: string;
+}
+
+export type SuggestedRequirementProposal = {
+  id: string;
+  label: string;
+  category: string;
+  reasoning: string;
+  sourceLabel?: string;
+  defaultSelected?: boolean;
+  blocking?: boolean;
+};
+
+export type AddressChangeOption = {
+  id: string;
+  label: string;
+  source: string;
+  recommended?: boolean;
+  diffNote?: string;
+};
+
+export type AddressChangeDecisionPayload = {
+  effectiveDate: string;
+  clientRequestedAddress: string;
+  registryName?: string;
+  registryNote?: string;
+  options: AddressChangeOption[];
+  defaultOptionId: string;
+};
+
+export type AddressChangeDurationKind = 'permanent' | 'temporary';
+
+export type AddressChangePolicyOption = {
+  id: string;
+  label: string;
+  detail?: string;
+  defaultSelected?: boolean;
+};
+
+export type AddressChangePolicyScopePayload = {
+  effectiveDate: string;
+  duration: AddressChangeDurationKind;
+  temporaryEndDate?: string;
+  temporaryNote?: string;
+  policies: AddressChangePolicyOption[];
+  defaultSelectedPolicyIds?: string[];
+};
+
+export interface TaskReviewPayload {
+  verdict: string;
+  /** @deprecated Prefer crewSteps — kept for legacy checklist migration */
+  reasoning?: string[];
+  crewSteps?: TaskCrewStep[];
+  confidence?: number;
+  evidenceIds?: string[];
+  /** Proposed requirements (not yet on case until user approves in copilot). */
+  suggestedRequirements?: SuggestedRequirementProposal[];
+  /** Semi-auto address change — policies in scope and change duration. */
+  addressPolicyScope?: AddressChangePolicyScopePayload;
+  /** Semi-auto address change — user picks canonical address before approving. */
+  addressDecision?: AddressChangeDecisionPayload;
+}
+
 // Task Interface
 export interface Task {
   id: string;
@@ -243,6 +324,8 @@ export interface Task {
   linkedObjects?: TaskLinkedObject[];
   objectRefs?: ObjectRef[];
   panelContext?: TaskPanelContext;
+  executionMode?: TaskExecutionMode;
+  review?: TaskReviewPayload;
 }
 
 export interface Team {
@@ -414,6 +497,8 @@ export interface CaseRequirement {
   workflowStepId?: string;
   aiInsight?: boolean;
   aiConfidence?: number;
+  /** Requirement was created or recommended by AI (mirrors task aiGenerated). */
+  aiGenerated?: boolean;
 }
 
 export interface CaseBenefitRow {
@@ -630,7 +715,18 @@ export type RequestCategory = 'Claims' | 'New business' | 'Changes' | 'Completed
  * "System initiated steps" header so reps can immediately see whether the
  * intake was self-serve, written, or verbal.
  */
-export type RequestSourceChannel = 'client_portal' | 'email' | 'phone' | 'Claimant portal' | 'Broker portal' | 'SBLI broker portal' | 'SBLI.com' | 'Mail' | 'Fax' | 'Agent portal';
+export type RequestSourceChannel =
+  | 'client_portal'
+  | 'email'
+  | 'phone'
+  | 'Claimant portal'
+  | 'Broker portal'
+  | 'SBLI broker portal'
+  | 'SBLI.com'
+  | 'harborlife.com'
+  | 'Mail'
+  | 'Fax'
+  | 'Agent portal';
 
 export type RequestSystemStepStatus =
   | 'completed'

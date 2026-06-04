@@ -8,6 +8,9 @@
  */
 
 export const DEFAULT_SIDE_PANEL_WIDTH_RATIO = 0.45;
+export const DOCUMENT_SIDE_PANEL_WIDTH_RATIO = 0.55;
+/** Below this width the document panel uses stacked preview + insights (mobile shell only on desktop). */
+export const DOCUMENT_SIDE_PANEL_LAYOUT_MIN_WIDTH = 760;
 export const COLLAPSED_SIDE_PANEL_WIDTH_RATIO = 0.3;
 
 export function getSidePanelWidthForRatio(
@@ -25,6 +28,20 @@ export function getSidePanelWidthForRatio(
 
 export function getDefaultSidePanelWidth(options: { min?: number; max?: number } = {}): number {
   return getSidePanelWidthForRatio(DEFAULT_SIDE_PANEL_WIDTH_RATIO, options);
+}
+
+/** Document / evidence panels — wide enough for canvas + insight column on desktop. */
+export function getDocumentSidePanelWidth(options: { min?: number; max?: number } = {}): number {
+  return getSidePanelWidthForRatio(DOCUMENT_SIDE_PANEL_WIDTH_RATIO, {
+    min: DOCUMENT_SIDE_PANEL_LAYOUT_MIN_WIDTH,
+    ...options,
+  });
+}
+
+export function resolveDocumentSidePanelWidth(currentWidth?: number): number {
+  const preferred = getDocumentSidePanelWidth();
+  if (!currentWidth || currentWidth < DOCUMENT_SIDE_PANEL_LAYOUT_MIN_WIDTH) return preferred;
+  return currentWidth;
 }
 
 export function getCollapsedSidePanelWidth(options: { min?: number; max?: number } = {}): number {

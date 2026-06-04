@@ -182,8 +182,8 @@ export const CASE_TYPE_ANATOMY_DEFINITIONS: CaseTypeAnatomyDefinition[] = [
     ],
     tabs: [
       { id: 'requirements', label: 'Requirements', utilityEntity: 'requirement', defaultEnabled: true },
-      { id: 'scoring', label: 'Scoring', defaultEnabled: true, caseTabId: 'scoring' },
-      { id: 'submission', label: 'Submission', defaultEnabled: true, caseTabId: 'decision' },
+      { id: 'scoring', label: 'Scoring', defaultEnabled: false, caseTabId: 'scoring' },
+      { id: 'decision', label: 'Decision', defaultEnabled: true, caseTabId: 'decision' },
     ],
     lifecycleOutputs: ['task', 'requirement', 'request', 'document', 'communication'],
     actions: ['validate-application', 'request-clarification', 'review-scoring', 'submit-to-underwriting'],

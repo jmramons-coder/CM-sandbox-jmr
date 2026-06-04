@@ -81,6 +81,7 @@ export function buildDemoSnapshotFromBranding(branding: Branding): DemoConfigura
       aiSidePanelEnabled: true,
       casesAiAssistantEnabled: true,
       aiActivityVisible: true,
+      presentationModeEnabled: true,
     },
     modules: {
       home: true,

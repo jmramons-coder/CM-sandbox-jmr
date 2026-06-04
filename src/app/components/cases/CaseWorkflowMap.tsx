@@ -1,4 +1,5 @@
 import type { CaseWorkflowSubwayStage } from '../../domain/objectRefs';
+import { isStepSelectable } from '../../utils/caseStageLens';
 import { AiCueSparkle } from '../AiCueSparkle';
 import { WorkflowStepsTabsBar } from '../WorkflowStepsTabsBar';
 
@@ -14,13 +15,15 @@ export const WORKFLOW_MAP_TRACK_ROW = 'flex min-h-[56px] w-full items-center sm:
 export function WorkflowMetaSubway({
   stages,
   mobileTabs = false,
-  activeOrder,
+  progressOrder,
+  lensOrder = null,
   onStageSelect,
   disabled = false,
 }: {
   stages: CaseWorkflowSubwayStage[];
   mobileTabs?: boolean;
-  activeOrder: number;
+  progressOrder: number;
+  lensOrder?: number | null;
   onStageSelect?: (order: number) => void;
   disabled?: boolean;
 }) {
@@ -37,7 +40,8 @@ export function WorkflowMetaSubway({
           subLabel: stage.subLabel,
           showAiCue: index > 0 && index < ordered.length - 1,
         }))}
-        activeOrder={activeOrder}
+        progressOrder={progressOrder}
+        lensOrder={lensOrder}
         onChange={(order) => onStageSelect?.(order)}
         disabled={disabled}
         className="rounded-b-lg bg-[rgba(250,250,250,0.8)]"
@@ -55,17 +59,36 @@ export function WorkflowMetaSubway({
           const active = stage.state === 'active';
           const next = ordered[index + 1];
           const connectorDone = done && next && (next.state === 'done' || next.state === 'active');
+          const lensSelected = lensOrder != null && lensOrder === stage.order;
+          const stepDisabled = disabled || !isStepSelectable(stage.state);
+          const badgeClass = lensSelected
+            ? 'bg-white text-brand-blue ring-2 ring-brand-blue ring-offset-2'
+            : done
+              ? 'bg-[#008533] text-white'
+              : active
+                ? 'bg-brand-blue text-white'
+                : 'border border-[#b7bbc2] bg-white text-text-muted';
+
           return (
-            <div key={stage.slug} className="flex shrink-0 cursor-default items-center">
+            <div key={stage.slug} className="flex shrink-0 items-center">
               {index > 0 ? (
                 <span className={`${WORKFLOW_MAP_CONNECTOR_BASE} ${connectorDone ? 'bg-[#008533]' : 'bg-[#dbdee1]'}`} />
               ) : null}
-              <div className={WORKFLOW_MAP_STEP_ROW}>
-                <span className={`${WORKFLOW_MAP_STEP_BADGE} ${
-                  done ? 'bg-[#008533] text-white' : active ? 'bg-brand-blue text-white' : 'border border-[#b7bbc2] bg-white text-text-muted'
-                }`}>
-                  {active ? <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-brand-blue opacity-60 animate-ping" /> : null}
-                  {done ? '✓' : stage.order}
+              <button
+                type="button"
+                disabled={stepDisabled}
+                aria-label={`${stage.name}${lensSelected ? ' — viewing work through this stage' : ''}`}
+                aria-pressed={lensSelected}
+                onClick={() => {
+                  if (!stepDisabled) onStageSelect?.(stage.order);
+                }}
+                className={`${WORKFLOW_MAP_STEP_ROW} rounded-sm text-left outline-none transition-opacity enabled:cursor-pointer enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <span className={`${WORKFLOW_MAP_STEP_BADGE} ${badgeClass}`}>
+                  {active ? (
+                    <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-brand-blue opacity-60 animate-ping" />
+                  ) : null}
+                  {done && !lensSelected ? '✓' : stage.order}
                   {index > 0 && index < ordered.length - 1 ? (
                     <span className="absolute -right-1 -top-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-white bg-brand-accent shadow-sm">
                       <AiCueSparkle size={8} className="!text-white" aria-hidden />
@@ -82,7 +105,7 @@ export function WorkflowMetaSubway({
                     <span className="mt-0.5 block text-[10px] font-normal text-text-muted">{stage.subLabel}</span>
                   ) : null}
                 </span>
-              </div>
+              </button>
             </div>
           );
         })}

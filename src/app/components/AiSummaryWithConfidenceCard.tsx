@@ -6,13 +6,15 @@ import { AiCueSparkle } from './AiCueSparkle';
 export function SidePanelSummaryBox({
   children,
   className = '',
+  label = 'Summary',
 }: {
   children: ReactNode;
   className?: string;
+  label?: string;
 }) {
   return (
     <div className={`rounded-lg border border-border-soft bg-white px-4 py-3 ${className}`}>
-      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Summary</p>
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">{label}</p>
       {children}
     </div>
   );

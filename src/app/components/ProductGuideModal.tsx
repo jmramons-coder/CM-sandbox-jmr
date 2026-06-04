@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ClipboardList, GitBranch, Users, X } from 'lucide-react';
-import { SectionLabel } from './ds';
+import { SectionLabel, ToastVariantGallerySection } from './ds';
 
 type WorkspaceTab = 'prd' | 'flows' | 'users' | 'scenarios';
 
@@ -38,6 +38,7 @@ function TabButton({
 
 function PrdTab() {
   return (
+    <div className="space-y-4">
     <div className="grid min-h-0 grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.9fr]">
       <section className="rounded-xl border border-border-default bg-white p-5">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Product Intent</h3>
@@ -83,6 +84,8 @@ function PrdTab() {
           ))}
         </div>
       </section>
+    </div>
+    <ToastVariantGallerySection />
     </div>
   );
 }

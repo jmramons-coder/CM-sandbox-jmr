@@ -24,8 +24,10 @@ import type {
   TaskAlert,
   TaskContextCard,
   TaskEvidenceDocument,
+  TaskExecutionMode,
   TaskPanelContext,
   TaskQueue,
+  TaskReviewPayload,
   TaskSummaryBlock,
   SLAStatus,
 } from '../types';
@@ -225,6 +227,8 @@ export interface DatasetTaskRecord {
     riskClass: string;
     suggestedAction?: string;
   };
+  executionMode?: TaskExecutionMode;
+  review?: TaskReviewPayload;
   linkedObjects: ObjectRef[];
 }
 
@@ -255,6 +259,7 @@ export interface DatasetRequirementRecord {
   workflowStepId?: string;
   aiInsight?: boolean;
   aiConfidence?: number;
+  aiGenerated?: boolean;
   linkedObjects: ObjectRef[];
 }
 

@@ -69,7 +69,7 @@ export function documentStatusRelevanceRank(status: string): number {
 export function requirementStatusRelevanceRank(status: string): number {
   const key = normalizeStatusKey(status);
   if (key === 'overdue') return 0;
-  if (key === 'pending' || key === 'ordered' || key === 'in queue' || key === 'not_started' || key === 'scheduled') return 1;
+  if (key === 'pending' || key === 'ordered' || key === 'in queue' || key === 'not_started' || key === 'scheduled' || key === 'outstanding') return 1;
   if (key === 'in_review' || key.includes('review')) return 2;
   if (key === 'fulfilled' || key === 'waived' || key === 'completed') return 4;
   return 3;

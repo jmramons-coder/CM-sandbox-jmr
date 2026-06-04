@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { X, ChevronDown, ExternalLink, Clock, AlertTriangle, Check, FileText } from 'lucide-react';
+import { X, ChevronDown, ExternalLink, Clock, AlertTriangle, Check, FileText, Briefcase } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import type { CaseRequirement } from '../types';
 import { getRequirementStatusLozengeType } from '../utils/status-display';
+import { formatTaskStage } from '../utils/taskReviewProjection';
+import { isRequirementAiSourced, MiniAiSourceBadge } from './ModuleCellHelpers';
 import { AiCueSparkle } from './AiCueSparkle';
-import { CollapsibleDetailSection } from './CollapsibleDetailSection';
-import { LozengeTag } from './LozengeTag';
 
 function sourceLabel(source: string) {
   if (source === 'ai_rule_engine') return 'AI Rule Engine';
@@ -39,6 +40,7 @@ export function RequirementDetailSidePanel({
   externalHref,
   externalCode,
 }: RequirementDetailSidePanelProps) {
+  const navigate = useNavigate();
   const [aiExpanded, setAiExpanded] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(true);
   const [timelineExpanded, setTimelineExpanded] = useState(false);
@@ -46,6 +48,11 @@ export function RequirementDetailSidePanel({
 
   const isFulfilled = requirement.status === 'Fulfilled' || requirement.status === 'Waived';
   const isOverdue = requirement.status === 'Overdue';
+  const requirementRef = `R-${requirement.id}`;
+  const stageLabel = requirement.stage ? formatTaskStage(requirement.stage) : undefined;
+  const caseTagLabel = stageLabel
+    ? `${caseId} · ${requirement.category} · ${stageLabel}`
+    : `${caseId} · ${requirement.category}`;
 
   return (
     <div
@@ -66,53 +73,56 @@ export function RequirementDetailSidePanel({
       </div>
 
       {/* Panel Header */}
-      <div className="border-b border-border-default px-6 py-4">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-1 text-xs text-text-muted">
-            <span>Requirements {'>'} R-{requirement.id}</span>
+      <div className="shrink-0 border-b border-border-default bg-white px-6 py-4">
+        <div className="flex w-full items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            {isRequirementAiSourced(requirement) ? <MiniAiSourceBadge /> : null}
+            <LozengeTag label={requirement.status} type={getRequirementStatusLozengeType(requirement.status, 'panel')} subtle />
+            <LozengeTag label={requirement.category} type="Neutral" subtle />
           </div>
-          <div className="flex items-center gap-2">
-            <a
-              href={externalHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border-default px-3 py-1 text-xs font-semibold leading-none text-text-secondary transition-colors hover:border-brand-blue hover:text-brand-blue"
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="pt-0.5 text-[12px] font-semibold leading-none text-text-muted/70">{requirementRef}</span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-muted"
+              aria-label="Close requirement"
             >
-              {externalCode}
-              <ExternalLink className="h-3 w-3" />
-            </a>
-            <button onClick={onClose} className="text-text-secondary transition-colors hover:text-text-primary">
-              <X className="h-5 w-5" />
+              <X className="size-5" />
             </button>
           </div>
         </div>
-        <h2 className="mb-2 text-xl font-semibold text-text-heading">{requirement.name}</h2>
-        <div className="mb-1 flex items-center gap-2">
-          <LozengeTag label={requirement.status} type={getRequirementStatusLozengeType(requirement.status, 'panel')} subtle />
-          <LozengeTag label={requirement.category} type="Neutral" subtle />
-          {requirement.source === 'ai_rule_engine' && (
-            <LozengeTag label="AI" type="Discovery" subtle showSparkles />
-          )}
-        </div>
-        <div className="mt-2 flex items-center gap-3 text-xs text-text-muted">
-          <span className="inline-flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            Due {requirement.dueDate}
-          </span>
-          {requirement.followUpDate && (
-            <span className="inline-flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Follow-up {requirement.followUpDate}
-            </span>
-          )}
-        </div>
+
+        <h2 className="mt-2 text-[18px] font-semibold leading-tight text-text-heading">{requirement.name}</h2>
+
+        <dl className="mt-3 flex flex-wrap gap-2">
+          <SidePanelHeaderTag
+            icon={Briefcase}
+            label={caseTagLabel}
+            title={caseTagLabel}
+            onClick={() => navigate(`/cases/${caseId}#tab=requirements`)}
+          />
+          <SidePanelHeaderTag icon={Clock} label={`Due ${requirement.dueDate}`} />
+          {requirement.followUpDate ? (
+            <SidePanelHeaderTag icon={Clock} label={`Follow-up ${requirement.followUpDate}`} />
+          ) : null}
+          <a
+            href={externalHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border-soft bg-[#fbfcfd] px-2.5 py-1 text-[11px] font-semibold leading-none text-text-primary transition-colors hover:border-brand-blue/30 hover:bg-surface-muted"
+          >
+            <ExternalLink className="size-3 shrink-0 text-text-muted" aria-hidden />
+            <span className="truncate">{externalCode}</span>
+          </a>
+        </dl>
       </div>
 
       {/* Panel Content */}
       <div className="relative min-h-0 flex-1">
         <div className="h-full overflow-y-auto px-6 py-2">
           {/* AI Section */}
-          {requirement.source === 'ai_rule_engine' && (
+          {isRequirementAiSourced(requirement) && (
             <section className="border-b border-border-divider py-4">
               <button
                 type="button"

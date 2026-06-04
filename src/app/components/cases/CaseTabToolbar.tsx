@@ -1,8 +1,7 @@
 import { LayoutGrid, List, Plus, Upload } from 'lucide-react';
 import type { EffectiveCaseTypeAnatomy } from '../../domain/entityAnatomy';
-import { FilterDropdown } from '../index';
 import { SearchBar } from '../ds';
-import { resolveCaseWorkspaceTabLabel, type CaseTab } from './caseViewTypes';
+import { resolveCaseTabDisplayLabel, type CaseTab } from './caseViewTypes';
 
 /** Desktop tabs that render a data table (others are list/card-only). */
 const CASE_TABS_WITH_TABLE = new Set<CaseTab>(['tasks', 'requirements', 'documents']);
@@ -13,11 +12,9 @@ export type CaseTabToolbarProps = {
   activeTab: WorkTab;
   isCompactShell: boolean;
   caseAnatomy: EffectiveCaseTypeAnatomy | undefined;
+  workflowTabLabels?: string[];
   tabSearchQuery: string;
   onTabSearchChange: (value: string) => void;
-  activeStageOptions: string[];
-  stageFilter: string;
-  onStageFilterChange: (value: string) => void;
   tabView: 'table' | 'list';
   onTabViewChange: (view: 'table' | 'list') => void;
   onAddRequirement: () => void;
@@ -34,11 +31,9 @@ export function CaseTabToolbar({
   activeTab,
   isCompactShell,
   caseAnatomy,
+  workflowTabLabels,
   tabSearchQuery,
   onTabSearchChange,
-  activeStageOptions,
-  stageFilter,
-  onStageFilterChange,
   tabView,
   onTabViewChange,
   onAddRequirement,
@@ -70,19 +65,11 @@ export function CaseTabToolbar({
         ) : (
           <div className="shrink-0">
             <h3 className="text-base font-semibold text-text-heading">
-              {resolveCaseWorkspaceTabLabel(activeTab, caseAnatomy)}
+              {resolveCaseTabDisplayLabel(activeTab, { anatomy: caseAnatomy, workflowTabLabels })}
             </h3>
           </div>
         )}
         <div className="flex shrink-0 items-center gap-3">
-          {activeStageOptions.length > 0 ? (
-            <FilterDropdown
-              label="Stage"
-              options={['All', ...activeStageOptions]}
-              value={stageFilter || 'All'}
-              onChange={(value) => onStageFilterChange(value === 'All' ? '' : value)}
-            />
-          ) : null}
           {activeTab === 'requirements' && (
             <button
               type="button"

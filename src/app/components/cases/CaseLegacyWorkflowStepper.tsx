@@ -24,6 +24,7 @@ export type CaseLegacyWorkflowStepperProps = {
   isTerminated: boolean;
   isDecisionStep: boolean;
   activeStepForPhase: number;
+  lensOrder?: number | null;
   phaseTransition: 'idle' | 'completing' | 'scrolling';
   hasSubwayStages: boolean;
   onStageSelect: (order: number) => void;
@@ -37,6 +38,7 @@ export function CaseLegacyWorkflowStepper({
   isTerminated,
   isDecisionStep,
   activeStepForPhase,
+  lensOrder = null,
   phaseTransition,
   hasSubwayStages,
   onStageSelect,
@@ -93,7 +95,8 @@ export function CaseLegacyWorkflowStepper({
         {isCompactShell && legacyWorkflowSteps.length > 0 ? (
           <WorkflowStepsTabsBar
             steps={legacyWorkflowSteps}
-            activeOrder={activeStepForPhase}
+            progressOrder={activeStepForPhase}
+            lensOrder={lensOrder}
             onChange={onStageSelect}
             disabled={isStepperBusy}
             className="mb-1 lg:hidden"
@@ -157,12 +160,20 @@ export function CaseLegacyWorkflowStepper({
                                         isDecisionStep,
                                         aiMode,
                                       );
+                              const lensSelected = lensOrder != null && lensOrder === step;
+                              const stepSelectable = !isTerminated && (isDone || isActive) && !isStepperBusy;
                               return (
                                 <TooltipPrimitive.Root key={label}>
                                   <TooltipPrimitive.Trigger asChild>
-                                    <div
-                                      tabIndex={0}
-                                      className="flex shrink-0 cursor-default items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30"
+                                    <button
+                                      type="button"
+                                      disabled={!stepSelectable}
+                                      aria-label={`${label}${lensSelected ? ' — viewing work through this stage' : ''}`}
+                                      aria-pressed={lensSelected}
+                                      onClick={() => {
+                                        if (stepSelectable) onStageSelect(step);
+                                      }}
+                                      className="flex shrink-0 items-center rounded-sm text-left outline-none transition-opacity enabled:cursor-pointer enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-brand-blue/30"
                                     >
                                       {idx > 0 ? (
                                         <div
@@ -175,22 +186,22 @@ export function CaseLegacyWorkflowStepper({
                                       ) : null}
                                       <div className={WORKFLOW_MAP_STEP_ROW}>
                                         <div className={`${WORKFLOW_MAP_STEP_BADGE} ${
-                                          isTerminated
-                                            ? 'bg-[#b7bbc2] text-white'
-                                            : isDecisionActive
-                                              ? 'bg-brand-blue text-white'
-                                              : isActive
+                                          lensSelected
+                                            ? 'bg-white text-brand-blue ring-2 ring-brand-blue ring-offset-2'
+                                            : isTerminated
+                                              ? 'bg-[#b7bbc2] text-white'
+                                              : isDecisionActive
                                                 ? 'bg-brand-blue text-white'
-                                                : isDone
-                                                  ? 'bg-[#008533] text-white'
-                                                  : 'bg-white border border-[#b7bbc2] text-text-muted'
+                                                : isActive
+                                                  ? 'bg-brand-blue text-white'
+                                                  : isDone
+                                                    ? 'bg-[#008533] text-white'
+                                                    : 'bg-white border border-[#b7bbc2] text-text-muted'
                                         }`}>
-                                          {!isTerminated && isDecisionActive ? (
-                                            <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-brand-blue opacity-60 animate-ping" />
-                                          ) : !isTerminated && isActive ? (
+                                          {!isTerminated && (isDecisionActive || isActive) ? (
                                             <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-brand-blue opacity-60 animate-ping" />
                                           ) : null}
-                                          {isDone ? '✓' : step}
+                                          {isDone && !lensSelected ? '✓' : step}
                                           {!isTerminated && aiMode ? (
                                             <span className="absolute -right-1 -top-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-white bg-brand-accent shadow-sm">
                                               <AiCueSparkle size={8} className="!text-white" aria-hidden />
@@ -224,7 +235,7 @@ export function CaseLegacyWorkflowStepper({
                                           ) : null}
                                         </span>
                                       </div>
-                                    </div>
+                                    </button>
                                   </TooltipPrimitive.Trigger>
                                   <TooltipPrimitive.Portal>
                                     <TooltipPrimitive.Content
@@ -261,12 +272,20 @@ export function CaseLegacyWorkflowStepper({
                               const isDone = isTerminated || step < activeStepForPhase;
                               const isActive = !isTerminated && step === activeStepForPhase && activeStepForPhase >= 1;
                               const postTip = getPostApprovalStepTooltip(idx, isDone, isActive);
+                              const lensSelected = lensOrder != null && lensOrder === step;
+                              const stepSelectable = !isTerminated && (isDone || isActive) && !isStepperBusy;
                               return (
                                 <TooltipPrimitive.Root key={label}>
                                   <TooltipPrimitive.Trigger asChild>
-                                    <div
-                                      tabIndex={0}
-                                      className="flex shrink-0 cursor-default items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30"
+                                    <button
+                                      type="button"
+                                      disabled={!stepSelectable}
+                                      aria-label={`${label}${lensSelected ? ' — viewing work through this stage' : ''}`}
+                                      aria-pressed={lensSelected}
+                                      onClick={() => {
+                                        if (stepSelectable) onStageSelect(step);
+                                      }}
+                                      className="flex shrink-0 items-center rounded-sm text-left outline-none transition-opacity enabled:cursor-pointer enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-brand-blue/30"
                                     >
                                       {idx > 0 ? (
                                         <div
@@ -279,18 +298,20 @@ export function CaseLegacyWorkflowStepper({
                                       ) : null}
                                       <div className={WORKFLOW_MAP_STEP_ROW}>
                                         <div className={`${WORKFLOW_MAP_STEP_BADGE} ${
-                                          isTerminated
-                                            ? 'bg-[#b7bbc2] text-white'
-                                            : isActive
-                                              ? 'bg-brand-blue text-white'
-                                              : isDone
-                                                ? 'bg-[#008533] text-white'
-                                                : 'bg-white border border-[#b7bbc2] text-text-muted'
+                                          lensSelected
+                                            ? 'bg-white text-brand-blue ring-2 ring-brand-blue ring-offset-2'
+                                            : isTerminated
+                                              ? 'bg-[#b7bbc2] text-white'
+                                              : isActive
+                                                ? 'bg-brand-blue text-white'
+                                                : isDone
+                                                  ? 'bg-[#008533] text-white'
+                                                  : 'bg-white border border-[#b7bbc2] text-text-muted'
                                         }`}>
-                                          {!isTerminated && isActive && (
+                                          {!isTerminated && isActive ? (
                                             <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-brand-blue opacity-60 animate-ping" />
-                                          )}
-                                          {isDone ? '✓' : step}
+                                          ) : null}
+                                          {isDone && !lensSelected ? '✓' : step}
                                         </div>
                                         <span
                                           className={`${WORKFLOW_MAP_STEP_LABEL} ${
@@ -313,7 +334,7 @@ export function CaseLegacyWorkflowStepper({
                                           )}
                                         </span>
                                       </div>
-                                    </div>
+                                    </button>
                                   </TooltipPrimitive.Trigger>
                                   <TooltipPrimitive.Portal>
                                     <TooltipPrimitive.Content

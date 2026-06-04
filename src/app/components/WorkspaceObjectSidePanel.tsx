@@ -41,6 +41,10 @@ type WorkspaceObjectSidePanelProps = {
    * onClick handler can switch the active item without flicker.
    */
   closeOnOutsideClick?: boolean;
+  /** When true, outside clicks matching this case keep the panel open (global AI + case file). */
+  preserveOnOutsideClick?: (target: Element) => boolean;
+  /** Marks portaled case workspace panels so outside-click logic can recognize them. */
+  caseWorkspaceId?: string;
 };
 
 export function WorkspaceObjectSidePanel({
@@ -49,8 +53,10 @@ export function WorkspaceObjectSidePanel({
   assistantContent,
   assistantLabel = 'Assistant',
   children,
+  caseWorkspaceId,
   closeOnOutsideClick = true,
   contexts,
+  preserveOnOutsideClick,
   isResizing = false,
   onChangeContext,
   onClearContext,
@@ -142,6 +148,7 @@ export function WorkspaceObjectSidePanel({
       if (!(target instanceof Element)) return;
       // Row/card explicitly opted out (it owns context-switching)
       if (target.closest('[data-keep-sidepanel]')) return;
+      if (preserveOnOutsideClick?.(target)) return;
       // Radix portals (Select / Popover / Dropdown / Dialog content)
       if (
         target.closest(
@@ -154,7 +161,7 @@ export function WorkspaceObjectSidePanel({
     };
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [closeOnOutsideClick, onClose]);
+  }, [closeOnOutsideClick, onClose, preserveOnOutsideClick]);
 
   const scrollContexts = (direction: 'left' | 'right') => {
     const el = scrollRef.current;
@@ -187,6 +194,7 @@ export function WorkspaceObjectSidePanel({
     <div
       ref={panelRef}
       onClick={handlePanelClick}
+      data-case-workspace={caseWorkspaceId}
       className={`fixed right-0 ${zIndexClassName} flex flex-col overflow-visible border-l border-t border-border-default bg-white shadow-[-8px_0_24px_rgba(0,0,0,0.08)]`}
       style={{
         width: `${panelWidth}px`,

@@ -1,6 +1,12 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import type { ChatTurn, ChatArtifact } from '../components/AiCopilotFooter';
 import type { LiveContext } from './LiveContextProvider';
+import {
+  applyTaskOutcomeToMessages,
+  stripBriefRefreshTurns,
+  type CopilotTaskOutcome,
+} from '../domain/copilotSessionMessages';
+import { clearCaseBriefIntroPlayed } from '../hooks/useCaseBriefIntroSequence';
 
 export type CopilotSession = {
   id: string;
@@ -34,18 +40,39 @@ type CopilotContextValue = {
   isOpen: boolean;
   setIsOpen: (v: boolean) => void;
   registerReplyHandler: (handler: ReplyHandler) => void;
+  registerSideEffectHandler: (handler: CopilotSideEffectHandler | null) => void;
   /** LiveContextProvider registers a getter so sendMessage can stamp the current context onto user turns. */
   registerContextSource: (source: ContextSource | null) => void;
+  injectBriefingIfEmpty: (sessionId: string, turn: ChatTurn) => boolean;
+  replaceCaseBriefing: (sessionId: string, turn: ChatTurn) => boolean;
+  appendTurns: (sessionId: string, turns: ChatTurn[]) => void;
+  patchSessionForTaskOutcome: (
+    sessionId: string,
+    taskId: string,
+    outcome: CopilotTaskOutcome,
+    alternateTaskIds?: string[],
+  ) => void;
+};
+
+export type CopilotTaskSideEffect = {
+  kind: 'task_action';
+  taskId: string;
+  actionType: 'complete' | 'request_info';
+};
+
+export type ReplyHandlerResult = {
+  text: string;
+  artifact?: ChatArtifact;
+  followUps?: string[];
+  sideEffect?: CopilotTaskSideEffect;
 };
 
 export type ReplyHandler = (
   text: string,
   context?: LiveContext,
-) => {
-  text: string;
-  artifact?: ChatArtifact;
-  followUps?: string[];
-} | null;
+) => ReplyHandlerResult | null;
+
+export type CopilotSideEffectHandler = (effect: CopilotTaskSideEffect) => boolean;
 
 const CopilotContext = createContext<CopilotContextValue | null>(null);
 
@@ -142,6 +169,7 @@ export function CopilotProvider({ children }: React.PropsWithChildren) {
   const [activeSessionId, setActiveSessionId] = useState('default');
   const [isOpen, setIsOpen] = useState(false);
   const [replyHandler, setReplyHandler] = useState<ReplyHandler | null>(null);
+  const sideEffectHandlerRef = useRef<CopilotSideEffectHandler | null>(null);
   const contextSourceRef = useRef<ContextSource | null>(null);
 
   const registerReplyHandler = useCallback((handler: ReplyHandler) => {
@@ -150,6 +178,109 @@ export function CopilotProvider({ children }: React.PropsWithChildren) {
 
   const registerContextSource = useCallback((source: ContextSource | null) => {
     contextSourceRef.current = source;
+  }, []);
+
+  const registerSideEffectHandler = useCallback((handler: CopilotSideEffectHandler | null) => {
+    sideEffectHandlerRef.current = handler;
+  }, []);
+
+  const updateSession = useCallback(
+    (sessionId: string, updater: (session: CopilotSession) => CopilotSession) => {
+      setSessions((prev) =>
+        prev.map((session) => (session.id === sessionId ? updater(session) : session)),
+      );
+    },
+    [],
+  );
+
+  const appendTurns = useCallback(
+    (sessionId: string, turns: ChatTurn[]) => {
+      if (!turns.length) return;
+      updateSession(sessionId, (session) => ({
+        ...session,
+        messages: [...session.messages, ...turns],
+        updatedAt: Date.now(),
+      }));
+    },
+    [updateSession],
+  );
+
+  const patchSessionForTaskOutcome = useCallback(
+    (sessionId: string, taskId: string, outcome: CopilotTaskOutcome, alternateTaskIds: string[] = []) => {
+      updateSession(sessionId, (session) => ({
+        ...session,
+        messages: applyTaskOutcomeToMessages(session.messages, taskId, outcome, alternateTaskIds),
+        updatedAt: Date.now(),
+      }));
+    },
+    [updateSession],
+  );
+
+  const injectBriefingIfEmpty = useCallback(
+    (sessionId: string, turn: ChatTurn) => {
+      let injected = false;
+      setSessions((prev) =>
+        prev.map((session) => {
+          if (session.id !== sessionId || session.messages.length > 0) return session;
+          injected = true;
+          if (turn.artifact?.kind === 'case-brief') {
+            clearCaseBriefIntroPlayed(turn.artifact.caseId);
+          }
+          return {
+            ...session,
+            messages: [turn],
+            updatedAt: Date.now(),
+          };
+        }),
+      );
+      return injected;
+    },
+    [],
+  );
+
+  const prependCaseBriefing = useCallback((sessionId: string, turn: ChatTurn) => {
+    if (turn.artifact?.kind !== 'case-brief') return false;
+    let prepended = false;
+    setSessions((prev) =>
+      prev.map((session) => {
+        if (session.id !== sessionId) return session;
+        const briefCaseId = turn.artifact.caseId;
+        const hasBrief = session.messages.some(
+          (row) => row.artifact?.kind === 'case-brief' && row.artifact.caseId === briefCaseId,
+        );
+        if (hasBrief) return session;
+        prepended = true;
+        clearCaseBriefIntroPlayed(turn.artifact.caseId);
+        return {
+          ...session,
+          messages: [turn, ...session.messages],
+          updatedAt: Date.now(),
+        };
+      }),
+    );
+    return prepended;
+  }, []);
+
+  const replaceCaseBriefing = useCallback((sessionId: string, turn: ChatTurn) => {
+    let replaced = false;
+    setSessions((prev) =>
+      prev.map((session) => {
+        if (session.id !== sessionId) return session;
+        const onlyBrief =
+          session.messages.length === 1 && session.messages[0]?.artifact?.kind === 'case-brief';
+        if (!onlyBrief) return session;
+        replaced = true;
+        if (turn.artifact?.kind === 'case-brief') {
+          clearCaseBriefIntroPlayed(turn.artifact.caseId);
+        }
+        return {
+          ...session,
+          messages: [turn],
+          updatedAt: Date.now(),
+        };
+      }),
+    );
+    return replaced;
   }, []);
 
   const activeMessages = useMemo(
@@ -164,6 +295,9 @@ export function CopilotProvider({ children }: React.PropsWithChildren) {
       const userTurn: ChatTurn = { id: `u-${uid()}`, role: 'user', text, at: now, context: ctx ?? undefined };
 
       const mock = replyHandler?.(text, ctx ?? undefined);
+      if (mock?.sideEffect) {
+        sideEffectHandlerRef.current?.(mock.sideEffect);
+      }
       const assistantTurn: ChatTurn = mock
         ? {
             id: `a-${uid()}`,
@@ -172,6 +306,7 @@ export function CopilotProvider({ children }: React.PropsWithChildren) {
             at: now + 1,
             artifact: mock.artifact,
             followUps: mock.followUps,
+            revealIntro: mock.artifact?.kind !== 'case-brief',
           }
         : {
             id: `a-${uid()}`,
@@ -187,7 +322,8 @@ export function CopilotProvider({ children }: React.PropsWithChildren) {
       setSessions((prev) =>
         prev.map((s) => {
           if (s.id !== activeSessionId) return s;
-          const msgs = [...s.messages, userTurn, assistantTurn];
+          const cleaned = stripBriefRefreshTurns(s.messages);
+          const msgs = [...cleaned, userTurn, assistantTurn];
           // Only overwrite the title when it is still the auto-generated placeholder
           // (preserves any manual rename the user did before sending the first message).
           const shouldAutoTitle = s.messages.length === 0 && s.titleIsDefault !== false;
@@ -267,9 +403,34 @@ export function CopilotProvider({ children }: React.PropsWithChildren) {
       isOpen,
       setIsOpen,
       registerReplyHandler,
+      registerSideEffectHandler,
       registerContextSource,
+      injectBriefingIfEmpty,
+      prependCaseBriefing,
+      replaceCaseBriefing,
+      appendTurns,
+      patchSessionForTaskOutcome,
     }),
-    [sessions, activeSessionId, activeMessages, sendMessage, createSession, switchSession, deleteSession, renameSession, togglePin, isOpen, registerReplyHandler, registerContextSource],
+    [
+      sessions,
+      activeSessionId,
+      activeMessages,
+      sendMessage,
+      createSession,
+      switchSession,
+      deleteSession,
+      renameSession,
+      togglePin,
+      isOpen,
+      registerReplyHandler,
+      registerSideEffectHandler,
+      registerContextSource,
+      injectBriefingIfEmpty,
+      prependCaseBriefing,
+      replaceCaseBriefing,
+      appendTurns,
+      patchSessionForTaskOutcome,
+    ],
   );
 
   return <CopilotContext.Provider value={value}>{children}</CopilotContext.Provider>;

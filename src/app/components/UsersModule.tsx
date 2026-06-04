@@ -4,6 +4,7 @@ import { Users as UsersIcon } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
 import { useActiveUser } from '../contexts/ActiveUserContext';
+import { appToast } from '../utils/app-toast';
 import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
 import { filterDatasetBySettings, getSystemDataset } from '../data/objectRepository';
 import { getPlatformUserFromDataset } from '../data/datasetUsers';
@@ -59,7 +60,6 @@ export function UsersModule() {
   const [isResizing, setIsResizing] = useState(false);
   const [tableScrollEl, setTableScrollEl] = useState<HTMLDivElement | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [reassignOpen, setReassignOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [teamFilter, setTeamFilter] = useState('All');
@@ -205,12 +205,6 @@ export function UsersModule() {
   }, [allRows, isManager, location.search, openUser, profile.name, selectedUser]);
 
   useEffect(() => {
-    if (!toastMessage) return;
-    const timer = setTimeout(() => setToastMessage(null), 3000);
-    return () => clearTimeout(timer);
-  }, [toastMessage]);
-
-  useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
       const newWidth = window.innerWidth - e.clientX;
@@ -274,7 +268,7 @@ export function UsersModule() {
     updateDataSource({ activeDatasetId: result.datasetId });
     setReassignOpen(false);
     bumpRefresh();
-    setToastMessage(`Reassigned ${input.taskIds.length} task(s) to ${input.toUser.name}`);
+    appToast.success(`Reassigned ${input.taskIds.length} task(s) to ${input.toUser.name}`);
   };
 
   const selectedTasks = selectedUser ? tasksForPlatformUser(dataset, selectedUser.id) : [];
@@ -419,17 +413,12 @@ export function UsersModule() {
               });
               setBlockOpen(false);
               bumpRefresh();
-              setToastMessage(`Availability block saved for ${selectedUser.name}`);
+              appToast.success(`Availability block saved for ${selectedUser.name}`);
             }}
           />
         </>
       ) : null}
 
-      {toastMessage ? (
-        <div className="pointer-events-none fixed bottom-6 left-1/2 z-[210] -translate-x-1/2 rounded-full bg-text-heading px-4 py-2 text-sm text-white shadow-lg">
-          {toastMessage}
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -3,7 +3,6 @@ import type {
   CaseGeneralInformationCollapsible,
   CaseInformationSection,
 } from '../../domain/objectRefs';
-import type { CaseBriefContent } from '../../domain/caseBrief';
 import type { UnderwritingScoring } from '../../domain/objectRefs';
 import {
   deriveHumanNet,
@@ -14,7 +13,6 @@ import {
   type ScoringItemType,
   type ScoringRow,
 } from '../../domain/scoring';
-import { DailyBriefCard } from '../DailyBriefCard';
 
 function CaseInfoGrid({
   fields,
@@ -123,7 +121,7 @@ function GeneralInformationCardView({ card }: { card: CaseGeneralInformationCard
     );
   }
   return (
-    <div className={`overflow-hidden rounded-lg border border-border-soft bg-white ${card.layout === '4_col' ? 'lg:col-span-2' : ''}`}>
+    <div className={`self-start overflow-hidden rounded-lg border border-border-soft bg-white ${card.layout === '4_col' ? 'lg:col-span-2' : ''}`}>
       {title}
       <div className={`grid grid-cols-2 gap-x-3 gap-y-4 p-3 sm:gap-x-4 sm:gap-y-3 ${card.layout === '4_col' ? 'sm:grid-cols-4' : ''}`}>
         {card.fields.map((field) => (
@@ -202,7 +200,7 @@ function GeneralInformationRichView({
   const renderedScoring = { current: false };
   return (
     <>
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid items-start gap-3 lg:grid-cols-2">
         {cards.map((card) => {
           if (card.type === 'scoring_bar_chart' && scoring && onScoreAdd && onScoreFullView && onScoreRowClick) {
             renderedScoring.current = true;
@@ -229,7 +227,6 @@ function GeneralInformationRichView({
 }
 
 export type CaseOverviewTabProps = {
-  caseBrief?: CaseBriefContent | null;
   richCards: CaseGeneralInformationCard[];
   richCollapsibles: CaseGeneralInformationCollapsible[];
   structuredSections: CaseInformationSection[];
@@ -241,7 +238,6 @@ export type CaseOverviewTabProps = {
 };
 
 export function CaseOverviewTab({
-  caseBrief,
   richCards,
   richCollapsibles,
   structuredSections,
@@ -251,14 +247,16 @@ export function CaseOverviewTab({
   onScoreFullView,
   onScoreRowClick,
 }: CaseOverviewTabProps) {
+  const showOverviewScoring = richCards.some((card) => card.type === 'scoring_bar_chart');
+  const overviewScoring = showOverviewScoring ? scoring : undefined;
+
   return (
     <div className="max-w-[1200px] space-y-4">
-      {caseBrief ? <DailyBriefCard content={caseBrief} /> : null}
       {richCards.length > 0 || richCollapsibles.length > 0 ? (
         <GeneralInformationRichView
           cards={richCards}
           collapsibles={richCollapsibles}
-          scoring={scoring}
+          scoring={overviewScoring}
           onScoreAdd={onScoreAdd}
           onScoreFullView={onScoreFullView}
           onScoreRowClick={onScoreRowClick}

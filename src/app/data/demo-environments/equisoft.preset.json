@@ -1,7 +1,7 @@
 {
   "id": "demo-equisoft",
   "name": "Equisoft (default)",
-  "description": "Equisoft Amplify branding with the shared SBLI-driven demo cases dataset.",
+  "description": "Equisoft Amplify branding with the shared US demo cases dataset (neutral carrier labels).",
   "createdAt": "2026-01-01T00:00:00.000Z",
   "settings": {
     "branding": {
@@ -21,7 +21,8 @@
       "aiActivityEnabled": true,
       "aiSidePanelEnabled": true,
       "casesAiAssistantEnabled": false,
-      "aiActivityVisible": false
+      "aiActivityVisible": false,
+      "presentationModeEnabled": true
     },
     "modules": {
       "home": true,
@@ -31,7 +32,7 @@
       "tasks": true,
       "requests": true,
       "documents": true,
-      "aiActions": true,
+      "aiActions": false,
       "insights": false,
       "reports": false,
       "copilot": true

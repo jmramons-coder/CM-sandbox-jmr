@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { GlobalCreateFlowModal } from '../components/GlobalCreateFlowModal';
 import { filterDatasetBySettings, getSystemDataset, listCaseSummaries } from '../data/objectRepository';
 import { useCasesNav } from './CasesNavContext';
+import { appToast } from '../utils/app-toast';
 import { useDataSourceSettings, usePlatformSettings, useModules } from './PlatformSettingsContext';
 
 export type GlobalCreateEntity = 'case' | 'task' | 'request';
@@ -77,14 +78,17 @@ export function GlobalCreateProvider({ children }: { children: ReactNode }) {
           ).find((item) => item.id === caseId);
           updateDataSource({ activeDatasetId: datasetId });
           addOpenCase(caseId, createdCaseSummary);
+          appToast.success(`Case ${caseId} created`);
         }}
         onTaskCreated={({ datasetId, taskId }) => {
           updateDataSource({ activeDatasetId: datasetId });
           navigate(`/tasks#task=${encodeURIComponent(taskId)}`);
+          appToast.success(`Task ${taskId} created`);
         }}
         onRequestCreated={({ datasetId, requestId }) => {
           updateDataSource({ activeDatasetId: datasetId });
           navigate(`/requests#request=${encodeURIComponent(requestId)}`);
+          appToast.success(`Request ${requestId} created`);
         }}
       />
     </GlobalCreateContext.Provider>

@@ -45,16 +45,7 @@ function task(
     aiSummary: extra.aiSummary,
     description,
     ...extra,
-    summary: extra.summary ?? {
-      contextLabel: 'Task context',
-      title: label,
-      description,
-      checklist: extra.summary?.checklist ?? [
-        `Review ${label.toLowerCase()}`,
-        'Update case notes and advisor copy',
-        'Confirm requirement status',
-      ],
-    },
+    summary: extra.summary,
     linkedObjects: [
       { kind: 'case', id: caseId, label: caseId },
       ...(extra.linkedObjects ?? []).filter((ref) => ref.kind !== 'case'),
@@ -83,7 +74,12 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
     actions: [{ type: 'complete', label: 'View FNOL', isPrimary: true }],
   }),
   task('task_emp_di_003', DI, 'Chase employer physician statement — own occupation', 'In Queue', 'High', 'req_gathering', {
+    executionMode: 'manual',
     aiSummary: 'Contact Maple Tech HR — statement must state unable to perform software development duties.',
+    review: {
+      verdict: 'Contact Maple Tech HR — statement must state unable to perform software development duties.',
+      reasoning: ['Reference requirement req_emp_di_003', 'Confirm own-occupation wording on physician statement'],
+    },
     alert: { type: 'sla', message: 'Overdue 2 days' },
     evidenceDocuments: [{ id: 'doc_emp_di_employer', name: 'Employer physician statement', size: 'Metadata', category: 'Medical', aiSummary: 'Wording gap on own occupation.', followUps: 2 }],
     linkedObjects: [
@@ -104,6 +100,18 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
   }),
   task('task_emp_ci_002', CI, 'Validate specialist diagnosis letter', 'Completed', 'Urgent', 'req_gathering', {
     hasAI: true,
+    executionMode: 'semi_auto',
+    aiGenerated: true,
+    aiConfidence: 94,
+    review: {
+      verdict: 'Invasive ductal carcinoma confirmed — meets Empire Life CI definition. Recommend full $125,000 payout.',
+      confidence: 94,
+      reasoning: [
+        'Specialist letter and pathology report corroborate diagnosis.',
+        'No exclusions apply under product definition.',
+      ],
+      evidenceIds: ['doc_emp_ci_diagnosis', 'doc_emp_ci_pathology'],
+    },
     aiSummary: 'Invasive ductal carcinoma confirmed — meets Empire Life CI definition. Recommend full payout.',
     evidenceDocuments: [
       { id: 'doc_emp_ci_diagnosis', name: 'Specialist diagnosis', size: 'Metadata', category: 'Medical', aiSummary: 'Full $125k recommended.', followUps: 0 },
@@ -118,6 +126,13 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
   }),
   task('task_emp_ci_003', CI, 'Prepare decision recommendation', 'In Queue', 'Urgent', 'decision', {
     hasAI: true,
+    executionMode: 'semi_auto',
+    aiGenerated: true,
+    review: {
+      verdict: 'All requirements fulfilled — recommend approve $125,000. Copy advisor on decision letter.',
+      reasoning: ['Medical and definitions complete — ready for human sign-off.'],
+      evidenceIds: ['doc_emp_ci_diagnosis', 'doc_emp_ci_pathology', 'doc_emp_ci_support'],
+    },
     aiSummary: 'All requirements fulfilled — recommend approve $125,000. Copy advisor on decision letter.',
     evidenceDocuments: [
       { id: 'doc_emp_ci_diagnosis', name: 'Specialist diagnosis', size: 'Metadata', category: 'Medical', aiSummary: 'Full $125k recommended.', followUps: 0 },
@@ -169,36 +184,130 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
     ],
   }),
 
-  task('task_emp_nb_001', NB, 'Complete application triage', 'Completed', 'Normal', 'application', {
-    aiSummary: 'Application and needs analysis reviewed. MIB clear; APS ordered — case advanced to requirements gathering.',
+  task('task_emp_nb_001', NB, 'Application Initial Review', 'Completed', 'Normal', 'application', {
+    assignee: 'Victor Ramon',
+    assigneeKind: 'user',
+    executionMode: 'manual',
+    aiGenerated: false,
+    hasAI: false,
+    createdDate: '2026-05-08',
+    dueDate: '2026-05-08',
+    completedDate: '2026-05-08',
+    aiSummary: 'Initial review completed 8 May — application and needs analysis validated; submission requirements released.',
     evidenceDocuments: [
       { id: 'doc_emp_nb_app', name: 'Application — Amélie Dubois (Solution 20)', size: 'Metadata', category: 'Financial', aiSummary: '$500,000 Solution 20 participating; non-smoker.', followUps: 0 },
       { id: 'doc_emp_nb_needs', name: 'Advisor needs analysis — Amélie Dubois', size: 'Metadata', category: 'Financial', aiSummary: 'Needs analysis supports participating whole life coverage.', followUps: 0 },
     ],
     linkedObjects: [
-      { kind: 'requirement', id: 'req_emp_nb_001', label: 'Application & advisor needs analysis' },
       { kind: 'document', id: 'doc_emp_nb_app', label: 'Application' },
       { kind: 'document', id: 'doc_emp_nb_needs', label: 'Needs analysis' },
       { kind: 'request', id: 'REQ-EMP-2026-002', label: 'NB application' },
     ],
     actions: [{ type: 'complete', label: 'View application', isPrimary: true }],
   }),
-  task('task_emp_nb_002', NB, 'Order and chase APS', 'In Queue', 'High', 'req_gathering', {
-    aiSummary: 'Clinique Médicale du Plateau — APS overdue since 20 May.',
-    alert: { type: 'sla', message: 'APS overdue' },
-    evidenceDocuments: [{ id: 'doc_emp_nb_aps_request', name: 'APS request', size: 'Metadata', category: 'Medical', aiSummary: 'Awaiting clinic response.', followUps: 2 }],
+  task('task_emp_nb_010', NB, 'Order MIB search', 'Completed', 'Normal', 'application', {
+    assignee: 'System',
+    assigneeKind: 'team',
+    executionMode: 'manual',
+    aiGenerated: false,
+    hasAI: false,
+    origin: 'System',
+    createdDate: '2026-05-08',
+    dueDate: '2026-05-08',
+    completedDate: '2026-05-08',
+    aiSummary: 'MIB inquiry ordered automatically at submission — clear, no alerts.',
+    evidenceDocuments: [{ id: 'doc_emp_nb_mib', name: 'MIB search results', size: 'Metadata', category: 'Medical', aiSummary: 'Clear at submission.', followUps: 0 }],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_emp_nb_003', label: 'MIB search' },
+      { kind: 'document', id: 'doc_emp_nb_mib', label: 'MIB results' },
+    ],
+    actions: [{ type: 'complete', label: 'View MIB', isPrimary: true }],
+  }),
+  task('task_emp_nb_011', NB, 'Order blood and urine', 'Completed', 'Normal', 'application', {
+    assignee: 'System',
+    assigneeKind: 'team',
+    executionMode: 'manual',
+    aiGenerated: false,
+    hasAI: false,
+    origin: 'System',
+    createdDate: '2026-05-08',
+    dueDate: '2026-05-08',
+    completedDate: '2026-05-08',
+    aiSummary: 'Paramedical lab requisition sent to Dynacare Ottawa at submission.',
+    linkedObjects: [{ kind: 'requirement', id: 'req_emp_nb_005', label: 'Blood and urine' }],
+    actions: [{ type: 'complete', label: 'View', isPrimary: true }],
+  }),
+  task('task_emp_nb_012', NB, 'Order Rx report', 'Completed', 'Normal', 'application', {
+    assignee: 'System',
+    assigneeKind: 'team',
+    executionMode: 'manual',
+    aiGenerated: false,
+    hasAI: false,
+    origin: 'System',
+    createdDate: '2026-05-08',
+    dueDate: '2026-05-08',
+    completedDate: '2026-05-08',
+    aiSummary: 'Milliman IntelliScript prescription history check ordered at submission.',
+    evidenceDocuments: [{ id: 'doc_emp_nb_rx', name: 'Rx report — IntelliScript', size: 'Metadata', category: 'Medical', aiSummary: 'Received 11 May.', followUps: 0 }],
+    linkedObjects: [
+      { kind: 'requirement', id: 'req_emp_nb_006', label: 'RX report' },
+      { kind: 'document', id: 'doc_emp_nb_rx', label: 'Rx report' },
+    ],
+    actions: [{ type: 'complete', label: 'View Rx report', isPrimary: true }],
+  }),
+  task('task_emp_nb_013', NB, 'Send scuba questionnaire', 'Completed', 'Normal', 'application', {
+    assignee: 'AI Agent',
+    assigneeKind: 'team',
+    executionMode: 'manual',
+    aiGenerated: true,
+    hasAI: true,
+    createdDate: '2026-05-08',
+    dueDate: '2026-05-08',
+    completedDate: '2026-05-08',
+    aiSummary: 'AI flagged recreational scuba diving on application — questionnaire sent to advisor portal at submission.',
+    linkedObjects: [{ kind: 'requirement', id: 'req_emp_nb_007', label: 'Scuba Questionnaire' }],
+    actions: [{ type: 'complete', label: 'View', isPrimary: true }],
+  }),
+  task('task_emp_nb_015', NB, 'Review Rx report — recommend APS', 'Completed', 'High', 'req_gathering', {
+    assignee: 'AI Agent',
+    assigneeKind: 'team',
+    executionMode: 'semi_auto',
+    aiGenerated: true,
+    hasAI: true,
+    aiConfidence: 88,
+    createdDate: '2026-05-11',
+    dueDate: '2026-05-11',
+    completedDate: '2026-05-11',
+    aiSummary:
+      'IntelliScript shows lisinopril 10 mg and amlodipine 5 mg — treated hypertension not on application. Recommended APS to Clinique Médicale du Plateau.',
+    review: {
+      verdict:
+        'Recommended attending physician statement to Clinique Médicale du Plateau. IntelliScript shows lisinopril 10 mg and amlodipine 5 mg — treated hypertension not fully characterized on the application; APS needed to confirm control, duration, and underwriting impact.',
+      confidence: 88,
+      reasoning: [
+        'IntelliScript Rx report received 11 May — two antihypertensive medications on continuous fill.',
+        'Application lists non-smoker and BMI 25 but does not document treated high blood pressure.',
+        'APS from primary care will clarify diagnosis date, blood-pressure control, and related cardiac workup.',
+      ],
+      evidenceIds: ['doc_emp_nb_rx'],
+    },
+    aiNarrative: {
+      text: 'After Rx ingestion, the agent matched lisinopril and amlodipine to treated hypertension and recommended APS to verify disclosure alignment before final rating.',
+      confidence: 88,
+      generatedBy: 'AI Agent',
+      generatedAt: '2026-05-11',
+    },
+    evidenceDocuments: [
+      { id: 'doc_emp_nb_rx', name: 'Rx report — IntelliScript', size: 'Metadata', category: 'Medical', aiSummary: 'Lisinopril and amlodipine on file — treated hypertension.', followUps: 0 },
+      { id: 'doc_emp_nb_aps_request', name: 'APS request (draft)', size: 'Metadata', category: 'Medical', aiSummary: 'Draft order to Clinique Médicale du Plateau — pending underwriter release.', followUps: 0 },
+    ],
     linkedObjects: [
       { kind: 'requirement', id: 'req_emp_nb_002', label: 'APS' },
-      { kind: 'document', id: 'doc_emp_nb_aps_request', label: 'APS request' },
+      { kind: 'requirement', id: 'req_emp_nb_006', label: 'RX report' },
+      { kind: 'document', id: 'doc_emp_nb_rx', label: 'Rx report' },
+      { kind: 'document', id: 'doc_emp_nb_aps_request', label: 'APS request (draft)' },
     ],
-  }),
-  task('task_emp_nb_003', NB, 'Review financial questionnaire', 'Completed', 'Normal', 'application', {
-    evidenceDocuments: [{ id: 'doc_emp_nb_financial', name: 'Financial questionnaire', size: 'Metadata', category: 'Financial', aiSummary: 'Affordability confirmed.', followUps: 0 }],
-    linkedObjects: [
-      { kind: 'requirement', id: 'req_emp_nb_004', label: 'Financial questionnaire' },
-      { kind: 'document', id: 'doc_emp_nb_financial', label: 'Financial questionnaire' },
-    ],
-    actions: [{ type: 'complete', label: 'View questionnaire', isPrimary: true }],
+    actions: [{ type: 'complete', label: 'View recommendation', isPrimary: true }],
   }),
 
   task('task_emp_nb_s_001', NB_S, 'Review Solution 10 application & questionnaire', 'Completed', 'Normal', 'application', {

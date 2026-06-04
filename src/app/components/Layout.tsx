@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
-import { ChevronDown, FileText, Maximize2, Menu, MessageSquare, Pencil, Plus, Search } from 'lucide-react';
+import { ChevronDown, FileText, Menu, MessageSquare, Search } from 'lucide-react';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { MobileBottomNav, MOBILE_BOTTOM_NAV_CLEARANCE } from './MobileBottomNav';
-import { AgentSearchOptionContent, CaseSearchOptionContent, InitialsAvatar } from './ds';
+import { AgentSearchOptionContent, AppToaster, CaseSearchOptionContent, InitialsAvatar } from './ds';
 import { toAgentSummarySearchResult } from '../utils/agent-display';
 import { toCaseSummarySearchResult } from '../utils/case-display';
 import { useTranslation } from 'react-i18next';
@@ -11,34 +11,50 @@ import VerticalNav from './VerticalNav';
 import { SimpleLogo } from './SimpleLogo';
 import { UserMenu } from './UserMenu';
 import { ProductGuideModal } from './ProductGuideModal';
-import {
-  AiCopilotDock,
-} from './AiCopilotFooter';
+import type { CopilotExecuteAction } from './AiCopilotFooter';
+import { GlobalAiCopilotSidePanel } from './copilot/GlobalAiCopilotSidePanel';
+import { setGlobalCopilotPanelOpenAttribute } from '../hooks/useCaseBriefCompanionPanelOpen';
 import { AiCueSparkle } from './AiCueSparkle';
 import { CasesNavProvider } from '../contexts/CasesNavContext';
 import { GlobalCreateProvider } from '../contexts/GlobalCreateContext';
 import { FoldersNavProvider } from '../contexts/FoldersNavContext';
 import { CopilotProvider, useCopilot, newChatDefaultTitle, type ReplyHandler } from '../contexts/CopilotContext';
-import { LiveContextProvider } from '../contexts/LiveContextProvider';
+import { LiveContextProvider, useLiveContext } from '../contexts/LiveContextProvider';
 import { PlatformSettingsProvider, useBranding, useDataSourceSettings, usePlatformSettings, useThemeMode } from '../contexts/PlatformSettingsContext';
 import { AppSwitcher } from './AppSwitcher';
+import { PresentationModeOverlay } from './presentation/PresentationModeOverlay';
 import { getActiveApp } from '../domain/apps';
 import { filterDatasetBySettings, getSystemDataset, listCaseSummaries } from '../data/objectRepository';
-import { WorkspaceObjectSidePanel } from './WorkspaceObjectSidePanel';
 import { getDefaultSidePanelWidth } from '../utils/sidepanel-width';
 
 import { resolveBrandingLogoSrc } from '../utils/branding-logo';
 
 import { buildAssistantReply } from '../domain/assistantReplyBuilder';
+import { buildCaseAssistantReply, buildCaseAssistantReplyForExecute } from '../domain/caseAssistantReplyBuilder';
+import { extractCaseIdFromLiveContext, extractCaseIdFromPath } from '../domain/extractCaseIdFromContext';
+import { resolveCaseCopilotContextFromCaseId } from '../domain/resolveCaseCopilotBriefInput';
+import { useCaseContextBriefing } from '../hooks/useCaseContextBriefing';
+import {
+  approveNb66RequirementGatheringPackage,
+  isNb66RecommendRequirementsTask,
+} from '../data/nb66RequirementGatheringActions';
+import { isEquisoftNb66GatheringDemo } from '../data/equisoftNb66ReqGatheringOverlay';
+import { isTaskCompleteActionSuccess, runTaskWorkflowAction } from '../data/workflowActions';
+import { appToast } from '../utils/app-toast';
+import { useActiveUser, ActiveUserProvider } from '../contexts/ActiveUserContext';
+import { APP_EVENTS, STORAGE_KEYS } from '../constants/storage-keys';
 import type { LiveContext } from '../contexts/LiveContextProvider';
 import { useViewportLayout } from '../hooks/useViewportLayout';
 import { ViewportLayoutProvider } from '../contexts/ViewportLayoutContext';
-import { ActiveUserProvider } from '../contexts/ActiveUserContext';
-import { APP_EVENTS, STORAGE_KEYS } from '../constants/storage-keys';
 
 function resolveCopilotContextId(context?: LiveContext): string | undefined {
   if (!context) return undefined;
-  if (context.kind === 'caseDetail' || context.kind === 'caseTab' || context.kind === 'caseRequirement') {
+  if (
+    context.kind === 'caseDetail'
+    || context.kind === 'caseTab'
+    || context.kind === 'caseRequirement'
+    || context.kind === 'caseTask'
+  ) {
     const match = context.href.match(/\/cases\/([^/?#]+)/);
     if (match) return `case:${match[1]}`;
   }
@@ -57,79 +73,6 @@ const GLOBAL_AI_MAX_FACTOR = 0.7;
 function clampGlobalAiWidth(innerWidth: number, width: number): number {
   const max = Math.max(GLOBAL_AI_MIN_WIDTH, Math.floor(innerWidth * GLOBAL_AI_MAX_FACTOR));
   return Math.max(GLOBAL_AI_MIN_WIDTH, Math.min(width, max));
-}
-
-/* ─── Inline editor for conversation title ─── */
-
-function InlineTitleEditor({
-  value,
-  editing,
-  onEditingChange,
-  onCommit,
-  className,
-}: {
-  value: string;
-  editing: boolean;
-  onEditingChange: (editing: boolean) => void;
-  onCommit: (next: string) => void;
-  className?: string;
-}) {
-  const [draft, setDraft] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!editing) setDraft(value);
-  }, [value, editing]);
-
-  useEffect(() => {
-    if (editing) {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }
-  }, [editing]);
-
-  const commit = () => {
-    const next = draft.trim();
-    onEditingChange(false);
-    if (next && next !== value) onCommit(next);
-    else setDraft(value);
-  };
-
-  if (editing) {
-    // Size the input to hug its content (draft length) instead of filling the row.
-    const ch = Math.min(Math.max(draft.length + 1, 10), 42);
-    return (
-      <input
-        ref={inputRef}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            commit();
-          } else if (e.key === 'Escape') {
-            e.preventDefault();
-            setDraft(value);
-            onEditingChange(false);
-          }
-        }}
-        style={{ width: `${ch}ch` }}
-        className={`inline-block max-w-full min-w-0 rounded-md border border-brand-blue/40 bg-white px-1.5 py-0.5 text-[15px] font-semibold leading-tight tracking-tight text-text-heading outline-none focus:border-brand-blue ${
-          className ?? ''
-        }`}
-      />
-    );
-  }
-
-  return (
-    <span
-      className={`inline-block min-w-0 max-w-full truncate align-middle text-[15px] font-semibold leading-tight tracking-tight text-text-heading ${className ?? ''}`}
-      title={value}
-    >
-      {value}
-    </span>
-  );
 }
 
 function HeaderGlobalSearch() {
@@ -395,6 +338,8 @@ function LayoutInner() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [globalAIWidth, setGlobalAIWidth] = useState(() => getDefaultSidePanelWidth({ min: 480 }));
   const [globalAIResizing, setGlobalAIResizing] = useState(false);
+  const [caseBriefIntroReplayKey, setCaseBriefIntroReplayKey] = useState(0);
+  const globalAiWasOpenRef = useRef(false);
 
   const {
     isOpen: globalAIOpen,
@@ -402,24 +347,107 @@ function LayoutInner() {
     activeMessages,
     sendMessage,
     registerReplyHandler,
+    registerSideEffectHandler,
     sessions,
     activeSessionId,
     createSession,
     renameSession,
+    appendTurns,
+    patchSessionForTaskOutcome,
   } = useCopilot();
   const activeSession = useMemo(
     () => sessions.find((s) => s.id === activeSessionId),
     [sessions, activeSessionId],
   );
   const activeSessionTitle = activeSession?.title || newChatDefaultTitle();
-  const [renamingConversation, setRenamingConversation] = useState(false);
-
   const branding = useBranding();
   const dataSource = useDataSourceSettings();
   const activeDataset = useMemo(() => filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource), [dataSource]);
   const themeMode = useThemeMode();
-  const { settings: platformSettings, setAiActivityEnabled: setAiActivityEnabledCtx } =
+  const { settings: platformSettings, setAiActivityEnabled: setAiActivityEnabledCtx, updateDataSource } =
     usePlatformSettings();
+  const { profile } = useActiveUser();
+  const { current: liveContext } = useLiveContext();
+  const hashParams = useMemo(
+    () => new URLSearchParams(location.hash.startsWith('#') ? location.hash.slice(1) : location.hash),
+    [location.hash],
+  );
+
+  const { caseId: briefingCaseId, isCaseContext, copilotContext, syncBriefing } = useCaseContextBriefing({
+    greetingName: profile.name,
+    dataset: activeDataset,
+    anatomy: platformSettings.anatomy,
+    enabledObjectDomains: dataSource.enabledObjectDomains,
+    legacyMockOverlayEnabled: dataSource.legacyMockOverlayEnabled,
+    selectedTaskId: hashParams.get('task'),
+    selectedRequirementId: hashParams.get('req'),
+    enabled: globalAIOpen,
+  });
+
+  useEffect(() => {
+    const open = globalAIOpen && isCaseContext && Boolean(briefingCaseId);
+    setGlobalCopilotPanelOpenAttribute(open);
+    return () => setGlobalCopilotPanelOpenAttribute(false);
+  }, [globalAIOpen, isCaseContext, briefingCaseId]);
+
+  useEffect(() => {
+    if (globalAIOpen && !globalAiWasOpenRef.current && isCaseContext && briefingCaseId) {
+      const hasCaseBrief = activeMessages.some(
+        (message) =>
+          message.artifact?.kind === 'case-brief' && message.artifact.caseId === briefingCaseId,
+      );
+      if (!hasCaseBrief) {
+        setCaseBriefIntroReplayKey((key) => key + 1);
+      }
+    }
+    globalAiWasOpenRef.current = globalAIOpen;
+  }, [globalAIOpen, isCaseContext, briefingCaseId, activeMessages]);
+
+  const resolveCaseContext = useCallback(
+    (context?: LiveContext) => {
+      const caseId = extractCaseIdFromLiveContext(context) ?? extractCaseIdFromPath(location.pathname);
+      if (!caseId) return null;
+      return resolveCaseCopilotContextFromCaseId(caseId, {
+        greetingName: profile.name,
+        dataset: activeDataset,
+        anatomy: platformSettings.anatomy,
+        enabledObjectDomains: dataSource.enabledObjectDomains,
+        legacyMockOverlayEnabled: dataSource.legacyMockOverlayEnabled,
+        selectedTaskId: hashParams.get('task'),
+        selectedRequirementId: hashParams.get('req'),
+      });
+    },
+    [
+      activeDataset,
+      dataSource.enabledObjectDomains,
+      dataSource.legacyMockOverlayEnabled,
+      hashParams,
+      location.pathname,
+      platformSettings.anatomy,
+      profile.name,
+    ],
+  );
+
+  const applyCopilotTaskAction = useCallback(
+    (effect: { taskId: string; actionType: 'complete' | 'request_info' }): string | null => {
+      const result = runTaskWorkflowAction(
+        dataSource.activeDatasetId,
+        effect.taskId,
+        effect.actionType,
+        { name: profile.name },
+      );
+      if (!result) return null;
+      if (effect.actionType === 'complete' && !isTaskCompleteActionSuccess(result, effect.taskId)) {
+        return null;
+      }
+      if (effect.actionType === 'request_info' && !result.record.task) {
+        return null;
+      }
+      updateDataSource({ activeDatasetId: result.datasetId });
+      return result.datasetId;
+    },
+    [dataSource.activeDatasetId, profile.name, updateDataSource],
+  );
   const headerLogoSrc =
     branding.logoMode === 'custom'
       ? resolveBrandingLogoSrc(
@@ -453,10 +481,198 @@ function LayoutInner() {
   }, []);
 
   useEffect(() => {
-    const handler: ReplyHandler = (text, context) =>
-      buildAssistantReply(activeDataset, text, resolveCopilotContextId(context));
+    const handler: ReplyHandler = (text, context) => {
+      const caseCtx = resolveCaseContext(context);
+      if (caseCtx) {
+        const caseReply = buildCaseAssistantReply(activeDataset, text, caseCtx);
+        if (caseReply) return caseReply;
+      }
+      return buildAssistantReply(activeDataset, text, resolveCopilotContextId(context));
+    };
     registerReplyHandler(handler);
-  }, [activeDataset, registerReplyHandler]);
+  }, [activeDataset, registerReplyHandler, resolveCaseContext]);
+
+  useEffect(() => {
+    registerSideEffectHandler((effect) => {
+      const datasetId = applyCopilotTaskAction(effect);
+      if (!datasetId) {
+        const taskLabel =
+          copilotContext?.focus.kind === 'task' && copilotContext.focus.task.id === effect.taskId
+            ? copilotContext.focus.task.taskType
+            : effect.taskId;
+        appToast.error(
+          effect.actionType === 'complete'
+            ? `Could not approve ${taskLabel}. Try again.`
+            : `Could not record amend on ${taskLabel}. Try again.`,
+        );
+        return false;
+      }
+      patchSessionForTaskOutcome(
+        activeSessionId,
+        effect.taskId,
+        effect.actionType === 'complete' ? 'accepted' : 'amended',
+      );
+      const taskLabel =
+        copilotContext?.focus.kind === 'task' && copilotContext.focus.task.id === effect.taskId
+          ? copilotContext.focus.task.taskType
+          : effect.taskId;
+      appToast.success(
+        effect.actionType === 'complete'
+          ? `Task ${taskLabel} approved`
+          : `Amend recorded on ${taskLabel}`,
+      );
+      return true;
+    });
+    return () => registerSideEffectHandler(null);
+  }, [activeSessionId, applyCopilotTaskAction, copilotContext, patchSessionForTaskOutcome, registerSideEffectHandler]);
+
+  const handleCopilotExecute = useCallback(
+    (action: CopilotExecuteAction) => {
+      if (action.kind === 'apply_requirement_suggestions') {
+        if (!isEquisoftNb66GatheringDemo(action.caseId)) {
+          appToast.error('Requirement suggestions are only available for the NB66 Equisoft demo case.');
+          return;
+        }
+        const result = approveNb66RequirementGatheringPackage(
+          dataSource.activeDatasetId,
+          action.caseId,
+          action.taskId,
+          action.requirementIds,
+          { name: profile.name },
+          platformSettings.activeDemoConfigurationId,
+        );
+        if (!result) {
+          appToast.error('Could not approve requirement package. Try again.');
+          return;
+        }
+        updateDataSource({ activeDatasetId: result.datasetId });
+        const added = result.addedCount;
+        appToast.success(
+          added === 1
+            ? `1 requirement added to ${action.caseId}`
+            : `${added} requirements added to ${action.caseId}`,
+        );
+        const now = Date.now();
+        appendTurns(activeSessionId, [
+          {
+            id: `u-${now}`,
+            role: 'user',
+            text: `Approve ${added} selected requirement${added === 1 ? '' : 's'}`,
+            at: now,
+            context: liveContext,
+          },
+          {
+            id: `a-${now + 1}`,
+            role: 'assistant',
+            text: `**${added}** requirement${added === 1 ? '' : 's'} added to **${action.caseId}**. Open the Requirements tab to track fulfillment.`,
+            at: now + 1,
+            followUps: ['Which requirements are still open?', 'What is the next task on this case?'],
+            revealIntro: true,
+          },
+        ]);
+        return;
+      }
+
+      if (action.kind !== 'task') return;
+
+      if (
+        action.actionType === 'complete' &&
+        isNb66RecommendRequirementsTask(action.taskId)
+      ) {
+        const reply = copilotContext
+          ? buildCaseAssistantReplyForExecute(copilotContext, action.actionType, action.taskId)
+          : null;
+        const now = Date.now();
+        appendTurns(activeSessionId, [
+          {
+            id: `u-${now}`,
+            role: 'user',
+            text: 'Accept AI recommend-requirements task',
+            at: now,
+            context: liveContext,
+          },
+          {
+            id: `a-${now + 1}`,
+            role: 'assistant',
+            text: reply?.text ?? '',
+            at: now + 1,
+            followUps: reply?.followUps,
+          },
+        ]);
+        return;
+      }
+
+      const effect = { taskId: action.taskId, actionType: action.actionType };
+      const taskLabel =
+        copilotContext?.focus.kind === 'task' &&
+        (copilotContext.focus.task.id === action.taskId ||
+          copilotContext.focus.task.taskId === action.taskId)
+          ? copilotContext.focus.task.taskType
+          : (copilotContext?.tasks.find((row) => row.id === action.taskId)?.label ?? action.taskId);
+
+      const refreshedDatasetId = applyCopilotTaskAction(effect);
+      if (!refreshedDatasetId) {
+        appToast.error(
+          action.actionType === 'complete'
+            ? `Could not approve ${taskLabel}. Try again.`
+            : `Could not record amend on ${taskLabel}. Try again.`,
+        );
+        return;
+      }
+
+      patchSessionForTaskOutcome(
+        activeSessionId,
+        action.taskId,
+        action.actionType === 'complete' ? 'accepted' : 'amended',
+      );
+
+      appToast.success(
+        action.actionType === 'complete'
+          ? `Task ${taskLabel} approved`
+          : `Amend recorded on ${taskLabel}`,
+      );
+
+      const reply = copilotContext
+        ? buildCaseAssistantReplyForExecute(copilotContext, action.actionType, action.taskId)
+        : {
+            text:
+              action.actionType === 'complete'
+                ? `**Done** — **${taskLabel}** is marked complete.`
+                : `**Amend recorded** — ${taskLabel}.`,
+            followUps: ['What is the next task on this case?', 'Which requirements are still open?'],
+          };
+
+      const userText = action.actionType === 'complete' ? `Accept ${taskLabel}` : `Amend ${taskLabel}`;
+      const now = Date.now();
+      appendTurns(activeSessionId, [
+        { id: `u-${now}`, role: 'user', text: userText, at: now, context: liveContext },
+        {
+          id: `a-${now + 1}`,
+          role: 'assistant',
+          text: reply?.text ?? '',
+          at: now + 1,
+          artifact: reply?.artifact,
+          followUps: reply?.followUps,
+          revealIntro: Boolean(reply?.artifact && reply.artifact.kind !== 'case-brief'),
+        },
+      ]);
+    },
+    [
+      activeSessionId,
+      appendTurns,
+      applyCopilotTaskAction,
+      copilotContext,
+      dataSource.activeDatasetId,
+      liveContext,
+      patchSessionForTaskOutcome,
+      updateDataSource,
+    ],
+  );
+
+  const handleCreateSession = useCallback(() => {
+    createSession();
+    window.setTimeout(() => syncBriefing(), 0);
+  }, [createSession, syncBriefing]);
 
   useEffect(() => {
     if (!globalAIResizing) return;
@@ -662,86 +878,29 @@ function LayoutInner() {
       ) : null}
       {activeApp.id !== 'eapp' ? <MobileBottomNav /> : null}
       {globalAIOpen && !isOnCopilotModule && aiSidePanelEnabled ? (
-        <WorkspaceObjectSidePanel
-          contexts={[{ id: 'assistant', label: activeSessionTitle, icon: MessageSquare }]}
-          activeContextId="assistant"
-          onChangeContext={() => undefined}
-          onClose={() => setGlobalAIOpen(false)}
+        <GlobalAiCopilotSidePanel
+          briefingCaseId={briefingCaseId}
+          isCaseContext={isCaseContext}
           panelWidth={globalAIWidth}
-          onPanelWidthChange={setGlobalAIWidth}
           isResizing={globalAIResizing}
+          onPanelWidthChange={setGlobalAIWidth}
           onResizeStart={() => setGlobalAIResizing(true)}
-          actions={
-            <>
-              <button
-                type="button"
-                onClick={() => createSession()}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border-default bg-white px-2.5 py-1 text-[11px] font-semibold text-text-secondary transition-colors hover:border-brand-blue hover:text-brand-blue"
-                aria-label={t('aiPanel.newConversation')}
-                title={t('aiPanel.newConversation')}
-              >
-                <Plus className="h-3.5 w-3.5" strokeWidth={2.25} />
-                {t('aiPanel.newChat')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setGlobalAIOpen(false);
-                  navigate('/copilot');
-                }}
-                className="shrink-0 rounded-full p-1.5 text-text-secondary hover:bg-surface-muted"
-                aria-label={t('aiPanel.openFullPage')}
-                title={t('aiPanel.openFullPage')}
-              >
-                <Maximize2 className="h-4 w-4" />
-              </button>
-            </>
-          }
-        >
-          <div className="shrink-0 border-b border-[#ececec] bg-white px-5 pb-3 pt-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <AiCueSparkle size={16} className="!text-brand-accent" />
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
-                    {t('aiPanel.eyebrow')}
-                  </span>
-                </div>
-                <div className="mt-1 flex min-w-0 items-center gap-1.5 pl-[24px]">
-                  <InlineTitleEditor
-                    value={activeSessionTitle}
-                    editing={renamingConversation}
-                    onEditingChange={setRenamingConversation}
-                    onCommit={(next) => renameSession(activeSessionId, next)}
-                  />
-                  {renamingConversation ? null : (
-                    <button
-                      type="button"
-                      onClick={() => setRenamingConversation(true)}
-                      className="shrink-0 rounded-md p-1 text-[#a9aeb5] transition-colors hover:bg-surface-muted hover:text-text-secondary"
-                      aria-label={t('aiPanel.renameConversation')}
-                      title={t('aiPanel.renameConversation')}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <AiCopilotDock
-            layout="panel"
-            data={{ id: globalContextId }}
-            messages={activeMessages}
-            onSendMessage={sendMessage}
-            aiPanelTab="workspace"
-          />
-
-        </WorkspaceObjectSidePanel>
+          onClose={() => setGlobalAIOpen(false)}
+          activeSessionTitle={activeSessionTitle}
+          activeSessionId={activeSessionId}
+          onRenameSession={renameSession}
+          onCreateSession={handleCreateSession}
+          globalContextId={globalContextId}
+          messages={activeMessages}
+          onSendMessage={sendMessage}
+          onExecuteAction={isCaseContext ? handleCopilotExecute : undefined}
+          caseBriefIntroReplayKey={caseBriefIntroReplayKey}
+        />
       ) : null}
     </div>
     <ProductGuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
+    <AppToaster />
+    <PresentationModeOverlay />
     </>
   );
 }

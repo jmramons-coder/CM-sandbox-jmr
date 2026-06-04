@@ -2,25 +2,23 @@ import { Eye } from 'lucide-react';
 
 type DashboardEvidencePreviewButtonProps = {
   label: string;
-  route: string;
+  onClick: () => void;
   previewUrl?: string;
   previewTitle?: string;
-  onNavigate: (route: string) => void;
 };
 
 /** View-evidence CTA with document mini preview on hover (home priority task). */
 export function DashboardEvidencePreviewButton({
   label,
-  route,
+  onClick,
   previewUrl,
   previewTitle,
-  onNavigate,
 }: DashboardEvidencePreviewButtonProps) {
   return (
     <div className="group/evidence relative">
       <button
         type="button"
-        onClick={() => onNavigate(route)}
+        onClick={onClick}
         className="inline-flex max-w-full items-center gap-1 rounded-full border border-border-default bg-white px-2.5 py-1 text-[11px] font-semibold text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary"
       >
         <Eye className="size-3 shrink-0" />

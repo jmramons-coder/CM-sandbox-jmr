@@ -85,10 +85,18 @@ export const EMPIRE_REQUEST_RECORDS: DatasetRequestRecord[] = [
     receivedTime: '09:15',
     assignee: 'Victor Ramon',
     aiSummary:
-      'Solution 20 participating whole life application — $500,000 coverage amount. MIB clear. APS outstanding — blocks final offer.',
+      'Solution 20 participating whole life application — $500,000 coverage amount. MIB clear at submission. Rx received 11 May — AI recommends APS for treated hypertension; approval pending.',
     summary: 'Full underwriting new business via Empire Life Advisor Portal.',
-    nextAction: 'Chase APS — Clinique Médicale du Plateau',
-    linkedTasks: ['task_emp_nb_001', 'task_emp_nb_002'],
+    nextAction: 'Review APS follow-up — approve order recommendation',
+    linkedTasks: [
+      'task_emp_nb_001',
+      'task_emp_nb_010',
+      'task_emp_nb_011',
+      'task_emp_nb_012',
+      'task_emp_nb_013',
+      'task_emp_nb_014',
+      'task_emp_nb_015',
+    ],
     form: {
       submitted: '2026-05-08 at 09:15',
       channel: 'Empire Life Advisor Portal',
@@ -105,11 +113,12 @@ export const EMPIRE_REQUEST_RECORDS: DatasetRequestRecord[] = [
       ],
     },
     aiActions: [
-      { ts: '2026-05-08 09:17', actor: 'AI Agent', actorType: 'AI Agent', action: 'MIB search — no alerts', dotCls: 'rp-tl-dot-ai' },
-      { ts: '2026-05-08 09:20', actor: 'AI Agent', actorType: 'AI Agent', action: 'Preliminary scoring: standard pending APS', dotCls: 'rp-tl-dot-ai' },
+      { ts: '2026-05-08 09:17', actor: 'System', actorType: 'System', action: 'MIB search ordered — no alerts', dotCls: 'rp-tl-dot-ai' },
+      { ts: '2026-05-08 09:20', actor: 'System', actorType: 'System', action: 'Submission requirements ordered — blood/urine and Rx', dotCls: 'rp-tl-dot-ai' },
+      { ts: '2026-05-11 10:05', actor: 'AI Agent', actorType: 'AI Agent', action: 'Rx report received — AI recommends APS for treated hypertension', dotCls: 'rp-tl-dot-ai' },
     ],
     humanActions: [
-      { ts: '2026-05-08 13:00', actor: 'Victor Ramon', actorType: 'Human', action: 'Triage complete — APS ordered', dotCls: 'rp-tl-dot-human' },
+      { ts: '2026-05-08 13:00', actor: 'Victor Ramon', actorType: 'Human', action: 'Application initial review complete — submission requirements released', dotCls: 'rp-tl-dot-human' },
     ],
     linkedObjects: [
       { kind: 'case', id: NB, label: 'NB-2026-4401' },

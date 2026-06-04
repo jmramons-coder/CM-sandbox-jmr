@@ -86,9 +86,18 @@ export function applyActiveDemoEnvironment(
 
   return {
     ...target.settings,
-    version: 5,
+    version: 6,
     demoConfigurations: settings.demoConfigurations,
     activeDemoConfigurationId: activeId,
+    preferences: {
+      aiActivityEnabled: true,
+      aiSidePanelEnabled: true,
+      casesAiAssistantEnabled: true,
+      aiActivityVisible: true,
+      presentationModeEnabled: true,
+      ...(target.settings.preferences ?? {}),
+      ...(settings.preferences ?? {}),
+    },
     dataSource: {
       ...DEFAULT_DATA_SOURCE_SETTINGS,
       ...(target.settings.dataSource ?? {}),

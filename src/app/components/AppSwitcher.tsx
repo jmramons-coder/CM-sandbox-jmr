@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { APPS, getActiveApp, type AppDef } from '../domain/apps';
 import { useThemeMode } from '../contexts/PlatformSettingsContext';
 import { AppSwitcherDemoSection } from './AppSwitcherDemoSection';
+import { AppSwitcherPresentationSection } from './AppSwitcherPresentationSection';
 
 export function AppSwitcher() {
   const { t } = useTranslation('nav');
@@ -86,6 +87,7 @@ export function AppSwitcher() {
           })}
         </div>
         <AppSwitcherDemoSection onClose={() => setOpen(false)} />
+        <AppSwitcherPresentationSection />
       </PopoverContent>
     </Popover>
   );

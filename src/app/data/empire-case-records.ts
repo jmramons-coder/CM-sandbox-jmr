@@ -160,6 +160,15 @@ export const EMPIRE_CASE_RECORDS: CaseRecord[] = [
       { id: 'emp-nb-sum', label: 'Coverage amount', value: '$500,000', category: 'financial', importance: 'primary' },
     ],
     sections: [],
+    decision: {
+      state: 'active',
+      recommendation: {
+        decision: 'Defer — pending APS and labs',
+        confidence: 73,
+        attribution: 'AI underwriting assistant',
+        narrative: 'Preliminary standard terms. Rx findings suggest treated hyperlipidemia and hypertension — defer formal offer until APS and lab results received.',
+      },
+    },
   },
   {
     id: NB_S,

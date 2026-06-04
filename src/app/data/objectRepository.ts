@@ -20,14 +20,24 @@ import {
 import type { CaseDocument, CaseOverview, CaseRequirement, CaseSummary, ServiceRequest, Task, TaskLinkedObject } from '../types';
 import { resolveClaimSubType } from '../domain/claimSubTypes';
 import { stripSummaryTitleDecorators } from '../utils/summaryText';
+import { inferRequirementAiGenerated } from '../utils/requirementAiSource';
 import type { CaseRecord, ObjectRef, ObjectRelationshipRow, WorkObjectKind } from '../domain/objectRefs';
-import type { DataSourceSettings } from '../domain/objectRefs';
+import { DEFAULT_DATASET_ID, type DataSourceSettings } from '../domain/objectRefs';
+import { getActiveDemoConfigurationId } from './datasetResolutionContext';
+import {
+  applyEquisoftNb66ReqGatheringOverlay,
+  isSharedMultiCaseDemoDatasetId,
+} from './equisoftNb66ReqGatheringOverlay';
+import { applyEmpireAddressChangeOverlay, isEmpireDatasetId } from './empireAddressChangeOverlay';
+import { neutralizeSharedDemoDataset, usesSbliBrandedDemoData } from './sharedDemoDatasetNeutralize';
 import { resolveObjectLocation } from '../domain/objectRefs';
 import { getWorkflowDefinition } from '../domain/workflows';
 import { parseCaseTypeCodeFromId } from '../domain/caseTypes';
 import { getDocumentFileType } from './documentMetadata';
 import { resolveAssigneeLabel } from './userDirectory';
+import { isSimpleServiceTask } from '../utils/taskSimpleService';
 import { deriveAiActionsFromDataset } from './aiActionDerivation';
+import { projectTaskReviewFields, resolveTaskReview } from '../utils/taskReviewProjection';
 
 export { deriveAiActionsFromDataset } from './aiActionDerivation';
 
@@ -54,7 +64,18 @@ export interface ObjectRepository {
 }
 
 export function getSystemDataset(datasetId: string | undefined | null): SystemDataset {
-  return datasetRegistry.getDataset(datasetId);
+  const raw = datasetRegistry.getDataset(datasetId);
+  const resolvedId = datasetId ?? DEFAULT_DATASET_ID;
+  if (!usesSbliBrandedDemoData(getActiveDemoConfigurationId()) && isSharedMultiCaseDemoDatasetId(resolvedId)) {
+    const base = resolvedId === DEFAULT_DATASET_ID ? neutralizeSharedDemoDataset(raw) : raw;
+    return applyEquisoftNb66ReqGatheringOverlay(base, {
+      preserveAddedProposals: resolvedId !== DEFAULT_DATASET_ID,
+    });
+  }
+  if (isEmpireDatasetId(resolvedId)) {
+    return applyEmpireAddressChangeOverlay(raw);
+  }
+  return raw;
 }
 
 export function filterDatasetBySettings(dataset: SystemDataset, settings?: DataSourceSettings): SystemDataset {
@@ -248,6 +269,24 @@ function toTask(dataset: SystemDataset, row: DatasetTaskRecord): Task {
   const primaryPartyPolicyRole = getPrimaryPartyPolicyRole(dataset, caseRecord);
   const priority = String(row.priority).toLowerCase();
   const normalizedPriority = priority === 'urgent' ? 'URGENT' : priority === 'high' ? 'HIGH' : 'NORMAL';
+  const { executionMode, review } = projectTaskReviewFields(row);
+  const isSemiAuto = executionMode === 'semi_auto' || executionMode === 'exception';
+  const simpleService = isSimpleServiceTask(row);
+  const panelContext = (() => {
+    if (!isSemiAuto) return row.panelContext ?? undefined;
+    if (!simpleService) {
+      return row.panelContext?.scoringContext
+        ? { scoringContext: row.scoringContext ?? row.panelContext.scoringContext }
+        : undefined;
+    }
+    const scoringContext = row.scoringContext ?? row.panelContext?.scoringContext;
+    const evidenceDocumentId = row.panelContext?.evidenceDocumentId;
+    if (!scoringContext && !evidenceDocumentId) return undefined;
+    return {
+      ...(evidenceDocumentId ? { evidenceDocumentId } : {}),
+      ...(scoringContext ? { scoringContext } : {}),
+    };
+  })();
   return {
     id: row.id,
     taskId: row.taskId,
@@ -256,14 +295,16 @@ function toTask(dataset: SystemDataset, row: DatasetTaskRecord): Task {
     caseSubtype: row.caseSubtype,
     taskType: stripSummaryTitleDecorators(row.label),
     hasAI: row.hasAI ?? row.aiGenerated ?? Boolean(row.aiSummary),
-    aiSummary: row.aiSummary,
+    aiSummary: review.verdict,
     aiAction: row.aiAction,
     alert: row.alert,
-    summary: row.summary,
+    summary: isSemiAuto ? undefined : row.summary,
     aiNarrative: row.aiNarrative,
     evidenceDocuments: row.evidenceDocuments,
-    contextCards: row.contextCards,
+    contextCards: isSemiAuto && !simpleService ? undefined : row.contextCards,
     actions: row.actions,
+    executionMode,
+    review,
     claimantName: caseRecord?.primaryParty.label ?? refs.find((ref) => ref.kind === 'client')?.label ?? 'N/A',
     claimantPolicyRole: primaryPartyPolicyRole,
     primaryPartyName: caseRecord?.primaryParty.label ?? refs.find((ref) => ref.kind === 'client')?.label,
@@ -273,7 +314,7 @@ function toTask(dataset: SystemDataset, row: DatasetTaskRecord): Task {
     dueDate: row.dueDate,
     stage: row.stage,
     aiGenerated: row.aiGenerated,
-    aiConfidence: row.aiConfidence,
+    aiConfidence: review.confidence ?? row.aiConfidence,
     slaStatus: row.slaStatus ?? (normalizedPriority === 'HIGH' ? 'warning' : 'normal'),
     status: row.status as Task['status'],
     assignedTo: resolveAssigneeLabel(row.assigneeId ?? row.assignee ?? row.owner),
@@ -283,22 +324,14 @@ function toTask(dataset: SystemDataset, row: DatasetTaskRecord): Task {
     sourceContext: row.sourceContext,
     createdFrom: row.createdFrom,
     createdDate: row.createdDate ?? 'Dataset record',
-    description: row.description,
+    description: isSemiAuto ? review.verdict : row.description,
     queue: row.queue ?? 'my_tasks',
     teamOrigin: row.teamOrigin,
     requiredAuthorityLevel: row.requiredAuthorityLevel ?? 1,
     caseId,
     linkedObjects: refs.map(toTaskLinkedObject).filter((ref): ref is TaskLinkedObject => Boolean(ref)),
     objectRefs: refs,
-    panelContext: {
-      ...(row.panelContext ?? {
-        summaryStatus: row.status,
-        contextTitle: stripSummaryTitleDecorators(row.label),
-        contextSummary: `Dataset task linked to ${caseRecord?.title ?? caseId ?? 'the active environment'}.`,
-        suggestions: ['Review linked entities', 'Confirm ownership', 'Update task status'],
-      }),
-      scoringContext: row.scoringContext ?? row.panelContext?.scoringContext,
-    },
+    panelContext,
   };
 }
 
@@ -453,6 +486,12 @@ function toRequirement(row: DatasetRequirementRecord): CaseRequirement {
     workflowStepId: row.workflowStepId,
     aiInsight: row.aiInsight,
     aiConfidence: row.aiConfidence,
+    aiGenerated: inferRequirementAiGenerated({
+      source: row.source ?? 'dataset',
+      trigger: row.trigger ?? row.workflowStepId ?? 'Business line',
+      aiGenerated: row.aiGenerated,
+      history: row.history,
+    }),
     objectRefs: refs,
   };
 }

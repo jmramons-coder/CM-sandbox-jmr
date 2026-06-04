@@ -99,7 +99,6 @@ function withSbliDocumentAssets(document: DatasetDocumentRecord): DatasetDocumen
     ...document,
     fileUrl: previewUrl,
     fileAvailable: true,
-    fileSize: document.fileSize === 'No file' ? 'PNG · Preview' : document.fileSize,
     placeholderReason: undefined,
     uploaded: document.uploaded ?? document.uploadedAt ?? 'May 17, 2026',
     uploadedAt: document.uploadedAt ?? document.uploaded ?? '2026-05-17',

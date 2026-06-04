@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SYSTEM_DATASETS } from './multi-case-dataset';
 import { createSimpleServiceRequest } from './datasetMutations';
-import { executeTaskAction, executeRequestAction } from './workflowActions';
+import {
+  executeTaskAction,
+  executeRequestAction,
+  isTaskCompleteActionSuccess,
+  runTaskWorkflowAction,
+} from './workflowActions';
 import { listTasks, listRequests } from './objectRepository';
 import { datasetRegistry } from './datasetRegistry';
 
@@ -102,6 +107,49 @@ describe('workflowActions — address change', () => {
 
     expect(review.record?.status).toBe('In progress');
     expect((review.record?.humanActions ?? []).length).toBeGreaterThan(0);
+  });
+
+  it('completes seed address change task from built-in dataset', () => {
+    const datasetId = SYSTEM_DATASETS[0].id;
+    const actionResult = executeTaskAction(datasetId, 'task_ps_addr_001', 'complete', { name: 'Victor Ramon' });
+    expect(actionResult.record.task?.status).toBe('Completed');
+    expect(isTaskCompleteActionSuccess(actionResult, 'task_ps_addr_001')).toBe(true);
+    expect(actionResult.datasetId).not.toBe(datasetId);
+    const persisted = listTasks(actionResult.dataset).find((row) => row.id === 'task_ps_addr_001');
+    expect(persisted?.status).toMatch(/completed/i);
+  });
+
+  it('completes semi-auto underwriting task task_nb4041', () => {
+    const actionResult = executeTaskAction(SYSTEM_DATASETS[0].id, 'task_nb4041', 'complete', { name: 'Sarah Chen' });
+    expect(actionResult.record.task?.status).toBe('Completed');
+    expect(isTaskCompleteActionSuccess(actionResult)).toBe(true);
+  });
+
+  it('re-completing address change on same workspace copy still succeeds', () => {
+    const first = executeTaskAction(SYSTEM_DATASETS[0].id, 'task_ps_addr_001', 'complete', { name: 'Victor Ramon' });
+    expect(isTaskCompleteActionSuccess(first)).toBe(true);
+    const second = executeTaskAction(first.datasetId, 'task_ps_addr_001', 'complete', { name: 'Victor Ramon' });
+    expect(isTaskCompleteActionSuccess(second)).toBe(true);
+    expect(second.record.task?.status).toBe('Completed');
+  });
+
+  it('runTaskWorkflowAction resolves task by display taskId', () => {
+    const actionResult = runTaskWorkflowAction(SYSTEM_DATASETS[0].id, 'task_ps_addr_001', 'complete', {
+      name: 'Victor Ramon',
+    });
+    expect(actionResult).not.toBeNull();
+    expect(isTaskCompleteActionSuccess(actionResult!)).toBe(true);
+  });
+
+  it('runTaskWorkflowAction completes when activeDatasetId no longer exists in registry', () => {
+    const actionResult = runTaskWorkflowAction(
+      'multi-case-demo-workspace-copy-deleted',
+      'task_ps_addr_001',
+      'complete',
+      { name: 'Victor Ramon' },
+    );
+    expect(actionResult).not.toBeNull();
+    expect(isTaskCompleteActionSuccess(actionResult!, 'task_ps_addr_001')).toBe(true);
   });
 
   it('seed address change task remains valid in repository', () => {

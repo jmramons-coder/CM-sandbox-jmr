@@ -314,6 +314,16 @@ export type UnderwritingScoringEvidence = {
   linkedRequirementIds?: string[];
 };
 
+export type UnderwritingRequirementAssessment = {
+  id: string;
+  requirement: string;
+  assessment: string;
+  positiveScore?: string;
+  negativeScore?: string;
+  notes?: string;
+  pending?: boolean;
+};
+
 export interface UnderwritingScoring {
   caseKey?: string;
   caseId?: string;
@@ -341,6 +351,9 @@ export interface UnderwritingScoring {
     narrative?: string;
   };
   underwriterNotes?: string;
+  requirementAssessments?: UnderwritingRequirementAssessment[];
+  /** When set to `panel`, scoring opens in the workspace side panel instead of a main tab. */
+  scoringPresentation?: 'panel' | 'tab';
 }
 
 export type CaseDecisionOptionTagClass = 'pf' | 'pp' | 'pr' | 'po';

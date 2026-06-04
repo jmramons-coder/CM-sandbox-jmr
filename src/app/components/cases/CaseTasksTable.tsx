@@ -15,11 +15,14 @@ import {
   moduleTableScrollContainerClass,
 } from '../../utils/module-table-scroll';
 import { resolveTaskForCaseContextRow } from '../../utils/caseContextualTask';
-import { getStatusLozengeType } from '../../utils/status-display';
+import { TASK_TABLE_WORK_COLUMN_LABEL } from '../../utils/taskReviewProjection';
+import { formatStageSlugForDisplay } from '../../utils/caseStageLens';
 import { PriorityChip } from '../ds';
-import { LozengeTag } from '../LozengeTag';
 import { ModuleTablePaginationFooter } from '../ModuleTablePaginationFooter';
 import { SummaryTableColumnHeader, TaskTableFirstColumnCell } from '../ModuleCellHelpers';
+import { TaskTableAiDigestCell } from '../tasks/TaskTableAiDigestCell';
+import { TaskTableAssigneeCell } from '../tasks/TaskTableAssigneeCell';
+import { TaskTableStatusCell } from '../tasks/TaskTableStatusCell';
 import type { CaseContextTaskRow } from './CaseTabMobileCards';
 
 const CASE_TASKS_TABLE_MIN_WIDTH = 1120;
@@ -61,14 +64,18 @@ export function CaseTasksTable({
                 Task
               </th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-2 py-3 text-left align-middle whitespace-nowrap text-sm font-medium text-text-secondary`}>
-                <SummaryTableColumnHeader className="text-sm font-medium text-text-secondary" />
+                <SummaryTableColumnHeader label={TASK_TABLE_WORK_COLUMN_LABEL} className="text-sm font-medium text-text-secondary" />
               </th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-2 py-3 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Stage</th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-2 py-3 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Priority</th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-2 py-3 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Due Date</th>
-              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-2 py-3 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Assignee</th>
               <th
-                className={`relative border-b border-border-default py-3 pl-2 pr-2 text-left align-middle text-sm font-medium text-text-secondary ${moduleTableStatusStickyRightClass(64)} ${MODULE_TABLE_TH_STICKY_EDGE_CLASS} ${tableScroll.showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                className={`${MODULE_TABLE_TH_SCROLL_CLASS} min-w-[112px] px-2 py-3 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}
+              >
+                Assignee
+              </th>
+              <th
+                className={`relative border-b border-border-default py-3 pl-2 pr-4 text-left align-middle text-sm font-medium text-text-secondary ${moduleTableStatusStickyRightClass(64)} ${MODULE_TABLE_TH_STICKY_EDGE_CLASS} ${tableScroll.showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
               >
                 {tableScroll.showRightStickyEdge ? (
                   <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
@@ -127,24 +134,32 @@ export function CaseTasksTable({
                       aiSourced={Boolean(row.aiGenerated)}
                     />
                   </td>
-                  <td className={`border-b border-border-default px-2 py-3 text-sm text-text-primary ${cellSurface}`}>
-                    <span className="line-clamp-2">{row.task?.aiSummary ?? row.task?.description ?? '—'}</span>
+                  <td className={`border-b border-border-default px-2 py-3 ${cellSurface}`}>
+                    {resolved ? <TaskTableAiDigestCell task={resolved} /> : <span className="text-text-muted">—</span>}
                   </td>
                   <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary ${cellSurface}`}>
-                    {row.stage ? <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-semibold text-text-secondary">{row.stage}</span> : <span className="text-text-muted">—</span>}
+                    {row.stage ? (
+                      <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-semibold text-text-secondary">
+                        {formatStageSlugForDisplay(row.stage)}
+                      </span>
+                    ) : (
+                      <span className="text-text-muted">—</span>
+                    )}
                   </td>
                   <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap ${cellSurface}`}>
                     <PriorityChip priority={row.priority} />
                   </td>
                   <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary ${cellSurface}`}>{row.dueDate}</td>
-                  <td className={`border-b border-border-default px-2 py-3 whitespace-nowrap text-sm text-text-primary ${cellSurface}`}>{row.assignee}</td>
+                  <td className={`min-w-[112px] border-b border-border-default px-2 py-3 ${cellSurface}`}>
+                    <TaskTableAssigneeCell task={resolved} />
+                  </td>
                   <td
-                    className={`relative border-b border-border-default py-3 pl-2 pr-2 align-top text-sm ${moduleTableStatusStickyRightClass(64)} z-[6] ${cellSurface} ${tableScroll.showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
+                    className={`relative border-b border-border-default py-3 pl-2 pr-4 align-top text-sm ${moduleTableStatusStickyRightClass(64)} z-[6] ${cellSurface} ${tableScroll.showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`}
                   >
                     {tableScroll.showRightStickyEdge ? (
                       <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                     ) : null}
-                    <LozengeTag label={row.status} type={getStatusLozengeType(row.status, 'task')} subtle />
+                    <TaskTableStatusCell task={resolved} />
                   </td>
                   {MODULE_TABLE_ROW_KEBAB_ENABLED ? (
                     <td className={`relative box-border min-h-12 w-[64px] min-w-[64px] max-w-[64px] border-b border-border-default p-0 align-middle sticky right-0 z-[6] ${cellSurface}`}>

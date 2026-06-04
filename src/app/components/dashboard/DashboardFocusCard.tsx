@@ -7,9 +7,10 @@ import { DashboardEvidencePreviewButton } from './DashboardEvidencePreviewButton
 
 type DashboardFocusCardProps = {
   viewModel: DashboardViewModel;
+  onOpenEvidence?: (documentId: string) => void;
 };
 
-export function DashboardFocusCard({ viewModel }: DashboardFocusCardProps) {
+export function DashboardFocusCard({ viewModel, onOpenEvidence }: DashboardFocusCardProps) {
   const navigate = useNavigate();
   const { focus } = viewModel;
 
@@ -72,13 +73,12 @@ export function DashboardFocusCard({ viewModel }: DashboardFocusCardProps) {
             >
               {focus.ctaLabel}
             </button>
-            {focus.evidenceRoute && focus.evidenceLabel ? (
+            {focus.evidenceDocumentId && focus.evidenceLabel && onOpenEvidence ? (
               <DashboardEvidencePreviewButton
                 label={focus.evidenceLabel}
-                route={focus.evidenceRoute}
+                onClick={() => onOpenEvidence(focus.evidenceDocumentId!)}
                 previewUrl={focus.evidencePreviewUrl}
                 previewTitle={focus.evidencePreviewTitle}
-                onNavigate={navigate}
               />
             ) : null}
           </div>

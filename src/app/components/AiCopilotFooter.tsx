@@ -12,7 +12,6 @@ import {
   Clock,
   Copy,
   ExternalLink,
-  FileText,
   FolderOpen,
   LayoutDashboard,
   Lightbulb,
@@ -29,12 +28,31 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 import { useCasesNav } from '../contexts/CasesNavContext';
+import { useLiveContext } from '../contexts/LiveContextProvider';
 import { Checkbox } from './ui/checkbox';
 import { AiCueSparkle } from './AiCueSparkle';
 import { AiContextChip, AiContextPill } from './AiContextPill';
 import type { LiveContext } from '../contexts/LiveContextProvider';
+import {
+  CopilotChatEmptyState,
+  resolveCopilotComposerPlaceholder,
+  type CopilotContextHints,
+  type CopilotExecuteAction,
+} from './copilot/copilotEmptyState';
 
 import { GLOBAL_COPILOT_CASE_PRIORITIES_PROMPT } from '../constants/copilot-prompts';
+import { CaseBriefArtifactCard } from './copilot/CaseBriefArtifactCard';
+import {
+  CaseNextStepCard,
+  CaseRequirementsListCard,
+  CaseTaskQueueCard,
+} from './copilot/CaseCopilotFollowUpCards';
+import { CaseRequirementSuggestionsCard } from './copilot/CaseRequirementSuggestionsCard';
+import { CopilotTurnRevealContent } from './copilot/CopilotTurnRevealContent';
+import type { OpenCaseWorkspaceObjectHandler } from '../utils/openCaseWorkspaceObject';
+import type { TaskCrewStep } from '../types';
+
+export type { CopilotContextHints, CopilotExecuteAction };
 
 export { GLOBAL_COPILOT_CASE_PRIORITIES_PROMPT };
 
@@ -52,11 +70,63 @@ export type TaskListArtifact = {
   items: { id: string; label: string; done: boolean; caseId?: string; dueDate?: string; priority?: 'High' | 'Normal' | 'Low' }[];
 };
 
+export type CaseTaskQueueArtifact = {
+  kind: 'case-task-queue';
+  title: string;
+  caseId: string;
+  items: Array<{
+    id: string;
+    label: string;
+    href: string;
+    status: string;
+    priority?: 'Urgent' | 'High' | 'Normal';
+    aiAssisted?: boolean;
+    stage?: string;
+    isNext?: boolean;
+  }>;
+};
+
+export type CaseRequirementsListArtifact = {
+  kind: 'case-requirements-list';
+  title: string;
+  caseId: string;
+  items: Array<{
+    id: string;
+    name: string;
+    href: string;
+    status: string;
+    blocking?: boolean;
+    tone?: 'neutral' | 'warning' | 'critical';
+  }>;
+};
+
+export type CaseNextStepArtifact = {
+  kind: 'case-next-step';
+  caseId: string;
+  recommendation: 'task' | 'requirements' | 'decision';
+  headline: string;
+  detail: string;
+  href: string;
+  ctaLabel: string;
+  taskItem?: CaseTaskQueueArtifact['items'][number];
+  requirementItems?: CaseRequirementsListArtifact['items'];
+};
+
 export type ActionCardArtifact = {
   kind: 'action-card';
   title: string;
   description: string;
-  actions: { id: string; label: string; variant: 'primary' | 'secondary' | 'danger'; prompt?: string }[];
+  actions: {
+    id: string;
+    label: string;
+    variant: 'primary' | 'secondary' | 'danger';
+    prompt?: string;
+    execute?: CopilotExecuteAction;
+  }[];
+  resolved?: {
+    label: string;
+    tone: 'success' | 'warning';
+  };
 };
 
 export type TimelineArtifact = {
@@ -73,7 +143,71 @@ export type DraftArtifact = {
   actions: { id: string; label: string; prompt?: string }[];
 };
 
-export type ChatArtifact = CaseLinksArtifact | TaskListArtifact | ActionCardArtifact | TimelineArtifact | DraftArtifact;
+export type CaseBriefFocusSegment =
+  | { type: 'text'; value: string }
+  | { type: 'link'; label: string; href: string; kind: 'task' | 'requirement' | 'case' };
+
+export type CaseRequirementSuggestionsArtifact = {
+  kind: 'case-requirement-suggestions';
+  caseId: string;
+  taskId: string;
+  title: string;
+  items: Array<{
+    id: string;
+    label: string;
+    reasoning: string;
+    category: string;
+    defaultSelected: boolean;
+    blocking?: boolean;
+  }>;
+};
+
+export type CaseBriefArtifact = {
+  kind: 'case-brief';
+  /** When false, skips the opening greeting (follow-up / refresh cards). */
+  showGreeting?: boolean;
+  greetingName: string;
+  caseId: string;
+  clientHeadline: string;
+  openRequirements: Array<{
+    id: string;
+    name: string;
+    status: string;
+    blocking?: boolean;
+    tone?: 'neutral' | 'warning' | 'critical';
+    href: string;
+  }>;
+  focusLine: string;
+  focusSegments?: CaseBriefFocusSegment[];
+  focusTask?: {
+    id: string;
+    label: string;
+    href: string;
+    verdict: string;
+    confidence?: number;
+    crewSteps?: TaskCrewStep[];
+    semiAuto?: boolean;
+    taskOutcome?: 'accepted' | 'amended';
+    statusLabel?: string;
+  };
+  focusRequirement?: {
+    id: string;
+    name: string;
+    href: string;
+  };
+};
+
+export type ChatArtifact =
+  | CaseLinksArtifact
+  | TaskListArtifact
+  | CaseTaskQueueArtifact
+  | CaseRequirementsListArtifact
+  | CaseNextStepArtifact
+  | ActionCardArtifact
+  | TimelineArtifact
+  | DraftArtifact
+  | CaseBriefArtifact
+  | CaseRequirementSuggestionsArtifact;
 
 export type ChatTurn = {
   id: string;
@@ -82,6 +216,8 @@ export type ChatTurn = {
   at: number;
   artifact?: ChatArtifact;
   followUps?: string[];
+  /** Staged thinking → text → artifact → follow-up chips (case copilot replies). */
+  revealIntro?: boolean;
   /** Live context the user was in when this turn was sent (user turns only). */
   context?: LiveContext;
 };
@@ -98,10 +234,9 @@ function AiCueQuickActionIcon({ className }: { className?: string; strokeWidth?:
 function quickActionsForTab(tab: AIPanelTab): { id: string; label: string; prompt: string; icon: QuickActionIcon }[] {
   if (tab === 'workspace') {
     return [
-      { id: 'queue', label: 'Queue focus', prompt: 'What should I prioritize in my queue today\u2014overdue items, due today, and anything at risk?', icon: LayoutDashboard },
-      { id: 'cases', label: 'Case priorities', prompt: GLOBAL_COPILOT_CASE_PRIORITIES_PROMPT, icon: FolderOpen },
-      { id: 'tasks', label: 'My tasks', prompt: 'Help me plan my work: summarize my open tasks, due dates, and suggested order to tackle them.', icon: ListTodo },
-      { id: 'documents', label: 'Documents', prompt: 'How can I spot missing or outstanding documents and follow-ups across my cases?', icon: FileText },
+      { id: 'priorities', label: "Today's priorities", prompt: 'What should I prioritize in my queue today\u2014overdue items, due today, and anything at risk?', icon: LayoutDashboard },
+      { id: 'cases', label: 'Case deadlines', prompt: GLOBAL_COPILOT_CASE_PRIORITIES_PROMPT, icon: FolderOpen },
+      { id: 'tasks', label: 'Open tasks', prompt: 'Summarize my open tasks, due dates, and a sensible order to work through them.', icon: ListTodo },
     ];
   }
   if (tab === 'factors') {
@@ -126,13 +261,6 @@ function quickActionsForTab(tab: AIPanelTab): { id: string; label: string; promp
     { id: 'next', label: 'Next steps', prompt: 'What are the best next steps on this case?', icon: Briefcase },
     { id: 'write', label: 'Write', prompt: 'Help me write a professional file update.', icon: PenLine },
   ];
-}
-
-function copilotEmptyContextLine(tab: AIPanelTab): string {
-  if (tab === 'workspace') return 'Get quick guidance on your dashboard, cases, tasks, and documents\u2014or tap a shortcut below to start.';
-  if (tab === 'factors') return 'Explore assessment scores, risk drivers, evidence behind the numbers, or draft a concise file note.';
-  if (tab === 'summary') return 'Summarize the client profile, prep for calls, relate facts to cover, or polish neutral case notes.';
-  return 'Ask about the overview, AI rationale, evidence gaps, and the best next steps for this case.';
 }
 
 /* ─── Markdown-lite renderer ─── */
@@ -212,71 +340,6 @@ function TypingIndicator() {
   );
 }
 
-/* ─── Empty state ─── */
-
-const emptyStateCards = [
-  { Icon: LayoutDashboard, label: 'Dashboard', desc: 'Queue and priority overview' },
-  { Icon: Briefcase, label: 'Cases', desc: 'Status, risks, and next actions' },
-  { Icon: ListTodo, label: 'Tasks', desc: 'Plan, delegate, and track work' },
-  { Icon: FileText, label: 'Documents', desc: 'Gaps, follow-ups, and drafts' },
-];
-
-function CopilotChatEmptyState({ tab }: { tab: AIPanelTab }) {
-  const title = tab === 'workspace' ? 'How can I help?' : 'Ask Amplify Assistant';
-  return (
-    <div className="flex h-full min-h-[360px] flex-col items-center justify-center px-4 text-center">
-      {tab === 'workspace' ? (
-        <>
-          <div className="mb-6 flex items-center gap-2 animate-in fade-in duration-500">
-            <AiCueSparkle size={20} className="!text-brand-accent" />
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">amplify assistant</span>
-          </div>
-          <h3 className="mb-2 text-[22px] font-semibold tracking-tight text-text-primary animate-in fade-in slide-in-from-bottom-2 duration-500 [animation-delay:100ms] [animation-fill-mode:backwards]">
-            {title}
-          </h3>
-          <p className="mb-8 max-w-[340px] text-[14px] leading-relaxed text-text-muted animate-in fade-in slide-in-from-bottom-2 duration-500 [animation-delay:200ms] [animation-fill-mode:backwards]">
-            {copilotEmptyContextLine(tab)}
-          </p>
-          <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-3 duration-500 [animation-delay:350ms] [animation-fill-mode:backwards]">
-            {emptyStateCards.map(({ Icon, label, desc }) => (
-              <div
-                key={label}
-                className="group flex flex-col items-center gap-2 rounded-xl border border-[#f0f0f0] bg-white px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-200 hover:border-[#d8c7f1] hover:shadow-[0_2px_8px_rgba(96,47,160,0.1)]"
-              >
-                <Icon className="h-5 w-5 text-[#b7bbc2] transition-colors group-hover:text-brand-accent" strokeWidth={1.5} />
-                <span className="text-[12px] font-semibold text-text-secondary">{label}</span>
-                <span className="text-[11px] leading-snug text-text-muted">{desc}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="mb-2 inline-flex items-start gap-0 animate-in fade-in slide-in-from-bottom-2 duration-500 [animation-delay:100ms] [animation-fill-mode:backwards]">
-            <h3 className="text-[18px] font-semibold tracking-tight text-text-primary">
-              {title}
-            </h3>
-            <span className="ml-1 mt-0.5 flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full bg-brand-accent">
-              <AiCueSparkle size={8} className="!text-white" />
-            </span>
-          </div>
-          <p className="mb-5 max-w-[300px] text-[13px] leading-relaxed text-text-muted animate-in fade-in slide-in-from-bottom-2 duration-500 [animation-delay:200ms] [animation-fill-mode:backwards]">
-            {copilotEmptyContextLine(tab)}
-          </p>
-          <div className="flex flex-wrap justify-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-500 [animation-delay:350ms] [animation-fill-mode:backwards]">
-            {quickActionsForTab(tab).map((a) => (
-              <span key={a.id} className="inline-flex items-center gap-1.5 rounded-full border border-[#f0f0f0] bg-white px-3 py-1.5 text-[12px] font-medium text-text-secondary">
-                <a.icon className="h-3 w-3 text-[#b7bbc2]" strokeWidth={1.75} />
-                {a.label}
-              </span>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 /* ─── Utilities ─── */
 
 function formatTurnTime(at: number): string {
@@ -294,7 +357,7 @@ function CopilotAssistantActions({ text, at }: { text: string; at: number }) {
   const shareReply = useCallback(async () => { try { if (navigator.share) await navigator.share({ text }); else await navigator.clipboard.writeText(text); } catch { /* */ } }, [text]);
   const btn = 'rounded-md p-1.5 text-[#a8a8a8] transition-colors hover:bg-black/[0.04] hover:text-[#525252]';
   return (
-    <div className="mt-2 flex items-center gap-1 text-[#8c8c8c] opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+    <div className="mt-2 flex items-center gap-1 text-[#8c8c8c] opacity-0 transition-opacity duration-150 group-hover/turn:opacity-100">
       <span className="pr-1 text-[11px]">{formatTurnTime(at)}</span>
       <button type="button" className={btn} onClick={copyReply} title="Copy"><Copy className="h-4 w-4" strokeWidth={1.75} /></button>
       <button type="button" className={btn} onClick={() => setVote((v) => (v === 'up' ? null : 'up'))} title="Helpful" aria-pressed={vote === 'up'}>
@@ -312,7 +375,7 @@ function UserBubbleActions({ text, at }: { text: string; at: number }) {
   const copyReply = useCallback(async () => { try { await navigator.clipboard.writeText(text); } catch { /* */ } }, [text]);
   const btn = 'rounded-md p-1.5 text-[#8c8c8c] transition-colors hover:bg-black/[0.04] hover:text-[#525252]';
   return (
-    <div className="mt-2 flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+    <div className="mt-2 flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover/turn:opacity-100">
       <span className="pr-1 text-[11px] text-[#8c8c8c]">{formatTurnTime(at)}</span>
       <button type="button" className={btn} title="Retry"><RotateCcw className="h-4 w-4" strokeWidth={1.75} /></button>
       <button type="button" className={btn} title="Edit"><SquarePen className="h-4 w-4" strokeWidth={1.75} /></button>
@@ -402,28 +465,56 @@ function TaskListCard({ artifact }: { artifact: TaskListArtifact }) {
   );
 }
 
-function ActionCardComponent({ artifact, onAction }: { artifact: ActionCardArtifact; onAction: (prompt: string) => void }) {
+function ActionCardComponent({
+  artifact,
+  onAction,
+  onExecuteAction,
+}: {
+  artifact: ActionCardArtifact;
+  onAction: (prompt: string) => void;
+  onExecuteAction?: (action: CopilotExecuteAction) => void;
+}) {
   const variantClass: Record<string, string> = {
     primary: 'bg-brand-blue text-white hover:bg-brand-blue-hover',
     secondary: 'border border-border-default bg-white text-text-secondary hover:bg-[#f8f9fa]',
     danger: 'border border-[#cd2c23]/20 bg-white text-brand-red hover:bg-[#fde5e4]',
   };
+  const resolvedToneClass =
+    artifact.resolved?.tone === 'success'
+      ? 'text-brand-blue'
+      : artifact.resolved?.tone === 'warning'
+        ? 'text-amber-800'
+        : 'text-text-secondary';
+
   return (
     <div className={`${artifactCard} p-4`}>
       <div className="mb-1 text-[14px] font-semibold text-text-primary">{artifact.title}</div>
       <p className="mb-3 text-[13px] leading-relaxed text-text-secondary">{artifact.description}</p>
-      <div className="flex flex-wrap gap-2">
-        {artifact.actions.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            onClick={() => a.prompt && onAction(a.prompt)}
-            className={`rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors ${variantClass[a.variant] ?? variantClass.secondary}`}
-          >
-            {a.label}
-          </button>
-        ))}
-      </div>
+      {artifact.resolved ? (
+        <div className={`flex items-center gap-2 text-[13px] ${resolvedToneClass}`}>
+          <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
+          <span className="font-semibold">{artifact.resolved.label}</span>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {artifact.actions.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => {
+                if (a.execute && onExecuteAction) {
+                  onExecuteAction(a.execute);
+                  return;
+                }
+                if (a.prompt) onAction(a.prompt);
+              }}
+              className={`rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors ${variantClass[a.variant] ?? variantClass.secondary}`}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -514,18 +605,57 @@ function DraftCard({ artifact, onAction }: { artifact: DraftArtifact; onAction: 
   );
 }
 
-function ArtifactRenderer({ artifact, onAction }: { artifact: ChatArtifact; onAction: (prompt: string) => void }) {
+function ArtifactRenderer({
+  artifact,
+  onAction,
+  onExecuteAction,
+  onOpenCaseObject,
+  introReveal = false,
+  caseBriefIntroReplayKey = 0,
+}: {
+  artifact: ChatArtifact;
+  onAction: (prompt: string) => void;
+  onExecuteAction?: (action: CopilotExecuteAction) => void;
+  onOpenCaseObject?: OpenCaseWorkspaceObjectHandler;
+  introReveal?: boolean;
+  caseBriefIntroReplayKey?: number;
+}) {
   switch (artifact.kind) {
     case 'case-links':
       return <CaseLinksCard artifact={artifact} onAction={onAction} />;
     case 'task-list':
       return <TaskListCard artifact={artifact} />;
+    case 'case-task-queue':
+      return <CaseTaskQueueCard artifact={artifact} onOpenCaseObject={onOpenCaseObject} introReveal={introReveal} />;
+    case 'case-requirements-list':
+      return (
+        <CaseRequirementsListCard
+          artifact={artifact}
+          onOpenCaseObject={onOpenCaseObject}
+          introReveal={introReveal}
+        />
+      );
+    case 'case-next-step':
+      return <CaseNextStepCard artifact={artifact} onOpenCaseObject={onOpenCaseObject} introReveal={introReveal} />;
     case 'action-card':
-      return <ActionCardComponent artifact={artifact} onAction={onAction} />;
+      return <ActionCardComponent artifact={artifact} onAction={onAction} onExecuteAction={onExecuteAction} />;
     case 'timeline':
       return <TimelineCard artifact={artifact} />;
     case 'draft':
       return <DraftCard artifact={artifact} onAction={onAction} />;
+    case 'case-brief':
+      return (
+        <CaseBriefArtifactCard
+          artifact={artifact}
+          onExecuteAction={onExecuteAction}
+          onOpenCaseObject={onOpenCaseObject}
+          introReplayKey={caseBriefIntroReplayKey}
+        />
+      );
+    case 'case-requirement-suggestions':
+      return (
+        <CaseRequirementSuggestionsCard artifact={artifact} onExecuteAction={onExecuteAction} />
+      );
     default:
       return null;
   }
@@ -537,16 +667,33 @@ export function AiCopilotDock({
   data,
   messages,
   onSendMessage,
+  onExecuteAction,
   aiPanelTab = 'insights',
+  contextHints,
   onSurfaceOpenChange,
   layout = 'dock',
+  hideEmptyState = false,
+  composerPlaceholder,
+  onOpenCaseObject,
+  panelHeader,
+  caseBriefIntroReplayKey = 0,
 }: {
   data: { id: string };
   messages: ChatTurn[];
   onSendMessage: (text: string) => void;
+  onExecuteAction?: (action: CopilotExecuteAction) => void;
+  onOpenCaseObject?: OpenCaseWorkspaceObjectHandler;
   aiPanelTab?: AIPanelTab;
+  /** Case- or task-specific empty state (e.g. semi-auto task approval). */
+  contextHints?: CopilotContextHints;
   onSurfaceOpenChange?: (open: boolean) => void;
   layout?: 'dock' | 'panel';
+  hideEmptyState?: boolean;
+  composerPlaceholder?: string;
+  /** Collapsible header above the transcript (hides on scroll down in panel layout). */
+  panelHeader?: ReactNode;
+  /** Bumps when the case AI panel opens to replay the case-brief intro. */
+  caseBriefIntroReplayKey?: number;
 }) {
   const formId = useId();
   const listRef = useRef<HTMLDivElement>(null);
@@ -557,8 +704,20 @@ export function AiCopilotDock({
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [isDockResizing, setIsDockResizing] = useState(false);
   const isPanel = layout === 'panel';
+  const panelHeaderEnabled = isPanel && Boolean(panelHeader);
+  const { current: liveContext } = useLiveContext();
 
   const quickActions = quickActionsForTab(aiPanelTab);
+  const resolvedPlaceholder =
+    composerPlaceholder ?? resolveCopilotComposerPlaceholder(aiPanelTab, contextHints);
+
+  const handleSuggestionClick = useCallback(
+    (prompt: string) => {
+      onSendMessage(prompt);
+      if (!isPanel) setSurfaceOpen(true);
+    },
+    [onSendMessage, isPanel],
+  );
 
   const targetHeight = useCallback(() => {
     if (typeof window === 'undefined') return 400;
@@ -584,6 +743,13 @@ export function AiCopilotDock({
       const container = listRef.current;
       if (!container) return;
       const lastMsg = messages[messages.length - 1];
+      const pinGrowingTurn =
+        lastMsg?.role === 'assistant'
+        && (lastMsg.revealIntro || lastMsg.artifact?.kind === 'case-brief');
+      if (pinGrowingTurn) {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
+        return;
+      }
       if (lastMsg?.role === 'assistant') {
         const el = container.querySelector(`[data-message-id="${lastMsg.id}"]`);
         if (el) {
@@ -697,14 +863,35 @@ export function AiCopilotDock({
         className={`relative ${isPanel ? 'min-h-0 flex-1 overflow-hidden' : `min-h-0 overflow-hidden rounded-t-2xl ${isDockResizing ? '' : 'transition-[height] duration-300 ease-out motion-reduce:transition-none'}`}`}
         style={isPanel ? undefined : { height: surfaceOpen ? surfacePx : 0 }}
       >
-        <div ref={listRef} className="h-full min-h-0 min-w-0 overflow-y-auto overscroll-contain bg-surface-primary px-10 pb-3 pt-7">
-          {messages.length === 0 ? (
-            <CopilotChatEmptyState tab={aiPanelTab} />
+        <div
+          ref={listRef}
+          data-copilot-transcript
+          className={`min-h-0 min-w-0 overflow-y-auto overscroll-contain bg-surface-primary px-10 pb-3 ${
+            isPanel ? 'h-full' : 'h-full pt-7'
+          }`}
+        >
+          {panelHeaderEnabled ? (
+            <div className="-mx-10 shrink-0 border-b border-[#ececec] bg-surface-primary">
+              {panelHeader}
+            </div>
+          ) : null}
+          {messages.length === 0 && !hideEmptyState ? (
+            <div className={panelHeaderEnabled ? 'pt-5' : undefined}>
+              <CopilotChatEmptyState
+                tab={aiPanelTab}
+                hints={contextHints}
+                liveContext={liveContext}
+                onSuggestionClick={handleSuggestionClick}
+                onExecuteAction={onExecuteAction}
+              />
+            </div>
+          ) : messages.length === 0 ? (
+            <div className={`h-full min-h-[120px] ${panelHeaderEnabled ? 'pt-5' : ''}`} />
           ) : (
-            <div className="mx-auto min-w-0 max-w-[720px] space-y-5">
+            <div className={`mx-auto min-w-0 max-w-[720px] space-y-5 ${panelHeaderEnabled ? 'pt-5' : ''}`}>
               {messages.map((m) =>
                 m.role === 'user' ? (
-                  <div key={m.id} className="group flex flex-col items-end animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div key={m.id} className="group/turn flex flex-col items-end animate-in fade-in slide-in-from-bottom-2 duration-200">
                     {m.context && m.context.kind !== 'copilot' ? <AiContextChip context={m.context} /> : null}
                     <div className="max-w-[85%] rounded-[1.25rem] bg-[#f0f0f0] px-4 py-2.5 text-left text-[15px] leading-relaxed text-[#171717]">
                       {m.text}
@@ -712,26 +899,87 @@ export function AiCopilotDock({
                     <UserBubbleActions text={m.text} at={m.at} />
                   </div>
                 ) : (
-                  <div key={m.id} data-message-id={m.id} className="group min-w-0 max-w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="py-2 text-[15px] leading-relaxed text-[#171717]">
-                      {renderMarkdownLite(m.text)}
-                    </div>
-                    {m.artifact ? <ArtifactRenderer artifact={m.artifact} onAction={onSendMessage} /> : null}
-                    {m.followUps && m.followUps.length > 0 ? (
-                      <div className="mt-2.5 flex flex-wrap gap-1.5">
-                        {m.followUps.map((f) => (
-                          <button
-                            key={f}
-                            type="button"
-                            onClick={() => { onSendMessage(f); if (!isPanel) setSurfaceOpen(true); }}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-white px-3 py-1.5 text-[12px] font-medium text-brand-blue transition-colors hover:border-brand-blue/30 hover:bg-surface-selected-alt"
-                          >
-                            <ChevronRight className="h-3 w-3 opacity-60" />
-                            {f}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
+                  <div
+                    key={
+                      m.artifact?.kind === 'case-brief'
+                        ? `${m.id}-brief-${caseBriefIntroReplayKey}`
+                        : m.revealIntro
+                          ? `${m.id}-reveal-${caseBriefIntroReplayKey}`
+                          : m.id
+                    }
+                    data-message-id={m.id}
+                    className={`group/turn min-w-0 max-w-full ${
+                      m.revealIntro || m.artifact?.kind === 'case-brief'
+                        ? ''
+                        : 'animate-in fade-in slide-in-from-bottom-2 duration-300'
+                    }`}
+                  >
+                    {m.artifact?.kind === 'case-brief' ? (
+                      <ArtifactRenderer
+                        artifact={m.artifact}
+                        onAction={onSendMessage}
+                        onExecuteAction={onExecuteAction}
+                        onOpenCaseObject={onOpenCaseObject}
+                        caseBriefIntroReplayKey={caseBriefIntroReplayKey}
+                      />
+                    ) : m.revealIntro ? (
+                      <CopilotTurnRevealContent
+                        revealIntro
+                        introReplayKey={caseBriefIntroReplayKey}
+                        text={m.text}
+                        artifact={m.artifact}
+                        followUps={m.followUps}
+                        renderMarkdown={renderMarkdownLite}
+                        renderArtifact={(artifact, introReveal) => (
+                          <ArtifactRenderer
+                            artifact={artifact}
+                            onAction={onSendMessage}
+                            onExecuteAction={onExecuteAction}
+                            onOpenCaseObject={onOpenCaseObject}
+                            introReveal={introReveal}
+                            caseBriefIntroReplayKey={caseBriefIntroReplayKey}
+                          />
+                        )}
+                        onFollowUpClick={(prompt) => {
+                          onSendMessage(prompt);
+                          if (!isPanel) setSurfaceOpen(true);
+                        }}
+                      />
+                    ) : (
+                      <>
+                        {m.text ? (
+                          <div className="py-2 text-[15px] leading-relaxed text-[#171717]">
+                            {renderMarkdownLite(m.text)}
+                          </div>
+                        ) : null}
+                        {m.artifact ? (
+                          <ArtifactRenderer
+                            artifact={m.artifact}
+                            onAction={onSendMessage}
+                            onExecuteAction={onExecuteAction}
+                            onOpenCaseObject={onOpenCaseObject}
+                          />
+                        ) : null}
+                        {m.followUps && m.followUps.length > 0 ? (
+                          <div className="mt-2.5 flex flex-wrap gap-1.5">
+                            {m.followUps.map((f) => (
+                              <button
+                                key={f}
+                                type="button"
+                                onClick={() => {
+                                  onSendMessage(f);
+                                  if (!isPanel) setSurfaceOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-white px-3 py-1.5 text-[12px] font-medium text-brand-blue transition-colors hover:border-brand-blue/30 hover:bg-surface-selected-alt"
+                              >
+                                <ChevronRight className="h-3 w-3 opacity-60" aria-hidden />
+                                {f}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </>
+                    )}
                     <CopilotAssistantActions text={m.text} at={m.at} />
                   </div>
                 ),
@@ -753,9 +1001,10 @@ export function AiCopilotDock({
         )}
       </div>
 
-      {/* Composer */}
-      <div className={`shrink-0 px-6 pb-5 ${isPanel ? 'border-t border-[#ececec] pt-4' : 'pt-4'}`}>
-        <div className="mx-auto max-w-[720px]">
+      {/* Composer — top rule spans full chat width (not inset by horizontal padding) */}
+      <div className={`shrink-0 border-t border-[#ececec] ${isPanel ? '' : 'rounded-b-2xl'}`}>
+        <div className={`pb-5 pt-4 ${isPanel ? 'px-10' : 'px-6'}`}>
+          <div className="mx-auto max-w-[720px]">
           <div className="rounded-[18px] border border-[#f0f0f0] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_10px_rgba(0,0,0,0.03)]">
             <form onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
               <div className="mb-3 flex items-center">
@@ -769,7 +1018,7 @@ export function AiCopilotDock({
                 onChange={(e) => onDraftChange(e.target.value)}
                 onFocus={() => !isPanel && openSurface()}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder="How can I help you today?"
+                placeholder={resolvedPlaceholder}
                 className="w-full resize-none border-0 bg-transparent text-[15px] leading-relaxed text-[#171717] outline-none placeholder:text-[#8c8c8c]"
                 autoComplete="off"
               />
@@ -777,17 +1026,11 @@ export function AiCopilotDock({
                 <button type="button" className="rounded-lg p-2 text-[#737373] hover:bg-[#f5f5f5]" aria-label="Add">
                   <Plus className="h-5 w-5" strokeWidth={1.75} />
                 </button>
-                <div className="flex items-center gap-2">
-                  <button type="button" className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-[#737373] hover:bg-[#f5f5f5]">
-                    <AiCueSparkle size={12} className="!text-brand-accent" />
-                    Amplify Assistant
-                    <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-                  </button>
-                  <span className="text-[#e5e5e5]">|</span>
+                <div className="flex items-center gap-1">
                   <button type="button" className="rounded-lg p-2 text-[#737373] hover:bg-[#f5f5f5]" aria-label="Voice">
                     <Mic className="h-5 w-5" strokeWidth={1.75} />
                   </button>
-                  <button type="submit" disabled={!draft.trim()} className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#171717] text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-25" aria-label="Send">
+                  <button type="submit" disabled={!draft.trim()} className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#171717] text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-25" aria-label="Send">
                     <Send className="h-4 w-4" strokeWidth={2} />
                   </button>
                 </div>
@@ -795,18 +1038,21 @@ export function AiCopilotDock({
             </form>
           </div>
 
-          <div className="mx-auto mt-4 flex flex-wrap justify-center gap-2">
-            {quickActions.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => { onSendMessage(a.prompt); if (!isPanel) setSurfaceOpen(true); }}
-                className="inline-flex items-center gap-2 rounded-full border border-[#ededed] bg-white px-3.5 py-2 text-[13px] font-medium text-[#525252] transition-colors hover:border-[#e3e3e3] hover:bg-surface-primary"
-              >
-                <a.icon className="h-3.5 w-3.5 text-[#737373]" strokeWidth={2} />
-                {a.label}
-              </button>
-            ))}
+          {messages.length > 0 ? (
+            <div className="mx-auto mt-4 flex flex-wrap justify-center gap-2">
+              {quickActions.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => { onSendMessage(a.prompt); if (!isPanel) setSurfaceOpen(true); }}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#ededed] bg-white px-3.5 py-2 text-[13px] font-medium text-[#525252] transition-colors hover:border-[#e3e3e3] hover:bg-surface-primary"
+                >
+                  <a.icon className="h-3.5 w-3.5 text-[#737373]" strokeWidth={2} />
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
           </div>
         </div>
       </div>

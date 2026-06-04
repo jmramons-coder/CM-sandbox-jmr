@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect } from 'react';
 import type { CaseWorkflowStageState } from '../domain/objectRefs';
 import { useHorizontalScrollNav } from '../hooks/useHorizontalScrollNav';
+import { isStepSelectable } from '../utils/caseStageLens';
 import { AiCueSparkle } from './AiCueSparkle';
 
 export type WorkflowStepTabItem = {
@@ -16,7 +17,8 @@ export type WorkflowStepTabItem = {
 
 type WorkflowStepsTabsBarProps = {
   steps: WorkflowStepTabItem[];
-  activeOrder: number;
+  progressOrder: number;
+  lensOrder?: number | null;
   onChange: (order: number) => void;
   bleed?: boolean;
   className?: string;
@@ -24,16 +26,18 @@ type WorkflowStepsTabsBarProps = {
 };
 
 const stepButtonBase =
-  'group/step relative z-0 shrink-0 whitespace-nowrap px-3 pb-2 pt-3 text-sm font-semibold transition-colors rounded-t-md enabled:hover:bg-surface-muted';
+  'group/step relative z-0 shrink-0 whitespace-nowrap px-3 pb-2 pt-3 text-sm font-semibold transition-colors rounded-t-md enabled:hover:bg-surface-muted enabled:cursor-pointer disabled:cursor-not-allowed';
 
 function StepIndicator({
   order,
   state,
   showAiCue,
+  lensSelected,
 }: {
   order: number;
   state: CaseWorkflowStageState;
   showAiCue?: boolean;
+  lensSelected?: boolean;
 }) {
   const done = state === 'done';
   const active = state === 'active';
@@ -41,17 +45,19 @@ function StepIndicator({
   return (
     <span
       className={`relative inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold leading-none ${
-        done
-          ? 'bg-[#008533] text-white'
-          : active
-            ? 'bg-brand-blue text-white'
-            : 'border border-[#b7bbc2] bg-white text-text-muted'
+        lensSelected
+          ? 'bg-white text-brand-blue ring-2 ring-brand-blue ring-offset-1'
+          : done
+            ? 'bg-[#008533] text-white'
+            : active
+              ? 'bg-brand-blue text-white'
+              : 'border border-[#b7bbc2] bg-white text-text-muted'
       }`}
     >
       {active ? (
         <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-brand-blue opacity-60 animate-ping" />
       ) : null}
-      {done ? '✓' : order}
+      {done && !lensSelected ? '✓' : order}
       {showAiCue ? (
         <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 w-3 items-center justify-center rounded-full border border-white bg-brand-accent shadow-sm">
           <AiCueSparkle size={6} className="!text-white" aria-hidden />
@@ -75,12 +81,14 @@ function StepSuffix({ state, subLabel }: { state: CaseWorkflowStageState; subLab
 /** Mobile-friendly workflow step rail — same horizontal scroll + chevrons as ModuleTabsBar. */
 export function WorkflowStepsTabsBar({
   steps,
-  activeOrder,
+  progressOrder,
+  lensOrder = null,
   onChange,
   bleed = false,
   className = '',
   disabled = false,
 }: WorkflowStepsTabsBarProps) {
+  const selectedOrder = lensOrder ?? progressOrder;
   const {
     scrollRef,
     canScrollLeft,
@@ -91,8 +99,8 @@ export function WorkflowStepsTabsBar({
   } = useHorizontalScrollNav(steps.length);
 
   useEffect(() => {
-    scrollItemIntoViewIfNeeded(`[data-workflow-step-order="${activeOrder}"]`);
-  }, [activeOrder, scrollItemIntoViewIfNeeded, steps.length]);
+    scrollItemIntoViewIfNeeded(`[data-workflow-step-order="${selectedOrder}"]`);
+  }, [selectedOrder, scrollItemIntoViewIfNeeded, steps.length]);
 
   const rootClass = `${bleed ? '-mx-6 px-6' : 'w-full'} relative border-b border-border-default ${className}`;
   const scrollClass = `touch-pan-x overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
@@ -124,11 +132,13 @@ export function WorkflowStepsTabsBar({
       <div ref={scrollRef} className={scrollClass} role="tablist" aria-label="Workflow steps">
         <div className="flex w-max flex-nowrap gap-0">
           {steps.map((step) => {
-            const active = activeOrder === step.order;
-            const stepDisabled = disabled || step.disabled || step.state === 'next';
+            const lensSelected = lensOrder != null && lensOrder === step.order;
+            const progressSelected = lensOrder == null && progressOrder === step.order;
+            const tabSelected = lensSelected || progressSelected;
+            const stepDisabled = disabled || step.disabled || !isStepSelectable(step.state);
             const toneClass = stepDisabled
               ? 'cursor-not-allowed text-[#b7bbc2]'
-              : active
+              : tabSelected
                 ? step.state === 'done'
                   ? 'text-brand-green'
                   : 'text-text-heading'
@@ -142,7 +152,7 @@ export function WorkflowStepsTabsBar({
                 type="button"
                 role="tab"
                 data-workflow-step-order={step.order}
-                aria-selected={active}
+                aria-selected={tabSelected}
                 aria-disabled={stepDisabled}
                 title={step.label}
                 disabled={stepDisabled}
@@ -152,7 +162,12 @@ export function WorkflowStepsTabsBar({
                 className={`${stepButtonBase} ${toneClass}`}
               >
                 <span className="inline-flex max-w-[11rem] items-center gap-1.5 sm:max-w-none">
-                  <StepIndicator order={step.order} state={step.state} showAiCue={step.showAiCue} />
+                  <StepIndicator
+                    order={step.order}
+                    state={step.state}
+                    showAiCue={step.showAiCue}
+                    lensSelected={lensSelected}
+                  />
                   <span className="truncate">{step.label}</span>
                   <StepSuffix state={step.state} subLabel={step.subLabel} />
                 </span>

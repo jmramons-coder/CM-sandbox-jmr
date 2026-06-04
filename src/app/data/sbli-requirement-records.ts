@@ -2714,54 +2714,6 @@ export const SBLI_REQUIREMENT_TASK_RECORDS: DatasetTaskRecord[] = [
     ]
   },
   {
-    "id": "task_nb4031",
-    "kind": "task",
-    "taskId": "task_nb4031",
-    "label": "Paramedical exam — blood draw follow-up",
-    "status": "Open",
-    "priority": "Normal",
-    "assignee": "Quest Diagnostics",
-    "assigneeKind": "user",
-    "caseType": "NB",
-    "caseSubtype": "full_underwriting",
-    "hasAI": true,
-    "aiSummary": "Paramedical exam scheduled with Quest Diagnostics for May 19, 2026. Blood draw and vitals capture required. Results will feed into final UW scoring alongside APS.",
-    "aiAction": "Review requirement",
-    "alert": null,
-    "dueDate": "2026-05-19",
-    "stage": "requirement_gathering",
-    "slaRemaining": "2026-05-19",
-    "slaStatus": "normal",
-    "origin": "paramedical_vendor",
-    "sourceContext": "SBLI requirement seed",
-    "createdDate": "2026-05-14",
-    "description": "Paramedical exam scheduled with Quest Diagnostics for May 19, 2026. Blood draw and vitals capture required. Results will feed into final UW scoring alongside APS.",
-    "queue": "my_tasks",
-    "requiredAuthorityLevel": 1,
-    "panelContext": {
-      "summaryStatus": "Scheduled",
-      "contextTitle": "Paramedical exam — blood draw",
-      "contextSummary": "Paramedical exam scheduled with Quest Diagnostics for May 19, 2026. Blood draw and vitals capture required. Results will feed into final UW scoring alongside APS.",
-      "suggestions": [
-        "Paramedical exam completed at scheduled time",
-        "Blood draw processed by accredited lab",
-        "Vitals recorded: height, weight, BP, pulse"
-      ]
-    },
-    "linkedObjects": [
-      {
-        "kind": "case",
-        "id": "NB66-7622343",
-        "label": "New Business — Full Underwriting"
-      },
-      {
-        "kind": "requirement",
-        "id": "req_mt_006",
-        "label": "Paramedical exam — blood draw"
-      }
-    ]
-  },
-  {
     "id": "task_nb2032",
     "kind": "task",
     "taskId": "task_nb2032",

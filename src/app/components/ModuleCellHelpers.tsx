@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { getDocumentSourceLabel } from '../data/documentMetadata';
+import { inferRequirementAiGenerated, isRequirementAiSourced } from '../utils/requirementAiSource';
 import { stripSummaryTitleDecorators } from '../utils/summaryText';
 import { getStatusLozengeType } from '../utils/status-display';
 import { AiCueSparkle } from './AiCueSparkle';
@@ -14,24 +15,64 @@ export const TABLE_TEXT_CLASS = 'text-[13px] text-text-primary';
 export const TABLE_SUBTEXT_CLASS = 'text-[11px] text-text-muted';
 
 /** Even purple ↔ blue blend; blue only edges in on the far right. Stops lifted ~10% toward white for a lighter glass read. */
-const MINI_AI_BADGE_GRADIENT =
+export const MINI_AI_BADGE_GRADIENT =
   'linear-gradient(100deg, color-mix(in srgb, color-mix(in srgb, var(--brand-accent, #602fa0) 80%, transparent) 90%, white) 0%, color-mix(in srgb, color-mix(in srgb, var(--brand-accent, #602fa0) 60%, var(--brand-primary, #006296)) 90%, white) 28%, color-mix(in srgb, color-mix(in srgb, var(--brand-accent, #602fa0) 44%, var(--brand-primary, #006296)) 90%, white) 50%, color-mix(in srgb, color-mix(in srgb, var(--brand-accent, #602fa0) 36%, var(--brand-primary, #006296)) 90%, white) 72%, color-mix(in srgb, color-mix(in srgb, var(--brand-primary, #006296) 64%, var(--brand-accent, #602fa0)) 90%, white) 88%, color-mix(in srgb, color-mix(in srgb, var(--brand-primary, #006296) 72%, var(--brand-accent, #602fa0)) 90%, white) 100%)';
 
-/** Compact AI pill for table first columns (case / task / requirement id). */
-export function MiniAiSourceBadge() {
+/** Circular AI avatar for completion / contributor stacks (secondary; matches InitialsAvatar xs/md footprint). */
+export function CircularAiAvatar({
+  size = 'md',
+  className,
+  style,
+  title,
+}: {
+  /** `md` matches `InitialsAvatar` `xs` (28px) in contributor stacks. */
+  size?: 'sm' | 'md';
+  className?: string;
+  style?: CSSProperties;
+  title?: string;
+}) {
+  const dim = size === 'sm' ? 'size-6' : 'size-7';
+  const sparkle = size === 'sm' ? 10 : 12;
   return (
     <span
-      className="inline-flex h-[22px] shrink-0 items-center gap-1 rounded-[6px] border border-white/28 px-2 text-[10px] font-bold uppercase leading-none tracking-[0.35px] text-white shadow-[0_2px_8px_rgba(27,28,30,0.16),inset_0_1px_0_rgba(255,255,255,0.16)] backdrop-blur-md backdrop-saturate-150"
+      className={cn(
+        'inline-flex shrink-0 items-center justify-center rounded-full bg-surface-muted',
+        dim,
+        className,
+      )}
+      style={style}
+      title={title}
+      aria-label={title ?? 'AI'}
+    >
+      <AiCueSparkle size={sparkle} brandGradientFill />
+    </span>
+  );
+}
+
+/** Compact AI pill for table first columns (case / task / requirement id). */
+export function MiniAiSourceBadge({ size = 'default' }: { size?: 'default' | 'compact' }) {
+  const compact = size === 'compact';
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center rounded-[6px] border border-white/28 font-bold uppercase leading-none text-white shadow-[0_2px_8px_rgba(27,28,30,0.16),inset_0_1px_0_rgba(255,255,255,0.16)] backdrop-blur-md backdrop-saturate-150',
+        compact
+          ? 'h-[14px] gap-0.5 rounded-[5px] px-1.5 text-[10px] tracking-[0.26px]'
+          : 'h-[22px] gap-1 px-2 text-[10px] tracking-[0.35px]',
+      )}
       style={{ backgroundImage: MINI_AI_BADGE_GRADIENT }}
       aria-label="AI"
     >
-      <AiCueSparkle size={10} className="!text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]" />
+      <AiCueSparkle
+        size={compact ? 8 : 10}
+        className="!text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]"
+      />
       <span className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]">AI</span>
     </span>
   );
 }
 
-/** Task table first column: muted ID above, task name as primary label. */
+/** Task table first column: compact AI + ID on one row, task name below. */
 export function TaskTableFirstColumnCell({
   taskId,
   taskName,
@@ -44,16 +85,17 @@ export function TaskTableFirstColumnCell({
   className?: string;
 }) {
   return (
-    <TableFirstColumnContent aiSourced={aiSourced} className={className}>
-      <div className="min-w-0">
-        <span className={`block truncate ${TABLE_SUBTEXT_CLASS}`} title={taskId}>
+    <div className={cn('min-w-0', className)}>
+      <div className="flex min-w-0 items-center gap-1">
+        {aiSourced ? <MiniAiSourceBadge size="compact" /> : null}
+        <span className={`min-w-0 truncate ${TABLE_SUBTEXT_CLASS}`} title={taskId}>
           {taskId}
         </span>
-        <span className={`mt-0.5 block truncate ${TABLE_TEXT_CLASS} font-semibold`} title={taskName}>
-          {taskName}
-        </span>
       </div>
-    </TableFirstColumnContent>
+      <span className={`mt-0.5 block truncate ${TABLE_TEXT_CLASS} font-semibold`} title={taskName}>
+        {taskName}
+      </span>
+    </div>
   );
 }
 
@@ -68,8 +110,8 @@ export function TableFirstColumnContent({
   className?: string;
 }) {
   return (
-    <span className={['flex min-w-0 items-center gap-2', className].filter(Boolean).join(' ')}>
-      {aiSourced ? <MiniAiSourceBadge /> : null}
+    <span className={['flex min-w-0 items-center gap-1', className].filter(Boolean).join(' ')}>
+      {aiSourced ? <MiniAiSourceBadge size="compact" /> : null}
       <span className="min-w-0 flex-1">{children}</span>
     </span>
   );
@@ -104,9 +146,7 @@ export function isDocumentRowAiSourced(
   return lower.includes('ai');
 }
 
-export function isRequirementAiSourced(source: string): boolean {
-  return source === 'ai_rule_engine';
-}
+export { inferRequirementAiGenerated, isRequirementAiSourced } from '../utils/requirementAiSource';
 
 export function isTaskAiSourced(task: {
   origin?: string;
@@ -248,7 +288,7 @@ export function isCaseAiSourced(item: { aiSummary?: string; aiRecommendation?: s
   return Boolean(item.aiSummary || item.aiRecommendation);
 }
 
-/** Side panel: AI badge (when applicable), status lozenge, priority chip, object id on the right. */
+/** Side panel: AI badge (when applicable), status lozenge, priority chip. */
 export function SidePanelAiPriorityRow({
   aiSourced = false,
   status,
@@ -259,7 +299,7 @@ export function SidePanelAiPriorityRow({
   aiSourced?: boolean;
   status?: string;
   priority: string;
-  objectId: string;
+  objectId?: string;
   className?: string;
 }) {
   return (
@@ -269,7 +309,9 @@ export function SidePanelAiPriorityRow({
         <LozengeTag label={status} type={getStatusLozengeType(status, 'task')} subtle />
       ) : null}
       <PriorityChip priority={priority} />
-      <span className="ml-auto shrink-0 text-[12px] font-semibold text-text-muted/70">{objectId}</span>
+      {objectId ? (
+        <span className="ml-auto shrink-0 text-[12px] font-semibold text-text-muted/70">{objectId}</span>
+      ) : null}
     </div>
   );
 }

@@ -36,6 +36,9 @@ import {
   downloadDeployablePreset,
   snapshotToDeployablePreset,
 } from '../data/demo-environment-deploy';
+import { setActiveDemoConfigurationId } from '../data/datasetResolutionContext';
+import { filterDatasetBySettings, getSystemDataset } from '../data/objectRepository';
+import type { SystemDataset } from '../data/multi-case-dataset';
 import { getWorkflowDefinition } from '../domain/workflows';
 import type { IdentityDocumentPermissionOverrides } from '../domain/identityDocumentPermissions';
 
@@ -111,6 +114,8 @@ export type PlatformPreferences = {
   aiSidePanelEnabled: boolean;
   casesAiAssistantEnabled: boolean;
   aiActivityVisible: boolean;
+  /** Cursor highlight + click ripples for screen recordings. */
+  presentationModeEnabled: boolean;
   identityDocuments?: IdentityDocumentPreferences;
 };
 
@@ -206,7 +211,7 @@ const STORAGE_KEY = 'amplify-platform-settings';
 const LIGHT_HEADER_BG = '#f5f5f7';
 const LIGHT_HEADER_FG = '#1b1c1e';
 
-const CURRENT_SETTINGS_VERSION = 5 as const;
+const CURRENT_SETTINGS_VERSION = 6 as const;
 
 const DEFAULT_ANATOMY_SETTINGS: AnatomySettings = {
   entityAnatomyOverrides: {},
@@ -229,6 +234,7 @@ const DEFAULT_SETTINGS: PlatformSettings = {
     aiSidePanelEnabled: true,
     casesAiAssistantEnabled: true,
     aiActivityVisible: true,
+    presentationModeEnabled: true,
   },
   modules: { ...DEFAULT_MODULES },
   roles: { enabled: false },
@@ -270,20 +276,26 @@ function migrateLegacyNewBusinessAnatomySteps(
 
 /* ─── Persistence ─── */
 
+function finalizePlatformSettings(settings: PlatformSettings): PlatformSettings {
+  const applied = applyActiveDemoEnvironment(settings);
+  setActiveDemoConfigurationId(applied.activeDemoConfigurationId ?? resolveDefaultDemoEnvironmentId());
+  return applied;
+}
+
 function loadSettings(): PlatformSettings {
-  if (typeof window === 'undefined') return applyActiveDemoEnvironment(structuredClone(DEFAULT_SETTINGS));
+  if (typeof window === 'undefined') return finalizePlatformSettings(structuredClone(DEFAULT_SETTINGS));
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return applyActiveDemoEnvironment(structuredClone(DEFAULT_SETTINGS));
+    if (!raw) return finalizePlatformSettings(structuredClone(DEFAULT_SETTINGS));
     const parsed = JSON.parse(raw) as Partial<PlatformSettings> & { version?: number };
     if (!parsed || typeof parsed.version !== 'number') {
-      return applyActiveDemoEnvironment(structuredClone(DEFAULT_SETTINGS));
+      return finalizePlatformSettings(structuredClone(DEFAULT_SETTINGS));
     }
     /* Anything newer than the current version (e.g. someone downgraded the
      * app) is treated as unknown and replaced with defaults — safer than
      * silently dropping unknown fields. */
     if (parsed.version > CURRENT_SETTINGS_VERSION) {
-      return applyActiveDemoEnvironment(structuredClone(DEFAULT_SETTINGS));
+      return finalizePlatformSettings(structuredClone(DEFAULT_SETTINGS));
     }
     /* Back-compat: earlier versions stored a single `logoDataUrl`. Promote it to
      * the dark-background slot so pre-existing custom logos keep working. */
@@ -362,16 +374,23 @@ function loadSettings(): PlatformSettings {
       branding: mergedBranding,
       themeMode: parsed.themeMode === 'light' ? 'light' : 'dark',
       language: isSupportedLanguage(parsed.language) ? parsed.language : DEFAULT_LANGUAGE,
-      preferences: { ...DEFAULT_SETTINGS.preferences, ...(parsed.preferences ?? {}) },
+      preferences: {
+        ...DEFAULT_SETTINGS.preferences,
+        ...(parsed.preferences ?? {}),
+        presentationModeEnabled:
+          parsed.version < 6
+            ? true
+            : (parsed.preferences?.presentationModeEnabled ?? DEFAULT_SETTINGS.preferences.presentationModeEnabled),
+      },
       modules,
       roles: { enabled: false },
       demoConfigurations,
       activeDemoConfigurationId,
     } as PlatformSettings;
 
-    return applyActiveDemoEnvironment(baseSettings);
+    return finalizePlatformSettings(baseSettings);
   } catch {
-    return applyActiveDemoEnvironment(structuredClone(DEFAULT_SETTINGS));
+    return finalizePlatformSettings(structuredClone(DEFAULT_SETTINGS));
   }
 }
 
@@ -498,6 +517,7 @@ type Ctx = {
   setAiSidePanelEnabled: (enabled: boolean) => void;
   setCasesAiAssistantEnabled: (enabled: boolean) => void;
   setAiActivityVisible: (visible: boolean) => void;
+  setPresentationModeEnabled: (enabled: boolean) => void;
   setModuleEnabled: (id: ModuleId, enabled: boolean) => void;
   updateDataSource: (patch: Partial<DataSourceSettings>) => void;
   updateAnatomy: (patch: Partial<AnatomySettings>) => void;
@@ -517,6 +537,10 @@ export function PlatformSettingsProvider({ children }: { children: ReactNode }) 
   useEffect(() => {
     persist(settings);
   }, [settings]);
+
+  useEffect(() => {
+    setActiveDemoConfigurationId(settings.activeDemoConfigurationId ?? resolveDefaultDemoEnvironmentId());
+  }, [settings.activeDemoConfigurationId]);
 
   /* Keep activeCaseTypeId valid when mode/enabled change. */
   useEffect(() => {
@@ -653,6 +677,13 @@ export function PlatformSettingsProvider({ children }: { children: ReactNode }) 
     }));
   }, []);
 
+  const setPresentationModeEnabled = useCallback((enabled: boolean) => {
+    setSettings((prev) => ({
+      ...prev,
+      preferences: { ...prev.preferences, presentationModeEnabled: enabled },
+    }));
+  }, []);
+
   const setModuleEnabled = useCallback((id: ModuleId, enabled: boolean) => {
     setSettings((prev) => ({
       ...prev,
@@ -742,17 +773,20 @@ export function PlatformSettingsProvider({ children }: { children: ReactNode }) 
   }, []);
 
   const setActiveDemoConfiguration = useCallback((id: string | null) => {
+    const resolvedDemoId = id ?? resolveDefaultDemoEnvironmentId();
+    setActiveDemoConfigurationId(resolvedDemoId);
     setSettings((prev) => {
       if (!id) {
-        return {
+        const reset = finalizePlatformSettings({
           ...structuredClone(DEFAULT_SETTINGS),
           demoConfigurations: prev.demoConfigurations,
-          activeDemoConfigurationId: null,
-        };
+          activeDemoConfigurationId: resolveDefaultDemoEnvironmentId(),
+        });
+        return reset;
       }
       const target = prev.demoConfigurations.find((config) => config.id === id);
       if (!target) return prev;
-      return applyActiveDemoEnvironment(
+      return finalizePlatformSettings(
         applyDemoConfigurationSnapshot(target.settings, prev.demoConfigurations, target.id),
       );
     });
@@ -788,6 +822,7 @@ export function PlatformSettingsProvider({ children }: { children: ReactNode }) 
       setAiSidePanelEnabled,
       setCasesAiAssistantEnabled,
       setAiActivityVisible,
+      setPresentationModeEnabled,
       setModuleEnabled,
       updateDataSource,
       updateAnatomy,
@@ -814,6 +849,7 @@ export function PlatformSettingsProvider({ children }: { children: ReactNode }) 
       setAiSidePanelEnabled,
       setCasesAiAssistantEnabled,
       setAiActivityVisible,
+      setPresentationModeEnabled,
       setModuleEnabled,
       updateDataSource,
       updateAnatomy,
@@ -928,6 +964,20 @@ export function useModules(): ModuleSettings {
   return usePlatformSettings().settings.modules;
 }
 
+export function usePresentationModeEnabled(): boolean {
+  return usePlatformSettings().settings.preferences.presentationModeEnabled ?? true;
+}
+
 export function useDataSourceSettings(): DataSourceSettings {
   return usePlatformSettings().settings.dataSource;
+}
+
+/** Dataset from the active demo environment (re-resolves when branding env toggles). */
+export function useResolvedSystemDataset(): SystemDataset {
+  const { settings } = usePlatformSettings();
+  const { dataSource, activeDemoConfigurationId } = settings;
+  return useMemo(
+    () => filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource),
+    [dataSource, activeDemoConfigurationId],
+  );
 }

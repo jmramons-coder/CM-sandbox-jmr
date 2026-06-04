@@ -8,9 +8,12 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Briefcase, CalendarDays, Check, ChevronLeft, ChevronRight, ClipboardCheck, Database, FileText, Maximize2, UserRound, X, ZoomIn, ZoomOut } from 'lucide-react';
-import { Link } from 'react-router';
-import { formatDocumentFileInfo } from '../data/documentMetadata';
+import { Briefcase, CalendarDays, ChevronLeft, ChevronRight, ClipboardCheck, Database, FileText, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { formatDocumentHeaderInlineMeta } from '../data/documentMetadata';
+import { getStatusLozengeType } from '../utils/status-display';
+import { LozengeTag } from './LozengeTag';
+import { SidePanelHeaderTag } from './SidePanelHeaderTag';
 import { normalizeDocumentHighlight } from '../utils/document-evidence-highlights';
 import { useViewportLayout } from '../hooks/useViewportLayout';
 import { CollapsibleDetailSection } from './CollapsibleDetailSection';
@@ -125,10 +128,14 @@ export function DynamicDocumentSidePanel({
   const activeHighlightRef = useRef<HTMLButtonElement | null>(null);
   const activeInsightRef = useRef<HTMLButtonElement | null>(null);
   const [connectorPath, setConnectorPath] = useState<{ d: string; endX: number; endY: number } | null>(null);
-  const [pageSurfaceSize, setPageSurfaceSize] = useState({ width: 440, height: 660 });
+  const [pageSurfaceSize, setPageSurfaceSize] = useState({ width: 0, height: 0 });
 
   const activePageIndex = document.pages.findIndex((page) => page.number === activePageNumber);
   const activePage = document.pages[activePageIndex] ?? document.pages[0];
+
+  useEffect(() => {
+    setPageSurfaceSize({ width: 0, height: 0 });
+  }, [activePage?.image, activePageNumber]);
   const hasPreviousPage = activePageIndex > 0;
   const hasNextPage = activePageIndex >= 0 && activePageIndex < document.pages.length - 1;
   const visibleEvidence = document.evidence.filter((item) => item.page === activePage?.number);
@@ -348,9 +355,8 @@ export function DynamicDocumentSidePanel({
   }, []);
 
   if (!isRendered || !activePage) return null;
-  const isCompactPanel = panelWidth < 760;
-  const isMobileDocLayout = isCompactShell || isCompactPanel;
-  const insightColumnWidth = isCompactPanel ? 240 : 320;
+  const isMobileDocLayout = isCompactShell;
+  const insightColumnWidth = panelWidth < 900 ? 280 : 320;
   const handleDocumentActionClick = (actionId: string) => {
     onDocumentAction?.(actionId, document.documentId);
   };
@@ -398,6 +404,7 @@ export function DynamicDocumentSidePanel({
                 onZoomOut={zoomOut}
                 onPageChange={setActivePageNumber}
                 onPageSurfaceSizeChange={setPageSurfaceSize}
+                pageSurfaceSize={pageSurfaceSize}
                 scoringContext={document.scoringContext}
                 visibleEvidence={visibleEvidence}
                 onActionClick={handleDocumentActionClick}
@@ -434,6 +441,7 @@ export function DynamicDocumentSidePanel({
                 onZoomOut={zoomOut}
                 onPageChange={setActivePageNumber}
                 onPageSurfaceSizeChange={setPageSurfaceSize}
+                pageSurfaceSize={pageSurfaceSize}
                 visibleEvidence={visibleEvidence}
               />
 
@@ -551,86 +559,63 @@ function DynamicDocumentHeader({
   mobileLayout?: boolean;
   onClose?: () => void;
 }) {
+  const navigate = useNavigate();
+  const contextTagLabel = `${document.caseId} · ${document.claimant} · ${document.linkedRequirement}`;
+  const fileMeta = formatDocumentHeaderInlineMeta(
+    document.documentTitle,
+    document.fileType,
+    document.fileSize,
+  );
+
   return (
     <div className={`shrink-0 border-b border-border-default bg-white ${mobileLayout ? 'px-4 py-3' : 'px-6 py-4'}`}>
-      <div className="relative rounded-t-lg">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-start">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-[4px] border border-border-soft bg-surface-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.2px] text-text-secondary">
-                  {document.category}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-[4px] border border-brand-green/35 bg-[#e5f5ea] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.2px] text-brand-green">
-                  <Check className="size-3.5" />
-                  {document.status}
-                </span>
-              </div>
-              <div className="mt-1 flex min-w-0 flex-wrap items-baseline gap-2">
-                <FileText className="mt-[3px] size-4 shrink-0 self-start text-text-heading" />
-                <p className="truncate text-[18px] font-semibold text-text-primary">{document.documentTitle}</p>
-                <span className="text-[12px] font-semibold text-text-muted">{formatDocumentFileInfo(document.fileType, document.fileSize)}</span>
-              </div>
-            </div>
-          </div>
+      <div className="flex w-full items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <LozengeTag label={document.status} type={getStatusLozengeType(document.status, 'document')} subtle />
+          <LozengeTag label={document.category} type="Neutral" subtle />
         </div>
-        {onClose ? (
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-muted"
-            aria-label="Close document"
-          >
-            <X className="size-5" />
-          </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="pt-0.5 text-[12px] font-semibold leading-none text-text-muted/70">
+            {document.documentId}
+          </span>
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-muted"
+              aria-label="Close document"
+            >
+              <X className="size-5" />
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-2 flex min-w-0 items-baseline gap-2">
+        <h2 className="min-w-0 truncate text-[18px] font-semibold leading-tight text-text-heading">
+          {document.documentTitle}
+        </h2>
+        {fileMeta ? (
+          <span className="shrink-0 text-[11px] font-medium text-text-muted">{fileMeta}</span>
         ) : null}
       </div>
-      <dl
-        className={
-          mobileLayout
-            ? 'mt-3 grid grid-cols-2 divide-x divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px]'
-            : 'mt-3 ml-6 grid w-[calc(100%-1.5rem)] overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px] sm:grid-cols-5'
-        }
-      >
-        <MetaItem mobileGrid={mobileLayout} icon={<ClipboardCheck className="size-3.5" />} label="Requirement" value={<Link to={document.linkedRequirementHref || '/cases'} data-keep-sidepanel="link" className="text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover">{document.linkedRequirement}</Link>} />
-        <MetaItem mobileGrid={mobileLayout} icon={<Briefcase className="size-3.5" />} label="Case" value={<Link to={`/cases/${document.caseId}#tab=requirements`} data-keep-sidepanel="link" className="text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover">{document.caseId}</Link>} />
-        <MetaItem mobileGrid={mobileLayout} icon={<CalendarDays className="size-3.5" />} label="Uploaded" value={document.received} />
-        <MetaItem mobileGrid={mobileLayout} icon={<Database className="size-3.5" />} label="Source" value={document.source} />
-        <MetaItem mobileGrid={mobileLayout} icon={<UserRound className="size-3.5" />} label="Claimant" value={<Link to={`/cases/${document.caseId}`} data-keep-sidepanel="link" className="text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover">{document.claimant}</Link>} />
+
+      <dl className="mt-3 flex flex-wrap gap-2">
+        <SidePanelHeaderTag
+          icon={Briefcase}
+          label={contextTagLabel}
+          title={contextTagLabel}
+          onClick={() => navigate(`/cases/${document.caseId}#tab=requirements`)}
+        />
+        <SidePanelHeaderTag icon={CalendarDays} label={`Uploaded ${document.received}`} />
+        <SidePanelHeaderTag icon={Database} label={document.source} />
         {mobileLayout ? (
-          <MetaItem mobileGrid icon={<FileText className="size-3.5" />} label="Pages" value={`${document.totalPages} page${document.totalPages === 1 ? '' : 's'}`} />
+          <SidePanelHeaderTag
+            icon={FileText}
+            label={`${document.totalPages} page${document.totalPages === 1 ? '' : 's'}`}
+          />
         ) : null}
       </dl>
-      </div>
-    </div>
-  );
-}
-
-function MetaItem({
-  icon,
-  label,
-  mobileGrid = false,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  mobileGrid?: boolean;
-  value: ReactNode;
-}) {
-  return (
-    <div
-      className={
-        mobileGrid
-          ? 'min-w-0 px-3 py-2.5'
-          : 'min-w-0 border-b border-border-soft px-3 py-2 sm:border-b-0 sm:border-r sm:last:border-r-0'
-      }
-    >
-      <dt className="flex items-center gap-1.5 text-[11px] text-text-muted">
-        <span className="text-text-muted">{icon}</span>
-        {label}
-      </dt>
-      <dd className={`mt-0.5 font-semibold text-text-primary ${mobileGrid ? 'break-words leading-snug' : 'truncate'}`}>{value}</dd>
     </div>
   );
 }
@@ -680,6 +665,7 @@ function DocumentCanvas({
   mobilePreview = false,
   onPageChange,
   onPageSurfaceSizeChange,
+  pageSurfaceSize,
   visibleEvidence,
 }: {
   activePage: DynamicDocumentPage;
@@ -708,10 +694,12 @@ function DocumentCanvas({
   onZoomOut: () => void;
   onPageChange: (pageNumber: number) => void;
   onPageSurfaceSizeChange: (size: { width: number; height: number }) => void;
+  pageSurfaceSize: { width: number; height: number };
   visibleEvidence: DynamicDocumentInsight[];
 }) {
   const frameMaxWidth = mobilePreview ? 280 : 440;
   const frameMaxHeight = mobilePreview ? 420 : 660;
+  const pageReady = pageSurfaceSize.width > 0 && pageSurfaceSize.height > 0;
 
   const reportSurfaceSize = (img: HTMLImageElement) => {
     const { naturalWidth, naturalHeight } = img;
@@ -727,7 +715,7 @@ function DocumentCanvas({
     <div className={`relative z-10 min-h-0 overflow-visible bg-white ${mobilePreview ? 'h-full' : ''}`}>
       <div
         className={`relative flex h-full min-h-0 items-center justify-center overflow-hidden bg-[#dfe3e8] ${
-          mobilePreview ? 'min-h-[min(52vh,480px)] px-3 py-6' : 'px-4 py-20'
+          mobilePreview ? 'min-h-[min(52vh,480px)] px-3 py-6' : 'px-4 py-10'
         } ${isDocumentPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
         onWheel={onWheel}
         onPointerDown={onPointerDown}
@@ -750,10 +738,12 @@ function DocumentCanvas({
         />
 
         <div
-          className={`relative flex shrink-0 items-center justify-center bg-white shadow-[0_1px_2px_rgba(27,28,30,0.08)] will-change-transform ${
-            mobilePreview ? 'h-[min(420px,50vh)] w-[min(280px,72vw)]' : 'h-[660px] w-[440px]'
+          className={`relative shrink-0 bg-white shadow-[0_1px_2px_rgba(27,28,30,0.08)] will-change-transform ${
+            pageReady ? '' : mobilePreview ? 'h-[min(420px,50vh)] w-[min(280px,72vw)]' : 'h-[min(660px,72vh)] w-[440px]'
           }`}
           style={{
+            width: pageReady ? pageSurfaceSize.width : undefined,
+            height: pageReady ? pageSurfaceSize.height : undefined,
             transform: activePage.image?.trim()
               ? `matrix(${documentZoom}, 0, 0, ${documentZoom}, ${documentPan.x}, ${documentPan.y})`
               : undefined,
@@ -762,12 +752,23 @@ function DocumentCanvas({
           }}
         >
           {activePage.image?.trim() ? (
-            <div className="relative max-h-full max-w-full">
+            <div
+              className="relative"
+              style={
+                pageReady
+                  ? { width: pageSurfaceSize.width, height: pageSurfaceSize.height }
+                  : { maxHeight: frameMaxHeight, maxWidth: frameMaxWidth }
+              }
+            >
               <img
                 src={activePage.image}
                 alt={`${document.documentTitle}, page ${activePage.number}: ${activePage.label}`}
-                className="block max-h-full max-w-full select-none object-contain"
-                style={{ maxHeight: frameMaxHeight, maxWidth: frameMaxWidth }}
+                className="block select-none"
+                style={
+                  pageReady
+                    ? { width: pageSurfaceSize.width, height: pageSurfaceSize.height }
+                    : { maxHeight: frameMaxHeight, maxWidth: frameMaxWidth, width: 'auto', height: 'auto' }
+                }
                 draggable={false}
                 onLoad={(event) => reportSurfaceSize(event.currentTarget)}
               />
@@ -1087,6 +1088,7 @@ type DocumentMobileLayoutProps = {
   onZoomOut: () => void;
   onPageChange: (pageNumber: number) => void;
   onPageSurfaceSizeChange: (size: { width: number; height: number }) => void;
+  pageSurfaceSize: { width: number; height: number };
   scoringContext?: DocumentScoringContext;
   visibleEvidence: DynamicDocumentInsight[];
   onActionClick?: (actionId: string) => void;
@@ -1121,6 +1123,7 @@ function DocumentMobileLayout({
   onZoomOut,
   onPageChange,
   onPageSurfaceSizeChange,
+  pageSurfaceSize,
   scoringContext,
   visibleEvidence,
   onActionClick,
@@ -1183,6 +1186,7 @@ function DocumentMobileLayout({
                 onZoomOut={onZoomOut}
                 onPageChange={onPageChange}
                 onPageSurfaceSizeChange={onPageSurfaceSizeChange}
+                pageSurfaceSize={pageSurfaceSize}
                 visibleEvidence={visibleEvidence}
               />
           </section>

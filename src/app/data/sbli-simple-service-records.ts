@@ -4,6 +4,7 @@ import type {
   DatasetTaskRecord,
   DocumentEvidenceRecord,
 } from './multi-case-dataset';
+import { getTaskCrewStepSeed } from './taskCrewReasoningSeeds';
 
 const ADDR_CLIENT_ID = 'CLI-SBLI-006';
 const ADDR_CLIENT_NAME = 'Nora Whitfield';
@@ -17,6 +18,8 @@ const BENE_POLICY_ID = 'SBLI-TL-2020-008905';
 const BENE_POLICY_LABEL = 'SBLI Term Life 20';
 const BENE_PRODUCT = 'SBLI Term Life 20';
 const BENE_NEW_NAME = 'Priya Chen';
+
+const addrChangeCrewSteps = getTaskCrewStepSeed('task_ps_addr_001') ?? [];
 
 /** Policy-service requests with no claim case — simple address / beneficiary changes. */
 export const SBLI_SIMPLE_REQUEST_RECORDS: DatasetRequestRecord[] = [
@@ -210,15 +213,15 @@ export const SBLI_SIMPLE_TASK_RECORDS: DatasetTaskRecord[] = [
     kind: 'task',
     taskId: 'task_ps_addr_001',
     label: 'Review address change request',
-    status: 'In progress',
-    priority: 'Normal',
+    status: 'In Queue',
+    priority: 'High',
     assignee: 'Victor Ramon',
     assigneeKind: 'user',
     caseType: 'Service',
     caseSubtype: 'address_change',
     hasAI: true,
     aiGenerated: true,
-    aiSummary: `Update mailing address for ${ADDR_CLIENT_NAME} on policy ${ADDR_POLICY_ID}. Supporting documents substantiate the new Cambridge address; confirm Suite vs Apt unit formatting before updating policy admin.`,
+    aiSummary: `Update mailing address for ${ADDR_CLIENT_NAME} on policy ${ADDR_POLICY_ID}. National Address Registry verified the new Cambridge address; confirm Apt vs Suite formatting before updating policy admin.`,
     summary: {
       contextLabel: 'Suggested next steps',
       title: 'Address change',
@@ -230,10 +233,54 @@ export const SBLI_SIMPLE_TASK_RECORDS: DatasetTaskRecord[] = [
       ],
     },
     aiNarrative: {
-      text: 'Address change package is largely complete. Recommend approving after clarifying Suite 2 vs Apt 2 on the lease.',
+      text: 'Verified mailing address against the National Address Registry. Registry canonical format matches except for unit label — confirm Apt vs Suite before updating policy admin.',
       confidence: 88,
       generatedAt: 'May 14, 2026',
       generatedBy: 'AI Agent',
+    },
+    review: {
+      verdict:
+        'Verified the mailing address change against the National Address Registry. Registry canonical format matches the client request except for unit label (Apt vs Suite).',
+      confidence: 88,
+      crewSteps: addrChangeCrewSteps,
+      addressDecision: {
+        effectiveDate: 'May 14, 2026',
+        clientRequestedAddress: '9 Willow Court, Suite 2, Cambridge MA 02139',
+        registryName: 'National Address Registry',
+        registryNote:
+          'Registry returned one near-match at the same street address. Unit label differs: form shows Suite 2; registry canonical format is Apt 2.',
+        options: [
+          {
+            id: 'registry-match',
+            label: '9 Willow Court, Apt 2, Cambridge MA 02139',
+            source: 'National Address Registry',
+            recommended: true,
+            diffNote: 'Recommended · registry canonical format (Apt vs Suite on form)',
+          },
+          {
+            id: 'client-request',
+            label: '9 Willow Court, Suite 2, Cambridge MA 02139',
+            source: 'Client request',
+            diffNote: 'As submitted on signed change form',
+          },
+        ],
+        defaultOptionId: 'registry-match',
+      },
+      addressPolicyScope: {
+        effectiveDate: 'May 14, 2026',
+        duration: 'permanent',
+        temporaryEndDate: 'May 31, 2026',
+        temporaryNote: 'Return to permanent address on file after forwarding period',
+        defaultSelectedPolicyIds: [ADDR_POLICY_ID],
+        policies: [
+          {
+            id: ADDR_POLICY_ID,
+            label: `${ADDR_POLICY_ID} · ${ADDR_PRODUCT}`,
+            detail: 'Owner · In force',
+            defaultSelected: true,
+          },
+        ],
+      },
     },
     evidenceDocuments: [
       {
@@ -245,37 +292,7 @@ export const SBLI_SIMPLE_TASK_RECORDS: DatasetTaskRecord[] = [
         followUps: 0,
       },
     ],
-    contextCards: [
-      {
-        type: 'policy_card',
-        contextLabel: 'Contextual content',
-        title: 'Previous addresses',
-        listItems: [
-          {
-            title: '9 Willow Court, Suite 2, Cambridge MA 02139',
-            detail: 'Requested · effective May 14, 2026',
-          },
-          {
-            title: '42 Brookline Ave, Boston MA 02215',
-            detail: 'On file · Jun 2022 – present',
-          },
-          {
-            title: '220 Massachusetts Ave, Boston MA 02115',
-            detail: 'Prior residence · 2018 – 2022',
-          },
-        ],
-      },
-      {
-        type: 'policy_card',
-        contextLabel: 'Key information to consider',
-        kv: [
-          { label: 'Policy', value: `${ADDR_POLICY_ID} · ${ADDR_PRODUCT}` },
-          { label: 'Unit formatting', value: 'Form lists Suite 2; lease agreement shows Apt 2' },
-          { label: 'Supporting documents', value: 'Signed change form and May 2026 bank statement received' },
-          { label: 'Government ID', value: 'Not required for in-state mailing address change' },
-        ],
-      },
-    ],
+    contextCards: [],
     actions: [
       { type: 'complete', label: 'Complete', isPrimary: true },
       { type: 'request_info', label: 'Request info' },
@@ -293,9 +310,9 @@ export const SBLI_SIMPLE_TASK_RECORDS: DatasetTaskRecord[] = [
     queue: 'my_tasks',
     requiredAuthorityLevel: 1,
     panelContext: {
-      summaryStatus: 'In progress',
+      summaryStatus: 'In Queue',
       contextTitle: 'Simple tasks — Address change',
-      contextSummary: `Update mailing address for ${ADDR_CLIENT_NAME} on policy ${ADDR_POLICY_ID}. Supporting documents substantiate the new Cambridge address; confirm unit formatting before updating policy admin.`,
+      contextSummary: `Update mailing address for ${ADDR_CLIENT_NAME} on policy ${ADDR_POLICY_ID}. National Address Registry verified the Cambridge address; confirm unit formatting before updating policy admin.`,
       suggestions: [
         'Confirm Suite vs Apt 2 variance between form and lease agreement',
         'Update policy admin mailing address after verification',

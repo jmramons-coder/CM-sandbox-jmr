@@ -79,6 +79,15 @@ export const COLORS = {
       border: '#e5d5f8',
     },
   },
+
+  /** Amplify action toast bars (semantic feedback). */
+  toast: {
+    neutral: { bg: '#2d3748', text: '#ffffff' },
+    success: { bg: '#00a651', text: '#ffffff' },
+    warning: { bg: '#f5a200', text: '#1b1c1e' },
+    alert: { bg: '#cd2c23', text: '#ffffff' },
+    discovery: { bg: '#602fa0', text: '#ffffff' },
+  },
 } as const;
 
 /**

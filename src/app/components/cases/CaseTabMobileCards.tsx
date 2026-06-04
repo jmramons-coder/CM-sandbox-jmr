@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { Database, ExternalLink, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { MODULE_TABLE_ROW_KEBAB_ENABLED } from '../../constants/moduleTableRowActions';
-import type { CaseDocument, CaseRequirement } from '../../types';
+import type { CaseDocument, CaseRequirement, Task } from '../../types';
+import { resolveTaskTableAiDigest } from '../../utils/taskReviewProjection';
 import { AiInsightInline } from '../AiInsightCell';
 import { LozengeTag } from '../LozengeTag';
 import { PriorityChip } from '../ds';
@@ -73,18 +74,18 @@ export type CaseContextTaskRow = {
 
 export function CaseTaskMobileCard({
   row,
+  task,
   selected,
   onSelect,
 }: {
   row: CaseContextTaskRow;
+  task: Task;
   selected: boolean;
   onSelect: () => void;
 }) {
-  const resolvedTask = row.task;
   const showAiSourceBadge =
-    row.aiGenerated ||
-    isTaskAiSourced(resolvedTask ?? { aiGenerated: row.aiGenerated, origin: resolvedTask?.origin });
-  const summary = resolvedTask?.aiSummary ?? resolvedTask?.description;
+    row.aiGenerated || isTaskAiSourced(task);
+  const digest = resolveTaskTableAiDigest(task);
 
   return (
     <ModuleMobileListCardShell selected={selected} onSelect={onSelect}>
@@ -98,9 +99,20 @@ export function CaseTaskMobileCard({
 
       <h3 className="mb-2 text-sm font-semibold leading-snug text-text-heading">{row.taskType}</h3>
 
-      {summary ? (
-        <div className="mb-3">
-          <AiInsightInline summary={summary} showSourceBadge={false} />
+      {digest.kind !== 'empty' && (digest.items.length > 0 || digest.recommendation) ? (
+        <div className="mb-3 min-w-0 space-y-1" title={digest.full}>
+          {digest.items.length > 0 ? (
+            <p className="line-clamp-1 text-[11px] leading-snug text-text-muted">
+              <span className="font-semibold uppercase tracking-[0.2px]">Done · </span>
+              {digest.display}
+            </p>
+          ) : null}
+          {digest.recommendation ? (
+            <p className={`line-clamp-2 text-[12px] leading-snug ${digest.kind === 'exception' ? 'text-[#8a5a00]' : 'text-text-primary'}`}>
+              <span className="font-semibold text-text-secondary">Approve · </span>
+              {digest.recommendation}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -133,7 +145,7 @@ export function CaseDocumentMobileCard({
   onSelect: () => void;
   onOpenRequirementTab: () => void;
 }) {
-  const summary = row.aiSummary || row.insight;
+  const summary = row.reqContext || row.aiSummary || row.insight;
 
   return (
     <div
@@ -155,20 +167,17 @@ export function CaseDocumentMobileCard({
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
           {documentHasAiInsight(row) ? <MiniAiSourceBadge /> : null}
           <LozengeTag label={row.category} type="Neutral" subtle size="compact" />
-          <DocumentValidatedIconTag status={row.status} />
         </div>
 
         <h3 className="mb-2 text-sm font-semibold leading-snug text-text-heading">{row.name}</h3>
 
         {summary ? (
-          <div className="mb-3">
-            <AiInsightInline summary={summary} showSourceBadge={false} />
-          </div>
+          <p className="mb-3 text-[13px] leading-relaxed text-text-secondary">{summary}</p>
         ) : null}
 
         <div className="mb-3 grid grid-cols-2 gap-x-3 gap-y-3">
-          <CaseTabCardMetaField label="Stage">
-            <span className="break-words">{row.stage || '—'}</span>
+          <CaseTabCardMetaField label="Insured">
+            <span className="break-words">{row.claimant || '—'}</span>
           </CaseTabCardMetaField>
           <CaseTabCardMetaField label="Uploaded">
             <span className="break-words">{row.uploaded || '—'}</span>
@@ -238,7 +247,7 @@ export function CaseRequirementMobileCard({
   externalCode: string;
 }) {
   const sourceText = requirementSourceLabel(row.source);
-  const showAi = isRequirementAiSourced(row.source) || Boolean(row.aiSummary);
+  const showAi = isRequirementAiSourced(row);
   const summary = row.aiSummary || row.notes;
 
   return (

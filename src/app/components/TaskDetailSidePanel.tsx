@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, type ComponentType, type MouseEvent, type ReactNode } from 'react';
-import { Plus, X, Clock, FileText, UserRound, ClipboardCheck, MessageSquare, Link2, Briefcase } from 'lucide-react';
-import { Link, type NavigateFunction } from 'react-router';
-import type { Task, TaskPanelAction } from '../types';
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { Plus, X, Clock, FileText, UserRound, ClipboardCheck, MessageSquare, Briefcase } from 'lucide-react';
+import { type NavigateFunction } from 'react-router';
+import type { Task, TaskPanelAction, AddressChangeDurationKind } from '../types';
 import type { DatasetRequirementRecord } from '../data/multi-case-dataset';
 import { AiCueSparkle } from './AiCueSparkle';
 import { AiCopilotDock, type ChatTurn } from './AiCopilotFooter';
@@ -9,16 +9,37 @@ import { useCopilot } from '../contexts/CopilotContext';
 import { DynamicDocumentSidePanel, type DynamicDocumentData } from './DynamicDocumentSidePanel';
 import { WorkspaceObjectSidePanel, type WorkspacePanelContext } from './WorkspaceObjectSidePanel';
 import { CollapsibleDetailSection } from './CollapsibleDetailSection';
+import { DEFAULT_DATASET_ID } from '../domain/objectRefs';
 import { getDocumentEvidence } from '../data/mock-document-evidence';
 import { filterDatasetBySettings, getSystemDataset } from '../data/objectRepository';
 import { updateDocumentStatus } from '../data/datasetMutations';
 import { useActiveUser } from '../contexts/ActiveUserContext';
 import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
 import { formatDocumentFileInfo } from '../data/documentMetadata';
-import { resolveObjectLocation } from '../domain/objectRefs';
+import { appToast } from '../utils/app-toast';
 import { ScoringMiniWidget } from './ScoringMiniWidget';
 import { isTaskAiSourced, SidePanelAiPriorityRow } from './ModuleCellHelpers';
-import { TaskSummaryBody } from './TaskSummaryBody';
+import { TaskReviewBody } from './TaskReviewBody';
+import { buildInitialSuggestedRequirementSelection } from './tasks/TaskSuggestedRequirementsSection';
+import { buildInitialAddressDecisionSelection, TaskAddressDecisionSection } from './tasks/TaskAddressDecisionSection';
+import {
+  buildInitialAddressPolicyScopeSelection,
+  TaskAddressPolicyScopeSection,
+} from './tasks/TaskAddressPolicyScopeSection';
+import { isNb66RecommendRequirementsTask } from '../data/nb66RequirementGatheringActions';
+import { TaskPanelLeanContext } from './TaskPanelLeanContext';
+import { TaskEvidencePreviewCard } from './TaskEvidencePreviewCard';
+import { SidePanelHeaderTag } from './SidePanelHeaderTag';
+import { LozengeTag } from './LozengeTag';
+import { getRequirementStatusLozengeType } from '../utils/status-display';
+import {
+  formatTaskStage,
+  inferTaskExecutionModeFromTask,
+  isSemiAutoTask,
+  isTaskStatusCompleted,
+  resolveTaskPanelActions,
+  resolveTaskReviewFromTask,
+} from '../utils/taskReviewProjection';
 import {
   documentIdFromPanelContext,
   documentPanelContextId,
@@ -28,7 +49,13 @@ import {
   requirementPanelContextId,
   taskPanelContextId,
 } from '../utils/workspacePanelContextUtils';
+import { resolveDocumentSidePanelWidth } from '../utils/sidepanel-width';
 import { resolveDocumentPreviewUrl } from '../utils/sbli-document-assets';
+import { listDatasetPlatformUsers } from '../data/datasetUsers';
+import {
+  resolveTaskAssigneeDisplayName,
+  resolveTaskClaimantDisplayName,
+} from '../utils/task-assignees';
 import {
   resolveTaskEvidenceButtonLabel,
   resolveTaskEvidenceDocumentIds,
@@ -55,17 +82,26 @@ export type TaskDetailSidePanelProps = {
   onManagerRelease?: (task: Task, e?: MouseEvent) => void;
   currentUserIsManager?: boolean;
   onAcceptMeeting?: (task: Task) => void;
-  onCompleteTask?: (task: Task) => void;
+  onCompleteTask?: (task: Task, options?: {
+    requirementIds?: string[];
+    addressOptionId?: string;
+    addressPolicyIds?: string[];
+    addressDuration?: AddressChangeDurationKind;
+  }) => void;
   onTaskAction?: (task: Task, actionType: string) => void;
   panelContexts?: WorkspacePanelContext[];
   activePanelContextId?: string;
   onPanelNavigationChange?: (payload: TaskPanelNavigationPayload) => void;
+  onOpenCaseScoring?: () => void;
 };
 export type TaskDetailEmbeddedViewProps = TaskDetailSidePanelProps;
 
 const FALLBACK_DOCUMENT_ID = 'DOC-1001';
 
-function actionButtonClass(action: TaskPanelAction) {
+function actionButtonClass(action: TaskPanelAction, amend = false) {
+  if (amend) {
+    return 'inline-flex w-full items-center justify-center rounded-full border border-brand-red px-4 py-2 text-sm font-semibold leading-none text-brand-red transition-colors hover:bg-[#fde5e4]';
+  }
   if (action.isPrimary || action.type === 'complete') {
     return 'inline-flex w-full items-center justify-center rounded-full bg-brand-navy px-4 py-2.5 text-sm font-semibold leading-none text-white transition-colors hover:bg-brand-blue-hover';
   }
@@ -136,6 +172,7 @@ function EmpowerTaskDetailContent({
   panelContexts,
   activePanelContextId,
   onPanelNavigationChange,
+  onOpenCaseScoring,
 }: TaskDetailSidePanelProps) {
   const isPanelNavControlled = Boolean(onPanelNavigationChange);
   const [internalActiveContextId, setInternalActiveContextId] = useState(() => taskPanelContextId(task.id));
@@ -153,6 +190,7 @@ function EmpowerTaskDetailContent({
       name: profile.name,
     });
     updateDataSource({ activeDatasetId: result.datasetId });
+    appToast.success('Document marked as reviewed');
   };
   const evidenceDocumentIds = useMemo(
     () => resolveTaskEvidenceDocumentIds(task, activeDataset),
@@ -187,35 +225,79 @@ function EmpowerTaskDetailContent({
     task.taskType.includes('Review proposed appointment');
   const isTeamTaskAvailable = isOnTeamTasks && !task.pickedUpBy;
   const isTeamTaskLocked = isOnTeamTasks && !!task.pickedUpBy;
-  const isCompletedTask = task.status === 'Completed' || task.status === 'Complete' || task.status === 'Done';
+  const isCompletedTask = isTaskStatusCompleted(task.status);
+  const executionMode = inferTaskExecutionModeFromTask(task);
+  const taskReview = resolveTaskReviewFromTask(task);
+  const suggestedProposals = taskReview.suggestedRequirements;
+  const hasSuggestedRequirements = Boolean(suggestedProposals?.length);
+  const addressDecision = taskReview.addressDecision;
+  const hasAddressDecision = Boolean(addressDecision?.options.length);
+  const addressPolicyScope = taskReview.addressPolicyScope;
+  const hasAddressPolicyScope = Boolean(addressPolicyScope?.policies.length);
+  const hideAddressChangeDetailsSections =
+    (dataSource.activeDatasetId === DEFAULT_DATASET_ID
+      || dataSource.activeDatasetId.startsWith(`${DEFAULT_DATASET_ID}-workspace-copy-`))
+    && (hasAddressPolicyScope || hasAddressDecision);
+  const nb66GatheringApprove = isNb66RecommendRequirementsTask(task.taskId ?? task.id);
+  const [selectedRequirementIds, setSelectedRequirementIds] = useState<Set<string>>(() =>
+    buildInitialSuggestedRequirementSelection(suggestedProposals ?? []),
+  );
+  const [selectedAddressOptionId, setSelectedAddressOptionId] = useState(() =>
+    addressDecision ? buildInitialAddressDecisionSelection(addressDecision) : '',
+  );
+  const [selectedAddressPolicyIds, setSelectedAddressPolicyIds] = useState<Set<string>>(() =>
+    addressPolicyScope ? buildInitialAddressPolicyScopeSelection(addressPolicyScope) : new Set(),
+  );
+  const [addressDuration, setAddressDuration] = useState<AddressChangeDurationKind>(
+    () => addressPolicyScope?.duration ?? 'permanent',
+  );
+  const suggestionSelectionKey =
+    suggestedProposals?.map((row) => row.id).join('|') ?? '';
+  const addressSelectionKey =
+    addressDecision?.options.map((row) => row.id).join('|') ?? '';
+  const addressPolicySelectionKey =
+    addressPolicyScope?.policies.map((row) => row.id).join('|') ?? '';
+  useEffect(() => {
+    setSelectedRequirementIds(buildInitialSuggestedRequirementSelection(suggestedProposals ?? []));
+  }, [task.id, suggestionSelectionKey]);
+  useEffect(() => {
+    if (!addressDecision) {
+      setSelectedAddressOptionId('');
+      return;
+    }
+    setSelectedAddressOptionId(buildInitialAddressDecisionSelection(addressDecision));
+  }, [task.id, addressSelectionKey, addressDecision]);
+  useEffect(() => {
+    if (!addressPolicyScope) {
+      setSelectedAddressPolicyIds(new Set());
+      setAddressDuration('permanent');
+      return;
+    }
+    setSelectedAddressPolicyIds(buildInitialAddressPolicyScopeSelection(addressPolicyScope));
+    setAddressDuration(addressPolicyScope.duration);
+  }, [task.id, addressPolicySelectionKey, addressPolicyScope]);
+  const semiAuto = isSemiAutoTask(task);
   const evidenceActionLabel = resolveTaskEvidenceButtonLabel(task, taskDocumentData);
+  const panelActions = resolveTaskPanelActions(task, {
+    isCompleted: isCompletedTask,
+    hasEvidence: evidenceDocumentIds.length > 0,
+  });
 
   const caseId = task.caseId || 'N/A';
-  const claimantName = task.claimantName || (dataSource.legacyMockOverlayEnabled ? 'Billy Bud' : 'N/A');
   const taskCaseRecord = activeDataset.cases.find((item) => item.id === caseId);
-  const linkedPolicyIds = new Set(taskCaseRecord?.linkedObjects.filter((ref) => ref.kind === 'policy').map((ref) => ref.id) ?? []);
-  const derivedPolicyRole = taskCaseRecord?.primaryParty.kind === 'client'
-    ? activeDataset.policies
-      .filter((policy) => linkedPolicyIds.has(policy.id))
-      .flatMap((policy) => policy.participants)
-      .filter((participant) => participant.clientId === taskCaseRecord.primaryParty.id)
-      .map((participant) => participant.role)
-      .find((role) => role === 'insured' || role === 'beneficiary')
-    : undefined;
-  const claimantPolicyRole = task.claimantPolicyRole ?? taskCaseRecord?.primaryParty.policyRole ?? derivedPolicyRole?.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-  const claimantLabel = claimantPolicyRole ? `${claimantName} (${claimantPolicyRole})` : claimantName;
+  const userRoster = useMemo(
+    () => listDatasetPlatformUsers(activeDataset).map((user) => ({ id: user.id, name: user.name })),
+    [activeDataset],
+  );
+  const assigneeLabel = resolveTaskAssigneeDisplayName(task, {
+    currentUserName: profile.name,
+    roster: userRoster,
+  });
+  const claimantName = resolveTaskClaimantDisplayName(task, taskCaseRecord, activeDataset.clients);
+  const caseTagLabel = `${caseId} · ${claimantName} · ${formatTaskStage(task.stage)}`;
   const activeRequirementRecord = activeDataset.requirements.find((requirement) =>
     task.linkedObjects?.some((item) => item.kind === 'requirement' && item.id === requirement.id),
   );
-  const statusItems: Array<{ label: string; value: ReactNode; icon: ComponentType<{ className?: string }> }> = [
-    { label: 'Case stage', value: task.origin || 'Assistant', icon: AiCueSparkle },
-    { label: 'Assignee', value: task.assignedTo || task.pickedUpBy || 'Unassigned', icon: UserRound },
-    { label: 'Due window', value: task.slaRemaining || 'Today', icon: Clock },
-    { label: 'Case', value: <HeaderObjectLink label={caseId} onClick={() => navigate(`/cases/${caseId}`)} />, icon: Briefcase },
-    { label: 'Claimant', value: <HeaderObjectLink label={claimantLabel} onClick={() => navigate(`/cases/${caseId}`)} />, icon: UserRound },
-    { label: 'Linked', value: `${task.linkedObjects?.length ?? 0} objects`, icon: Link2 },
-  ];
-  const linkedObjects = task.linkedObjects ?? [];
   const evidencePreviews = useMemo(() => {
     const byId = new Map((task.evidenceDocuments ?? []).map((document) => [document.id, document]));
     evidenceDocumentIds.forEach((id) => {
@@ -254,8 +336,7 @@ function EmpowerTaskDetailContent({
     const documentData = getDocumentEvidence(documentId, activeDataset);
     if (!documentData) return;
     if (typeof window !== 'undefined') {
-      const targetWidth = Math.min(Math.round(window.innerWidth * 0.75), Math.max(860, panelWidth));
-      onPanelWidthChange?.(targetWidth);
+      onPanelWidthChange?.(resolveDocumentSidePanelWidth(panelWidth));
     }
     const resolvedDocumentId = documentId ?? documentData.documentId;
     const docContext: WorkspacePanelContext = {
@@ -292,21 +373,6 @@ function EmpowerTaskDetailContent({
     pushPanelNavigation({ contexts, activeContextId: reqContext.id });
   };
 
-  const handleLinkedObjectClick = (id: string) => {
-    const target = linkedObjects.find((item) => item.id === id || item.kind === id);
-    if (target?.kind === 'case' || target?.kind === 'client') {
-      navigate(target.href ?? (task.caseId ? `/cases/${task.caseId}` : '/cases'));
-      return;
-    }
-    if (target?.kind === 'document') {
-      openDocumentView();
-      return;
-    }
-    if (target?.kind === 'requirement') {
-      openRequirementView();
-    }
-  };
-
   const panelBody = activeView === 'document' ? (
     viewingDocumentData ? (
         <DynamicDocumentSidePanel
@@ -337,87 +403,78 @@ function EmpowerTaskDetailContent({
           requirement={activeRequirementRecord}
           evidenceDocument={taskDocumentData}
           onOpenDocument={openDocumentView}
+          navigate={navigate}
         />
       ) : (
       <>
       <div className="shrink-0 border-b border-border-default bg-white px-6 py-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <SidePanelAiPriorityRow
-              aiSourced={isTaskAiSourced(task)}
-              status={task.status}
-              priority={task.priority}
-              objectId={task.taskId ?? task.id}
-            />
-            <h2 className="text-[18px] font-semibold leading-tight text-text-heading">{task.taskType}</h2>
-          </div>
+        <div className="flex w-full items-start justify-between gap-4">
+          <SidePanelAiPriorityRow
+            aiSourced={isTaskAiSourced(task) || semiAuto}
+            status={task.status}
+            priority={task.priority}
+            className="!mb-0 min-w-0 flex-1"
+          />
+          <span className="shrink-0 pt-0.5 text-[12px] font-semibold leading-none text-text-muted/70">
+            {task.taskId ?? task.id}
+          </span>
         </div>
+        <h2 className="mt-2 text-[18px] font-semibold leading-tight text-text-heading">{task.taskType}</h2>
 
-        <dl className="mt-4 grid grid-cols-2 overflow-visible rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px] md:grid-cols-3">
-          {statusItems.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="group relative min-w-0 border-b border-border-soft px-3 py-2 sm:border-b-0 sm:border-r sm:last:border-r-0">
-              <dt className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                <Icon className="size-3.5 shrink-0" />
-                {label}
-              </dt>
-              <dd className="mt-0.5 truncate font-semibold text-text-primary">{value}</dd>
-              {label === 'Linked' ? (
-                <div className="absolute right-0 top-full z-30 hidden w-[240px] pt-2 text-left group-hover:block">
-                  <div className="rounded-lg border border-border-default bg-white p-2 shadow-[0_8px_24px_rgba(27,28,30,0.14)]">
-                    <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Linked objects</p>
-                    <div className="space-y-1">
-                      {linkedObjects.map((item) => {
-                        const href = item.href ?? resolveObjectLocation(item);
-                        const content = (
-                          <>
-                            <p className="text-[10px] text-text-muted">{item.kind}</p>
-                            <p className="truncate text-[12px] font-semibold text-text-primary">{item.label}</p>
-                          </>
-                        );
-                        return href ? (
-                          <Link
-                            key={`${item.kind}-${item.id}`}
-                            to={href}
-                            data-keep-sidepanel="link"
-                            className="block w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-muted hover:text-brand-blue"
-                          >
-                            {content}
-                          </Link>
-                        ) : (
-                          <button
-                            key={`${item.kind}-${item.id}`}
-                            type="button"
-                            data-keep-sidepanel="context"
-                            onClick={() => handleLinkedObjectClick(item.id)}
-                            className="w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-muted"
-                          >
-                            {content}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ))}
+        <dl className="mt-3 flex flex-wrap gap-2">
+          <SidePanelHeaderTag
+            icon={Briefcase}
+            label={caseTagLabel}
+            title={caseTagLabel}
+            onClick={() => navigate(`/cases/${caseId}`)}
+          />
+          <SidePanelHeaderTag icon={Clock} label={`Due ${task.slaRemaining || 'Today'}`} />
+          <SidePanelHeaderTag icon={UserRound} label={assigneeLabel} />
         </dl>
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden bg-surface-primary">
         <div className="app-scrollbar h-full overflow-y-auto px-5 py-4">
-          <TaskSummaryBody task={task} isInterview={isInterview} />
+          <TaskReviewBody
+            task={task}
+            executionMode={executionMode}
+            review={taskReview}
+            selectedRequirementIds={hasSuggestedRequirements ? selectedRequirementIds : undefined}
+            onSelectedRequirementIdsChange={
+              hasSuggestedRequirements ? setSelectedRequirementIds : undefined
+            }
+            hideAddressChangeDetailsSections={hideAddressChangeDetailsSections}
+          />
 
-          <ScoringMiniWidget scoring={taskCaseRecord?.underwritingScoring} onOpenScoring={() => navigate(`/cases/${caseId}#tab=scoring`)} />
+          <TaskPanelLeanContext task={task} />
+
+          {hasAddressPolicyScope && addressPolicyScope && !hideAddressChangeDetailsSections ? (
+            <TaskAddressPolicyScopeSection
+              className="mt-4"
+              scope={addressPolicyScope}
+              selectedPolicyIds={selectedAddressPolicyIds}
+              onSelectedPolicyIdsChange={setSelectedAddressPolicyIds}
+              duration={addressDuration}
+              onDurationChange={setAddressDuration}
+            />
+          ) : null}
+
+          {!semiAuto ? (
+            <ScoringMiniWidget
+              scoring={taskCaseRecord?.underwritingScoring}
+              onOpenScoring={
+                onOpenCaseScoring
+                ?? (caseId ? () => navigate(`/cases/${caseId}#tab=scoring`) : undefined)
+              }
+            />
+          ) : null}
 
           {evidencePreviews.length ? (
-          <CollapsibleDetailSection
-            title="Evidence preview"
-            subtitle="AI-parsed document anchors"
-            className="mt-3"
-            defaultOpen
-          >
-            <div className="space-y-2">
+          <section className="mt-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">
+              References · {evidencePreviews.length}
+            </p>
+            <div className="mt-2 space-y-2">
               {evidencePreviews.map((document) => {
                 const documentData = getDocumentEvidence(document.id, activeDataset);
                 const datasetDoc = activeDataset.documents.find((row) => row.id === document.id);
@@ -431,44 +488,30 @@ function EmpowerTaskDetailContent({
                     })
                   : '';
                 return (
-                  <button
+                  <TaskEvidencePreviewCard
                     key={document.id}
-                    type="button"
-                    onClick={() => openDocumentView(document.id)}
+                    title={document.name ?? documentData?.documentTitle ?? document.id}
+                    fileType={documentData?.fileType}
+                    fileSize={document.size ?? documentData?.fileSize}
+                    previewUrl={previewUrl}
+                    documentData={documentData}
+                    fallbackSummary={document.aiSummary}
+                    onOpen={() => openDocumentView(document.id)}
                     disabled={!documentData}
-                    className="flex w-full items-stretch rounded-lg border border-border-soft bg-white p-2 text-left transition-colors hover:border-brand-blue/40 disabled:cursor-default disabled:hover:border-border-soft"
-                  >
-                    <span className="relative flex w-22 shrink-0 self-stretch overflow-hidden rounded-[5px] border border-border-soft bg-[#f7f8fa] min-h-[68px]">
-                      {previewUrl ? (
-                        <img
-                          src={previewUrl}
-                          alt=""
-                          className="h-full w-full object-cover object-top"
-                        />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center">
-                          <FileText className="size-5 text-text-muted" aria-hidden />
-                        </span>
-                      )}
-                    </span>
-                    <span className="mx-2 w-px shrink-0 self-stretch bg-border-soft" aria-hidden />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[12px] font-semibold text-text-primary">{document.name ?? documentData?.documentTitle ?? document.id}</span>
-                      <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-text-muted">
-                        {formatDocumentFileInfo(documentData?.fileType ?? 'PDF', document.size ?? documentData?.fileSize)}
-                      </span>
-                      <span className="mt-1 block text-[11px] leading-relaxed text-text-secondary">
-                        {document.aiSummary ?? documentData?.summary.text ?? 'Document metadata is linked to this task.'}
-                      </span>
-                      <span className="mt-2 inline-flex rounded-full bg-[#fff4e6] px-2 py-0.5 text-[10px] font-semibold text-[#8a5a00]">
-                        {document.followUps ?? documentData?.evidence.length ?? 0} follow-ups
-                      </span>
-                    </span>
-                  </button>
+                  />
                 );
               })}
             </div>
-          </CollapsibleDetailSection>
+          </section>
+          ) : null}
+
+          {hasAddressDecision && addressDecision && !hideAddressChangeDetailsSections ? (
+            <TaskAddressDecisionSection
+              className="mt-4"
+              decision={addressDecision}
+              selectedOptionId={selectedAddressOptionId}
+              onSelectionChange={setSelectedAddressOptionId}
+            />
           ) : null}
 
         </div>
@@ -494,7 +537,7 @@ function EmpowerTaskDetailContent({
           </>
         ) : (
           <>
-            {evidenceDocumentIds.length && !isCompletedTask ? (
+            {evidenceDocumentIds.length && !isCompletedTask && !semiAuto ? (
               <button
                 type="button"
                 onClick={() => openDocumentView()}
@@ -504,12 +547,10 @@ function EmpowerTaskDetailContent({
                 {evidenceActionLabel}
               </button>
             ) : null}
-            {(task.actions?.length ? task.actions : [
-              { type: 'complete' as const, label: 'Complete', isPrimary: true },
-              { type: 'add_requirement' as const, label: 'Add requirement' },
-            ]).map((action) => (
+            {panelActions.map((action) => (
               <button
-                key={action.type}
+                key={`${action.type}-${action.label}`}
+                type="button"
                 onClick={() => {
                   if (
                     evidenceDocumentIds.length
@@ -520,12 +561,20 @@ function EmpowerTaskDetailContent({
                     return;
                   }
                   if (action.type === 'complete' || action.type === 'complete_return' || action.type === 'send_approver') {
-                    onCompleteTask?.(task);
+                    onCompleteTask?.(task, {
+                      requirementIds:
+                        nb66GatheringApprove && hasSuggestedRequirements
+                          ? [...selectedRequirementIds]
+                          : undefined,
+                      addressOptionId: hasAddressDecision ? selectedAddressOptionId : undefined,
+                      addressPolicyIds: hasAddressPolicyScope ? [...selectedAddressPolicyIds] : undefined,
+                      addressDuration: hasAddressPolicyScope ? addressDuration : undefined,
+                    });
                     return;
                   }
                   onTaskAction?.(task, action.type);
                 }}
-                className={actionButtonClass(action)}
+                className={actionButtonClass(action, action.type === 'request_info' && action.label === 'Amend')}
               >
                 {action.type === 'add_requirement' ? <Plus className="h-3.5 w-3.5 shrink-0" /> : null}
                 {evidenceDocumentIds.length
@@ -636,34 +685,28 @@ function EmpowerAssistantView({
   );
 }
 
-function HeaderObjectLink({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      data-keep-sidepanel="link"
-      onClick={onClick}
-      className="inline-block max-w-full truncate p-0 text-left align-bottom text-[12px] font-semibold leading-snug text-brand-blue underline underline-offset-2 hover:text-brand-blue-hover"
-    >
-      {label}
-    </button>
-  );
-}
-
 function EmpowerRequirementView({
   caseId,
   claimantName,
   requirement,
   evidenceDocument,
   onOpenDocument,
+  navigate,
 }: {
   caseId: string;
   claimantName: string;
   requirement?: DatasetRequirementRecord;
   evidenceDocument: DynamicDocumentData | null;
   onOpenDocument: () => void;
+  navigate: NavigateFunction;
 }) {
   const requirementName = requirement?.label ?? 'Requirement';
   const requirementStatus = requirement?.status ?? 'Unknown';
+  const requirementRef = requirement ? `R-${requirement.id}` : undefined;
+  const stageLabel = requirement?.stage ? formatTaskStage(requirement.stage) : undefined;
+  const caseTagLabel = stageLabel
+    ? `${caseId} · ${claimantName} · ${stageLabel}`
+    : `${caseId} · ${claimantName}`;
   const requirementSummary = requirement
     ? `${requirement.category} requirement from ${requirement.source ?? requirement.trigger ?? 'the active case context'}${requirement.dueDate ? `, due ${requirement.dueDate}` : ''}.`
     : 'No requirement record is linked to this task in the active dataset.';
@@ -671,11 +714,33 @@ function EmpowerRequirementView({
   return (
     <>
       <div className="shrink-0 border-b border-border-default bg-white px-6 py-4">
-        <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25px]">
-          <span className={requirementStatus === 'Fulfilled' ? 'text-brand-green' : 'text-brand-orange'}>{requirementStatus}</span>
+        <div className="flex w-full items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <LozengeTag
+              label={requirementStatus}
+              type={getRequirementStatusLozengeType(requirementStatus, 'panel')}
+              subtle
+            />
+            {requirement?.category ? <LozengeTag label={requirement.category} type="Neutral" subtle /> : null}
+          </div>
+          {requirementRef ? (
+            <span className="shrink-0 pt-0.5 text-[12px] font-semibold leading-none text-text-muted/70">
+              {requirementRef}
+            </span>
+          ) : null}
         </div>
-        <h2 className="text-[18px] font-semibold leading-tight text-text-heading">{requirementName}</h2>
-        <p className="mt-1 text-[12px] text-text-secondary">{claimantName} · {caseId}</p>
+        <h2 className="mt-2 text-[18px] font-semibold leading-tight text-text-heading">{requirementName}</h2>
+        <dl className="mt-3 flex flex-wrap gap-2">
+          <SidePanelHeaderTag
+            icon={Briefcase}
+            label={caseTagLabel}
+            title={caseTagLabel}
+            onClick={() => navigate(`/cases/${caseId}#tab=requirements`)}
+          />
+          {requirement?.dueDate ? (
+            <SidePanelHeaderTag icon={Clock} label={`Due ${requirement.dueDate}`} />
+          ) : null}
+        </dl>
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden bg-surface-primary">

@@ -1,6 +1,7 @@
 import { applyWorkflowOutcomes, resolveWorkflowProfile } from '../domain/objectWorkflow';
 import { isSimpleServiceTask } from './simpleServiceRules';
 import { datasetRegistry } from './datasetRegistry';
+import { getSystemDataset } from './objectRepository';
 import type { DatasetRequestRecord, DatasetTaskRecord, SystemDataset } from './multi-case-dataset';
 import {
   advanceRequestSystemSteps,
@@ -18,8 +19,97 @@ export type WorkflowActionResult = MutationResult<{
   request?: DatasetRequestRecord | null;
 }>;
 
+function isWorkspaceDatasetId(datasetId: string): boolean {
+  return datasetId.includes('-workspace-copy-');
+}
+
+/** Registry read for workflow: apply Equisoft read overlays on base demo; keep workspace copies as saved. */
 function getDataset(datasetId: string): SystemDataset {
-  return datasetRegistry.getDataset(datasetId);
+  const resolved = resolveWorkflowDatasetId(datasetId);
+  if (isWorkspaceDatasetId(resolved)) {
+    return datasetRegistry.getDataset(resolved);
+  }
+  return getSystemDataset(resolved);
+}
+
+/** Resolve a dataset task by canonical id or display taskId. */
+export function findDatasetTaskRecord(
+  dataset: SystemDataset,
+  taskRef: string,
+): DatasetTaskRecord | undefined {
+  const needle = taskRef.trim();
+  if (!needle) return undefined;
+  return dataset.tasks.find((row) => row.id === needle || row.taskId === needle);
+}
+
+/** Resolve a task on the active registry dataset (not UI-filtered). */
+export function resolveDatasetTaskForWorkflow(
+  datasetId: string,
+  taskRef: string,
+): DatasetTaskRecord | undefined {
+  const resolvedDatasetId = resolveWorkflowDatasetId(datasetId);
+  return findDatasetTaskRecord(getDataset(resolvedDatasetId), taskRef);
+}
+
+function isCompletedTaskStatus(status: string | undefined): boolean {
+  const key = (status ?? '').trim().toLowerCase();
+  return key === 'completed' || key === 'complete' || key === 'done';
+}
+
+export function isTaskCompleteActionSuccess(
+  result: WorkflowActionResult,
+  taskRef?: string,
+): boolean {
+  const task = result.record?.task;
+  if (!task || !isCompletedTaskStatus(task.status)) return false;
+  const needle = taskRef?.trim();
+  if (!needle) return true;
+  return task.id === needle || task.taskId === needle;
+}
+
+/** Use when settings may reference a deleted workspace copy id. */
+export function resolveWorkflowDatasetId(datasetId: string | undefined | null): string {
+  const requested = (datasetId ?? '').trim();
+  if (!requested) return datasetRegistry.getDataset(null).id;
+  const exists = datasetRegistry.listDatasets().some((row) => row.id === requested);
+  return exists ? requested : datasetRegistry.getDataset(null).id;
+}
+
+/** Find a task on the active dataset, then fall back to the built-in demo when stale workspace copies omit seed rows. */
+function resolveWorkflowTaskLocation(
+  datasetId: string,
+  taskRef: string,
+): { row: DatasetTaskRecord; datasetId: string } | null {
+  const needle = taskRef.trim();
+  if (!needle) return null;
+
+  const tryDataset = (id: string) => {
+    const row = findDatasetTaskRecord(getDataset(id), needle);
+    return row ? { row, datasetId: id } : null;
+  };
+
+  const resolvedDatasetId = resolveWorkflowDatasetId(datasetId);
+  const primary = tryDataset(resolvedDatasetId);
+  if (primary) return primary;
+
+  const canonicalId = datasetRegistry.getDataset(null).id;
+  if (canonicalId !== resolvedDatasetId) {
+    const fallback = tryDataset(canonicalId);
+    if (fallback) return fallback;
+  }
+
+  return null;
+}
+
+export function runTaskWorkflowAction(
+  datasetId: string,
+  taskRef: string,
+  actionType: string,
+  actor: WorkflowActorContext,
+): WorkflowActionResult | null {
+  const located = resolveWorkflowTaskLocation(datasetId, taskRef);
+  if (!located) return null;
+  return executeTaskAction(located.datasetId, located.row.id, actionType, actor);
 }
 
 function linkedRequestIdFromTask(task: DatasetTaskRecord): string | undefined {
@@ -33,7 +123,11 @@ function cascadeSimpleServiceCompletion(
   task: DatasetTaskRecord,
   actor: WorkflowActorContext,
 ): string {
-  let activeId = updateTaskStatus(datasetId, task.id, 'Completed').datasetId;
+  const completed = updateTaskStatus(datasetId, task.id, 'Completed');
+  if (!completed.record || !isCompletedTaskStatus(completed.record.status)) {
+    throw new Error(`Failed to complete task ${task.id}`);
+  }
+  let activeId = completed.datasetId;
   const requestId = linkedRequestIdFromTask(task);
 
   if (!requestId) return activeId;
@@ -185,16 +279,24 @@ export function executeTaskAction(
   actionType: string,
   actor: WorkflowActorContext,
 ): WorkflowActionResult {
-  const task = getDataset(datasetId).tasks.find((row) => row.id === taskId);
+  const sourceDataset = getDataset(datasetId);
+  const task = findDatasetTaskRecord(sourceDataset, taskId);
   if (!task) {
-    const dataset = getDataset(datasetId);
-    return { datasetId, dataset, record: { task: null, request: null } };
+    return { datasetId, dataset: sourceDataset, record: { task: null, request: null } };
   }
+
+  const canonicalTaskId = task.id;
 
   if (actionType === 'complete' || actionType === 'complete_return' || actionType === 'send_approver') {
     const finalDatasetId = isSimpleServiceTask(task)
       ? cascadeSimpleServiceCompletion(datasetId, task, actor)
-      : updateTaskStatus(datasetId, taskId, 'Completed').datasetId;
+      : (() => {
+          const statusResult = updateTaskStatus(datasetId, canonicalTaskId, 'Completed');
+          if (!statusResult.record || !isCompletedTaskStatus(statusResult.record.status)) {
+            throw new Error(`Failed to complete task ${canonicalTaskId}`);
+          }
+          return statusResult.datasetId;
+        })();
 
     const dataset = getDataset(finalDatasetId);
     const requestId = linkedRequestIdFromTask(task);
@@ -202,7 +304,7 @@ export function executeTaskAction(
       datasetId: finalDatasetId,
       dataset,
       record: {
-        task: dataset.tasks.find((row) => row.id === taskId) ?? null,
+        task: findDatasetTaskRecord(dataset, canonicalTaskId) ?? null,
         request: requestId ? dataset.requests.find((row) => row.id === requestId) ?? null : null,
       },
     };
@@ -210,7 +312,7 @@ export function executeTaskAction(
 
   if (actionType === 'request_info') {
     const requestId = linkedRequestIdFromTask(task);
-    let activeId = updateTaskFields(datasetId, taskId, { status: 'In progress' }).datasetId;
+    let activeId = updateTaskFields(datasetId, canonicalTaskId, { status: 'In progress' }).datasetId;
     if (requestId) {
       activeId = updateRequestStatus(activeId, requestId, 'Pending info').datasetId;
       activeId = advanceRequestSystemSteps(activeId, requestId, {
@@ -229,13 +331,13 @@ export function executeTaskAction(
       datasetId: activeId,
       dataset,
       record: {
-        task: dataset.tasks.find((row) => row.id === taskId) ?? null,
+        task: findDatasetTaskRecord(dataset, canonicalTaskId) ?? null,
         request: requestId ? dataset.requests.find((row) => row.id === requestId) ?? null : null,
       },
     };
   }
 
-  return executeTaskAction(datasetId, taskId, 'complete', actor);
+  return executeTaskAction(datasetId, canonicalTaskId, 'complete', actor);
 }
 
 export function executeRequestAction(

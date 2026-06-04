@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
-import { Plus, X, Clock, ChevronDown, Kanban, List, MoreVertical, Users, Lock, Check, ArrowLeftRight, ClipboardList } from 'lucide-react';
+import { Plus, X, Clock, ChevronDown, Kanban, List, MoreVertical, Users, Lock, ArrowLeftRight, ClipboardList } from 'lucide-react';
 import {
   MODULE_TABLE_ROW_KEBAB_ENABLED,
-  moduleTableStatusStickyRightPx,
 } from '../constants/moduleTableRowActions';
 import { useLocation, useNavigate } from 'react-router';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
-import { AiInsightInline, FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
+import { FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
 import { TaskKanbanBoard } from './tasks/TaskKanbanBoard';
 import { PriorityChip, SearchBar } from './ds';
 import { TaskDetailEmbeddedView, type TaskPanelNavigationPayload } from './TaskDetailSidePanel';
@@ -17,7 +16,17 @@ import { Checkbox } from './ui/checkbox';
 import { WorkspaceObjectSidePanel, type WorkspacePanelContext } from './WorkspaceObjectSidePanel';
 import { TEAMS, CURRENT_USER } from '../data/mock-tasks';
 import { filterDatasetBySettings, getSystemDataset, listTasks } from '../data/objectRepository';
-import { executeTaskAction, pickUpTask, releaseTaskToQueue } from '../data/workflowActions';
+import {
+  approveNb66RequirementGatheringPackage,
+  isNb66RecommendRequirementsTask,
+} from '../data/nb66RequirementGatheringActions';
+import {
+  isTaskCompleteActionSuccess,
+  pickUpTask,
+  releaseTaskToQueue,
+  runTaskWorkflowAction,
+} from '../data/workflowActions';
+import { isSemiAutoTask, resolveTaskTableAiDigest, TASK_TABLE_WORK_COLUMN_LABEL } from '../utils/taskReviewProjection';
 import { useActiveUser } from '../contexts/ActiveUserContext';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
 import { useViewportLayout } from '../hooks/useViewportLayout';
@@ -30,6 +39,7 @@ import {
 import { UI_CLASS } from '../constants/design-tokens';
 import { getStatusLozengeType, sortTasks } from '../utils';
 import { filterTasks } from '../utils/task-filters';
+import { appToast } from '../utils/app-toast';
 import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
 import type { Task, TaskViewMode, TaskTabType, SortableColumn, SortDirection } from '../types';
 import { getDefaultSidePanelWidth } from '../utils/sidepanel-width';
@@ -46,15 +56,17 @@ import {
   TABLE_LINK_TRUNCATE_CLASS,
   TABLE_SUBTEXT_CLASS,
   TABLE_TEXT_CLASS,
-  TaskAssigneeAvatarStack,
   TaskSourceTag,
   TaskTableFirstColumnCell,
-  TwoLineSummaryCell,
 } from './ModuleCellHelpers';
-import { getTaskAssigneeNames } from '../utils/task-assignees';
+import { resolveTaskAssigneeRow } from '../utils/task-assignees';
+import { TaskTableAiDigestCell } from './tasks/TaskTableAiDigestCell';
+import { TaskAssigneeIdentity } from './tasks/TaskAssigneeIdentity';
+import { TaskTableAssigneeCell } from './tasks/TaskTableAssigneeCell';
+import { TaskTableStatusCell } from './tasks/TaskTableStatusCell';
 
 /** Task + case share one sticky cell so the left pack scrolls as a unit (no per-column sticky gaps). */
-const TASK_TABLE_TASK_COL_WIDTH = 152;
+const TASK_TABLE_TASK_COL_WIDTH = Math.round(152 * 1.3);
 const TASK_TABLE_CASE_COL_WIDTH = 132;
 const TASK_TABLE_LEFT_PACK_WIDTH = TASK_TABLE_TASK_COL_WIDTH + TASK_TABLE_CASE_COL_WIDTH;
 const TASK_TABLE_LEFT_PACK_GRID_STYLE = {
@@ -67,7 +79,12 @@ const TASK_TABLE_STICKY_COL = {
   packWidth: TASK_TABLE_LEFT_PACK_WIDTH,
 } as const;
 
-const TASK_TABLE_STATUS_WIDTH = 124;
+const TASK_TABLE_ASSIGNEE_WIDTH = 112;
+const TASK_TABLE_STATUS_WIDTH = 120;
+/** Status column sticks to the right edge of the scroll area (before optional actions column). */
+function taskModuleStatusStickyRightPx(hasTrailingActionsCol: boolean): number {
+  return hasTrailingActionsCol ? TASK_TABLE_ACTIONS_WIDTH : 0;
+}
 const TASK_TABLE_ACTIONS_WIDTH = 48;
 const TASK_TABLE_SCROLL_COL_MIN = 112;
 const TASK_TABLE_MIN_WIDTH =
@@ -75,6 +92,7 @@ const TASK_TABLE_MIN_WIDTH =
   TASK_TABLE_STICKY_COL.packWidth +
   320 +
   TASK_TABLE_SCROLL_COL_MIN * 3 +
+  TASK_TABLE_ASSIGNEE_WIDTH +
   TASK_TABLE_STATUS_WIDTH +
   TASK_TABLE_ACTIONS_WIDTH;
 const TASK_TABLE_MIN_WIDTH_TEAM = TASK_TABLE_MIN_WIDTH + TASK_TABLE_SCROLL_COL_MIN;
@@ -105,7 +123,6 @@ function TaskMobileListCard({
 }) {
   const partyName = task.primaryPartyName ?? task.claimantName;
   const partyLabel = task.primaryPartyLabel ?? 'Claimant';
-  const assigneeNames = getTaskAssigneeNames(task, { queueTeamId });
   const showAiSourceBadge =
     isTaskAiSourced(task) || task.hasAI || Boolean(task.aiSummary || task.description);
 
@@ -117,16 +134,37 @@ function TaskMobileListCard({
           <PriorityChip priority={task.priority} />
           <LozengeTag label={task.status} type={getStatusLozengeType(task.status, 'task')} subtle />
         </div>
-        <TaskAssigneeAvatarStack names={assigneeNames} />
+        {(() => {
+          const assignee = resolveTaskAssigneeRow(task, { queueTeamId });
+          return assignee ? <TaskAssigneeIdentity row={assignee} className="max-w-[112px]" /> : null;
+        })()}
       </div>
 
       <h3 className="mb-2 text-sm font-semibold leading-snug text-text-heading">{task.taskType}</h3>
 
-      {task.aiSummary || task.description ? (
-        <div className="mb-3">
-          <AiInsightInline summary={task.aiSummary ?? task.description} showSourceBadge={false} />
-        </div>
-      ) : null}
+      {(() => {
+        const digest = resolveTaskTableAiDigest(task);
+        if (digest.kind === 'empty') return null;
+        const hasChecks = digest.items.length > 0;
+        const hasApproval = Boolean(digest.recommendation?.trim());
+        if (!hasChecks && !hasApproval) return null;
+        return (
+          <div className="mb-3 min-w-0 space-y-1" title={digest.full}>
+            {hasChecks ? (
+              <p className="line-clamp-1 text-[11px] leading-snug text-text-muted">
+                <span className="text-text-primary">Done · </span>
+                {digest.display}
+              </p>
+            ) : null}
+            {hasApproval ? (
+              <p className="line-clamp-2 text-[12px] font-normal leading-snug text-text-primary">
+                <span className="text-text-primary">Approve · </span>
+                {digest.recommendation}
+              </p>
+            ) : null}
+          </div>
+        );
+      })()}
 
       <div className="mb-3 grid grid-cols-2 gap-x-3 gap-y-3">
         <TaskCardMetaField label="Case">
@@ -163,7 +201,7 @@ export function TaskModule() {
   const navigate = useNavigate();
   const location = useLocation();
   const dataSource = useDataSourceSettings();
-  const { updateDataSource } = usePlatformSettings();
+  const { settings: platformSettings, updateDataSource } = usePlatformSettings();
   const { profile } = useActiveUser();
   const workflowActor = useMemo(() => ({ name: profile.name }), [profile.name]);
   const repositoryTasks = useMemo(
@@ -199,7 +237,6 @@ export function TaskModule() {
   const [myTasks, setMyTasks] = useState<Task[]>(repositoryMyTasks);
   const [teamTasks, setTeamTasks] = useState<Task[]>(repositoryTeamTasks);
   const [selectedTeamId, setSelectedTeamId] = useState(TEAMS[0].id);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [teamSelectorOpen, setTeamSelectorOpen] = useState(false);
   const teamSelectorRef = useRef<HTMLDivElement | null>(null);
@@ -252,9 +289,10 @@ export function TaskModule() {
   useEffect(() => {
     setMyTasks(repositoryMyTasks);
     setTeamTasks(repositoryTeamTasks);
-    setSelectedTask((current) =>
-      current && repositoryTasks.some((task) => task.id === current.id) ? current : null,
-    );
+    setSelectedTask((current) => {
+      if (!current) return null;
+      return repositoryTasks.find((task) => task.id === current.id) ?? null;
+    });
   }, [repositoryMyTasks, repositoryTasks, repositoryTeamTasks]);
 
   const isOnMyTasks = activeTab === 'my_tasks';
@@ -369,12 +407,6 @@ export function TaskModule() {
   }, [isResizing]);
 
   useEffect(() => {
-    if (!toastMessage) return;
-    const timer = setTimeout(() => setToastMessage(null), 3000);
-    return () => clearTimeout(timer);
-  }, [toastMessage]);
-
-  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (teamSelectorRef.current && !teamSelectorRef.current.contains(e.target as Node)) {
         setTeamSelectorOpen(false);
@@ -402,7 +434,7 @@ export function TaskModule() {
       (row) => row.id === task.id,
     );
     if (refreshed) openTaskPanel(refreshed);
-    setToastMessage(`Task ${task.id} picked up — now in My Tasks`);
+    appToast.success(`Task ${task.id} picked up — now in My Tasks`);
   }, [dataSource, openTaskPanel, updateDataSource, workflowActor]);
 
   const handleRelease = useCallback((task: Task, e?: React.MouseEvent) => {
@@ -410,7 +442,7 @@ export function TaskModule() {
     const result = releaseTaskToQueue(dataSource.activeDatasetId, task.id, workflowActor, 'team_tasks');
     updateDataSource({ activeDatasetId: result.datasetId });
     openTaskPanel(null);
-    setToastMessage(`Task ${task.id} released to team queue`);
+    appToast.success(`Task ${task.id} released to team queue`);
   }, [dataSource, openTaskPanel, updateDataSource, workflowActor]);
 
   const handleManagerRelease = useCallback((task: Task, e?: React.MouseEvent) => {
@@ -418,31 +450,133 @@ export function TaskModule() {
     const result = releaseTaskToQueue(dataSource.activeDatasetId, task.id, workflowActor, 'team_tasks');
     updateDataSource({ activeDatasetId: result.datasetId });
     openTaskPanel(null);
-    setToastMessage(`Task ${task.id} released back to queue`);
+    appToast.success(`Task ${task.id} released back to queue`);
   }, [dataSource, openTaskPanel, updateDataSource, workflowActor]);
 
-  const handleCompleteTask = useCallback((task: Task) => {
-    const result = executeTaskAction(dataSource.activeDatasetId, task.id, 'complete', workflowActor);
-    updateDataSource({ activeDatasetId: result.datasetId });
-    openTaskPanel(null);
-    setToastMessage(`Task ${task.id} completed`);
-  }, [dataSource.activeDatasetId, openTaskPanel, updateDataSource, workflowActor]);
+  const resolveRepositoryTask = useCallback(
+    (task: Task, datasetId = dataSource.activeDatasetId) =>
+      listTasks(filterDatasetBySettings(getSystemDataset(datasetId), dataSource)).find(
+        (row) => row.id === task.id || row.taskId === task.id,
+      ),
+    [dataSource],
+  );
+
+  const handleCompleteTask = useCallback(
+    (task: Task, options?: { requirementIds?: string[] }) => {
+      const taskRef = task.taskId ?? task.id;
+      if (isNb66RecommendRequirementsTask(taskRef)) {
+        const caseId = task.caseId;
+        if (!caseId) {
+          appToast.error('Could not resolve case for this task.');
+          return;
+        }
+        const packageResult = approveNb66RequirementGatheringPackage(
+          dataSource.activeDatasetId,
+          caseId,
+          taskRef,
+          options?.requirementIds ?? [],
+          workflowActor,
+          platformSettings.activeDemoConfigurationId,
+        );
+        if (!packageResult) {
+          appToast.error(`Could not approve ${task.taskId ?? task.id}. Try again.`);
+          return;
+        }
+        updateDataSource({ activeDatasetId: packageResult.datasetId });
+        const refreshed = resolveRepositoryTask(task, packageResult.datasetId);
+        if (refreshed) {
+          if (refreshed.queue === 'team_tasks') {
+            setTeamTasks((current) => [
+              refreshed,
+              ...current.filter((row) => row.id !== refreshed.id),
+            ]);
+          } else {
+            setMyTasks((current) => [
+              refreshed,
+              ...current.filter((row) => row.id !== refreshed.id),
+            ]);
+          }
+        }
+        openTaskPanel(null);
+        const added = packageResult.addedCount;
+        appToast.success(
+          added > 0
+            ? `Task approved — ${added} requirement${added === 1 ? '' : 's'} added to ${caseId}`
+            : `Task ${task.taskId ?? task.id} approved`,
+        );
+        return;
+      }
+      try {
+        const result = runTaskWorkflowAction(
+          dataSource.activeDatasetId,
+          taskRef,
+          'complete',
+          workflowActor,
+        );
+        if (!result || !isTaskCompleteActionSuccess(result, taskRef)) {
+          appToast.error(`Could not complete task ${task.taskId ?? task.id}. Try again.`);
+          return;
+        }
+        updateDataSource({ activeDatasetId: result.datasetId });
+        const refreshed = resolveRepositoryTask(task, result.datasetId);
+        if (refreshed) {
+          if (refreshed.queue === 'team_tasks') {
+            setTeamTasks((current) => [
+              refreshed,
+              ...current.filter((row) => row.id !== refreshed.id),
+            ]);
+          } else {
+            setMyTasks((current) => [
+              refreshed,
+              ...current.filter((row) => row.id !== refreshed.id),
+            ]);
+          }
+        }
+        openTaskPanel(null);
+        appToast.success(
+          isSemiAutoTask(task) ? `Task ${task.taskId ?? task.id} approved` : `Task ${task.taskId ?? task.id} completed`,
+        );
+      } catch {
+        appToast.alert(`Could not complete task ${task.taskId ?? task.id}. Try again.`);
+      }
+    },
+    [dataSource.activeDatasetId, openTaskPanel, resolveRepositoryTask, updateDataSource, workflowActor],
+  );
 
   const handleTaskAction = useCallback(
     (task: Task, actionType: string) => {
-      const result = executeTaskAction(dataSource.activeDatasetId, task.id, actionType, workflowActor);
-      updateDataSource({ activeDatasetId: result.datasetId });
-      if (actionType === 'complete' || actionType === 'complete_return' || actionType === 'send_approver') {
-        openTaskPanel(null);
-      } else {
-        const refreshed = listTasks(filterDatasetBySettings(getSystemDataset(result.datasetId), dataSource)).find(
-          (row) => row.id === task.id,
+      const taskRef = task.taskId ?? task.id;
+      try {
+        const result = runTaskWorkflowAction(
+          dataSource.activeDatasetId,
+          taskRef,
+          actionType,
+          workflowActor,
         );
+        if (!result?.record.task) {
+          appToast.error(`Could not update task ${task.taskId ?? task.id}. Try again.`);
+          return;
+        }
+        updateDataSource({ activeDatasetId: result.datasetId });
+        const refreshed = resolveRepositoryTask(task, result.datasetId);
+        if (actionType === 'complete' || actionType === 'complete_return' || actionType === 'send_approver') {
+          if (!isTaskCompleteActionSuccess(result, taskRef)) {
+            appToast.error(`Could not complete task ${task.taskId ?? task.id}. Try again.`);
+            return;
+          }
+          openTaskPanel(null);
+          appToast.success(
+            isSemiAutoTask(task) ? `Task ${task.taskId ?? task.id} approved` : `Task ${task.taskId ?? task.id} completed`,
+          );
+          return;
+        }
         if (refreshed) openTaskPanel(refreshed);
+        appToast.success(`Action recorded on ${task.taskId ?? task.id}`);
+      } catch {
+        appToast.alert(`Could not update task ${task.taskId ?? task.id}. Try again.`);
       }
-      setToastMessage(`Action recorded on ${task.id}`);
     },
-    [dataSource, openTaskPanel, updateDataSource, workflowActor],
+    [dataSource.activeDatasetId, openTaskPanel, resolveRepositoryTask, updateDataSource, workflowActor],
   );
 
   const isRestricted = (task: Task) => task.requiredAuthorityLevel > CURRENT_USER.authorityLevel;
@@ -621,9 +755,7 @@ export function TaskModule() {
                 const taskTableMinWidth =
                   (isOnTeamTasks ? TASK_TABLE_MIN_WIDTH_TEAM : TASK_TABLE_MIN_WIDTH) -
                   (showTaskRowActionsColumn ? 0 : TASK_TABLE_ACTIONS_WIDTH);
-                const taskStatusStickyRight = showTaskRowActionsColumn
-                  ? moduleTableStatusStickyRightPx(TASK_TABLE_ACTIONS_WIDTH)
-                  : undefined;
+                const taskStatusStickyRight = taskModuleStatusStickyRightPx(showTaskRowActionsColumn);
                 return (
               <>
               <div
@@ -642,6 +774,7 @@ export function TaskModule() {
                     <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} />
                     {isOnTeamTasks ? <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} /> : null}
                     <col style={{ width: TASK_TABLE_SCROLL_COL_MIN }} />
+                    <col style={{ width: TASK_TABLE_ASSIGNEE_WIDTH }} />
                     <col style={{ width: TASK_TABLE_STATUS_WIDTH }} />
                     {showTaskRowActionsColumn ? <col style={{ width: TASK_TABLE_ACTIONS_WIDTH }} /> : null}
                   </colgroup>
@@ -680,7 +813,11 @@ export function TaskModule() {
                       <th className={`sticky top-0 border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${MODULE_TABLE_SUMMARY_COL_CLASS}`}>
                         <button onClick={() => handleSort('taskType')} className="group flex items-center gap-1 hover:text-brand-blue">
                           <div className={thStyle} style={fontVar}>
-                            <SummaryTableColumnHeader className="leading-[20px] text-text-primary" style={fontVar} />
+                            <SummaryTableColumnHeader
+                              label={TASK_TABLE_WORK_COLUMN_LABEL}
+                              className="leading-[20px] text-text-primary"
+                              style={fontVar}
+                            />
                           </div>
                           <ReorderIcon isActive={sortColumn === 'taskType'} />
                         </button>
@@ -711,16 +848,25 @@ export function TaskModule() {
                         </button>
                       </th>
                       <th
-                        className={`relative border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle ${
-                          taskTableRightSticky ? `sticky top-0 z-[34] ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}` : ''
+                        className="sticky top-0 border-b border-border-default bg-surface-primary px-2 py-3 text-left align-middle"
+                        style={{ width: TASK_TABLE_ASSIGNEE_WIDTH, minWidth: TASK_TABLE_ASSIGNEE_WIDTH }}
+                      >
+                        <button onClick={() => handleSort('assignedTo')} className="group flex items-center gap-1 hover:text-brand-blue">
+                          <div className={thStyle} style={fontVar}><p className="leading-[20px]">Assignee</p></div>
+                          <ReorderIcon isActive={sortColumn === 'assignedTo'} />
+                        </button>
+                      </th>
+                      <th
+                        className={`relative sticky top-0 z-[34] border-b border-border-default bg-surface-primary py-3 pl-2 pr-4 text-left align-middle ${
+                          showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''
                         }`}
                         style={{
                           width: TASK_TABLE_STATUS_WIDTH,
                           minWidth: TASK_TABLE_STATUS_WIDTH,
-                          ...(taskTableRightSticky && taskStatusStickyRight != null ? { right: taskStatusStickyRight } : {}),
+                          right: taskStatusStickyRight,
                         }}
                       >
-                        {taskTableRightSticky && showRightStickyEdge ? (
+                        {showRightStickyEdge ? (
                           <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                         ) : null}
                         <button onClick={() => handleSort('status')} className="group flex items-center gap-1 hover:text-brand-blue">
@@ -832,11 +978,7 @@ export function TaskModule() {
                             </div>
                           </td>
                           <td className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${MODULE_TABLE_SUMMARY_COL_CLASS} ${cellSurface}`}>
-                            <TwoLineSummaryCell
-                              title={task.aiSummary ?? task.description ?? '—'}
-                              titleMaxLines={2}
-                              titleWeight="normal"
-                            />
+                            <TaskTableAiDigestCell task={task} />
                           </td>
                           <td className={`min-w-[112px] border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                             <PriorityChip priority={task.priority} />
@@ -857,22 +999,30 @@ export function TaskModule() {
                             <TaskSourceTag task={task} />
                           </td>
                           <td
-                            className={`relative border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${
-                              taskTableRightSticky
-                                ? `sticky z-[14] ${stickyRowSurface} ${showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''}`
-                                : cellSurface
+                            className={`border-b border-border-default px-2 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}
+                            style={{ width: TASK_TABLE_ASSIGNEE_WIDTH, minWidth: TASK_TABLE_ASSIGNEE_WIDTH }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <TaskTableAssigneeCell
+                              task={task}
+                              queueTeamId={isOnTeamTasks ? selectedTeamId : undefined}
+                            />
+                          </td>
+                          <td
+                            className={`relative sticky z-[14] border-b border-border-default py-3 pl-2 pr-4 ${TABLE_CELL_ALIGN_CLASS} ${stickyRowSurface} ${
+                              showRightStickyEdge ? 'shadow-[-2px_0_8px_-2px_rgba(0,0,0,0.08)]' : ''
                             }`}
                             style={{
                               width: TASK_TABLE_STATUS_WIDTH,
                               minWidth: TASK_TABLE_STATUS_WIDTH,
-                              ...(taskTableRightSticky && taskStatusStickyRight != null ? { right: taskStatusStickyRight } : {}),
+                              right: taskStatusStickyRight,
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {taskTableRightSticky && showRightStickyEdge ? (
+                            {showRightStickyEdge ? (
                               <span className="pointer-events-none absolute left-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                             ) : null}
-                            <LozengeTag label={task.status} type={getStatusLozengeType(task.status, 'task')} subtle />
+                            <TaskTableStatusCell task={task} />
                           </td>
                           {showTaskRowActionsColumn ? (
                           <td
@@ -950,21 +1100,6 @@ export function TaskModule() {
         )}
       </div>
 
-      {/* Success toast — bottom-right, high-contrast green */}
-      {toastMessage && (
-        <div
-          className="fixed bottom-6 right-6 z-[200] max-w-[min(440px,calc(100vw-3rem))] animate-[fadeInUp_0.35s_ease-out]"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="flex items-start gap-3 rounded-lg border-2 border-white/30 bg-[#00a651] px-5 py-4 shadow-[0_12px_40px_rgba(0,133,65,0.5),0_4px_12px_rgba(0,0,0,0.15)]">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/20">
-              <Check className="h-6 w-6 text-white" strokeWidth={2.5} aria-hidden />
-            </span>
-            <span className="min-w-0 pt-0.5 text-base font-semibold leading-snug text-white">{toastMessage}</span>
-          </div>
-        </div>
-      )}
       <CreateTaskModal
         open={createTaskOpen}
         onOpenChange={setCreateTaskOpen}
@@ -989,7 +1124,7 @@ export function TaskModule() {
             openTaskPanel(createdTask);
             navigate(`/tasks#task=${encodeURIComponent(taskId)}`, { replace: true });
           }
-          setToastMessage(`Task ${taskId} created`);
+          appToast.success(`Task ${taskId} created`);
         }}
       />
     </div>

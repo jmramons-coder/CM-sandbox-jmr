@@ -1,5 +1,8 @@
 import type { DynamicDocumentData } from '../components/DynamicDocumentSidePanel';
-import { resolveDocumentFindingHighlight } from '../utils/document-evidence-highlights';
+import {
+  resolveDocumentFindingHighlight,
+  resolveDocumentPreviewHighlightVariant,
+} from '../utils/document-evidence-highlights';
 import { resolveDocumentPreviewUrl } from '../utils/sbli-document-assets';
 import type { SystemDataset } from './multi-case-dataset';
 import { getDocumentFileType, getDocumentSourceLabel } from './documentMetadata';
@@ -88,6 +91,15 @@ function getDatasetDocumentEvidence(documentId: string, dataset?: SystemDataset)
   if (!evidence && !document) return null;
   const caseId = document?.linkedObjects?.find((ref) => ref.kind === 'case')?.id;
   const caseRecord = caseId ? dataset.cases.find((item) => item.id === caseId) : undefined;
+  const previewUrl = resolveDocumentPreviewUrl({
+    documentId,
+    filename: document?.filename,
+    fileUrl: document?.fileUrl,
+    fileAvailable: document?.fileAvailable,
+    pageImage: evidence?.pages[0]?.image,
+    legacyFallback: '/request-adress_change-dd2100ce-bebe-4031-ab3a-45dc96d1e07b.png',
+  });
+  const highlightVariant = resolveDocumentPreviewHighlightVariant(previewUrl);
   return {
     documentId,
     documentTitle: document?.label ?? evidence?.title ?? documentId,
@@ -97,7 +109,7 @@ function getDatasetDocumentEvidence(documentId: string, dataset?: SystemDataset)
     fileType: getDocumentFileType(document?.label ?? evidence?.title, document?.fileType),
     caseId: caseId ?? 'N/A',
     caseReference: caseId ?? 'N/A',
-    claimant: caseRecord?.primaryParty.label ?? 'Dataset',
+    claimant: document?.claimant ?? caseRecord?.primaryParty.label ?? 'Dataset',
     source: getDocumentSourceLabel(document?.source ?? 'dataset'),
     linkedRequirement: document?.linkedRequirement ?? 'Dataset evidence',
     linkedRequirementHref: caseId ? `/cases/${caseId}#tab=requirements` : '/cases',
@@ -144,12 +156,12 @@ function getDatasetDocumentEvidence(documentId: string, dataset?: SystemDataset)
       reasoning: finding.reasoning,
       impact: finding.impact,
       tone: finding.severity === 'High' ? 'danger' : 'warning',
-      highlight: resolveDocumentFindingHighlight(finding.id, index),
+      highlight: resolveDocumentFindingHighlight(finding.id, index, {
+        previewVariant: highlightVariant,
+      }),
     })) ?? [],
     scoringContext: document?.scoringContext,
-    actions: [
-      { id: 'mark-reviewed', label: 'Mark evidence reviewed', variant: 'primary' },
-    ],
+    actions: [],
   };
 }
 

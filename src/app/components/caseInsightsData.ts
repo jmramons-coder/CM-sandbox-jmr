@@ -1,6 +1,11 @@
 import type { CaseKind, ClaimSubType } from '../domain/objectRefs';
 import { insightStageNarratives } from '../domain/claimSubTypeContent';
 import { DEMO_CASE_IDS, resolveSbliCaseId } from '../data/demoCaseIds';
+import { getActiveDemoConfigurationId } from '../data/datasetResolutionContext';
+import {
+  applyNeutralCarrierToText,
+  usesSbliBrandedDemoData,
+} from '../data/sharedDemoDatasetNeutralize';
 import type { CasePhase, DecisionTabState } from '../types';
 
 /** Rich step content for the AI journey insight story */
@@ -145,6 +150,22 @@ const CASE_INSIGHT_BUNDLES: Record<string, InsightSection[]> = {
   [DEMO_CASE_IDS.nbSimpleUw]: NB98_SIMPLE_UW,
 };
 
+function neutralizeInsightSections(sections: InsightSection[]): InsightSection[] {
+  return sections.map((section) => ({
+    ...section,
+    label: applyNeutralCarrierToText(section.label),
+    headline: applyNeutralCarrierToText(section.headline),
+    body: applyNeutralCarrierToText(section.body),
+    continuation: section.continuation ? applyNeutralCarrierToText(section.continuation) : undefined,
+    actorsLine: section.actorsLine ? applyNeutralCarrierToText(section.actorsLine) : undefined,
+    aiSignals: section.aiSignals?.map((signal) => ({
+      ...signal,
+      label: applyNeutralCarrierToText(signal.label),
+      value: applyNeutralCarrierToText(signal.value),
+    })),
+  }));
+}
+
 function genericSections(
   stages: readonly string[],
   caseKind?: CaseKind,
@@ -173,7 +194,13 @@ export function getInsightBundle(
   options?: InsightBundleOptions,
 ): InsightBundle {
   const resolvedId = resolveSbliCaseId(caseId);
-  const curated = CASE_INSIGHT_BUNDLES[resolvedId];
+  const curatedRaw = CASE_INSIGHT_BUNDLES[resolvedId];
+  const curated =
+    curatedRaw && usesSbliBrandedDemoData(getActiveDemoConfigurationId())
+      ? curatedRaw
+      : curatedRaw
+        ? neutralizeInsightSections(curatedRaw)
+        : undefined;
   if (curated) {
     const pre = [...curated];
     if (

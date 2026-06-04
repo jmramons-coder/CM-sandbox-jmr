@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { filterDatasetBySettings, listActivityEvents, listAiActions, listCaseSummaries, listCommunications, listDocuments, listRequirements, listRequests, listTasks } from './objectRepository';
+import { filterDatasetBySettings, getSystemDataset, listActivityEvents, listAiActions, listCaseSummaries, listCommunications, listDocuments, listRequirements, listRequests, listTasks } from './objectRepository';
 import { datasetFromPackage, packageFromDataset } from './datasetPackageMappers';
 import { validateDatasetPackage } from './datasetPackageSchema';
 import { DATASET_GENERATION_PROFILES, generateDatasetFromProfile } from './datasetGenerator';
@@ -143,10 +143,12 @@ describe('dataset validation gates', () => {
     expect(dataset!.displayCurrency).toBe('CAD');
     expect(dataset!.documents.length).toBeGreaterThanOrEqual(20);
     expect(dataset!.requirements.length).toBeGreaterThanOrEqual(20);
-    expect(dataset!.requests).toHaveLength(6);
+    expect(dataset!.requests).toHaveLength(7);
     expect(dataset!.assistantResponses).toHaveLength(7);
     expect(dataset!.activityEvents).toHaveLength(6);
-    expect(dataset!.documents.every((doc) => doc.fileAvailable === false)).toBe(true);
+    expect(dataset!.documents.some((doc) => doc.id === 'doc_emp_addr_change_form' && doc.fileAvailable === true)).toBe(true);
+    expect(dataset!.documents.filter((doc) => doc.id !== 'doc_emp_addr_change_form').every((doc) => doc.fileAvailable === false)).toBe(true);
+    expect(getSystemDataset('empire-ca-demo').tasks[0]?.id).toBe('task_emp_addr_001');
 
     const nbSubTypes = dataset!.cases
       .filter((row) => row.caseKind === 'new_business')

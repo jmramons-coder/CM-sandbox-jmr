@@ -1,10 +1,9 @@
 import type { Task, TaskContextCard } from '../types';
 import { resolveAiSummaryPresentation } from '../utils/aiSummaryPresentation';
+import { isSimpleServiceTask } from '../utils/taskSimpleService';
 import { SidePanelSummaryBox } from './AiSummaryWithConfidenceCard';
 
-export function isSimpleServiceTask(task: Pick<Task, 'caseType' | 'caseSubtype'>): boolean {
-  return task.caseType === 'Service' || task.caseSubtype === 'address_change' || task.caseSubtype === 'beneficiary_change';
-}
+export { isSimpleServiceTask } from '../utils/taskSimpleService';
 
 function SimpleServiceContextCard({ card }: { card: TaskContextCard }) {
   return (

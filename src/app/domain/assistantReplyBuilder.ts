@@ -4,6 +4,8 @@ import type { SystemDataset } from '../data/multi-case-dataset';
 import type { CaseRecord } from './objectRefs';
 import { buildDatasetAssistantReply, findDatasetAssistantResponse } from './assistantResponses';
 import { resolveSbliCaseId } from '../data/demoCaseIds';
+import { getActiveDemoConfigurationId } from '../data/datasetResolutionContext';
+import { usesSbliBrandedDemoData } from '../data/sharedDemoDatasetNeutralize';
 
 export type AssistantReply = {
   text: string;
@@ -63,11 +65,12 @@ function buildDynamicCasePrioritiesReply(dataset: SystemDataset): AssistantReply
     return `${index + 1}. **${record.id} · ${party}** — ${record.caseTypeLabel ?? record.title}. ${sla}.`;
   });
 
+  const workloadIntro = usesSbliBrandedDemoData(getActiveDemoConfigurationId())
+    ? "Here's how I'd prioritize your SBLI demo workload this week:\n\n"
+    : "Here's how I'd prioritize your US demo workload this week:\n\n";
+
   return {
-    text:
-      "Here's how I'd prioritize your SBLI demo workload this week:\n\n" +
-      lines.join('\n\n') +
-      '\n\nOpen any case from the list below.',
+    text: workloadIntro + lines.join('\n\n') + '\n\nOpen any case from the list below.',
     artifact: buildCaseLinksArtifact(dataset, 'Cases needing attention'),
     followUps: [
       `Summarize ${ranked[0]?.id ?? 'my top case'} for handoff.`,
@@ -175,7 +178,7 @@ export function buildAssistantReply(
       ...priorities,
       text:
         'Queue focus for today:\n\n' +
-        priorities.text.replace("Here's how I'd prioritize your SBLI demo workload this week:\n\n", ''),
+        priorities.text.replace(/^Here's how I'd prioritize your .+ demo workload this week:\n\n/, ''),
     };
   }
 

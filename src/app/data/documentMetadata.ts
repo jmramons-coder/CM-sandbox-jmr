@@ -9,6 +9,25 @@ export function formatDocumentFileInfo(fileType?: string, fileSize?: string): st
   return [fileType, fileSize].filter(Boolean).join(' · ');
 }
 
+function normalizeDocumentFileSize(fileSize?: string): string | undefined {
+  if (!fileSize?.trim()) return undefined;
+  const value = fileSize.trim();
+  if (/^(metadata only|no file|preview|png\s*·\s*preview)$/i.test(value)) return undefined;
+  if (/preview/i.test(value)) return undefined;
+  return value;
+}
+
+/** Compact type + size for side panel title line (e.g. "PDF · 890 KB"). */
+export function formatDocumentHeaderInlineMeta(
+  documentTitle: string,
+  fileType?: string,
+  fileSize?: string,
+): string {
+  const type = getDocumentFileType(documentTitle, fileType);
+  const size = normalizeDocumentFileSize(fileSize);
+  return [type, size].filter(Boolean).join(' · ');
+}
+
 const DOCUMENT_SOURCE_LABELS: Record<string, string> = {
   ai: 'AI Agent',
   ai_extraction: 'AI Extraction',

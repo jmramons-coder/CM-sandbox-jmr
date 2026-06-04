@@ -15,7 +15,7 @@ export const EMPIRE_ASSISTANT_RESPONSES: DemoAssistantResponse[] = [
     workflowTemplateId: 'ct_claim_disability',
     prompt: GLOBAL_COPILOT_CASE_PRIORITIES_PROMPT,
     response:
-      'Empire Life workload: sign off Sophie Chen CI decision ($125k ready). Chase Marc Tremblay employer physician statement (own-occupation wording). Track MacDonald estate probate for final $385k. NB: Amélie Dubois APS overdue; Liam O\'Brien PHI 22 May; Patricia Singh PAD pending before GLP issue.',
+      'Empire Life workload: sign off Sophie Chen CI decision ($125k ready). Chase Marc Tremblay employer physician statement (own-occupation wording). Track MacDonald estate probate for final $385k. NB: Amélie Dubois — approve APS follow-up (Rx hypertension); Liam O\'Brien PHI 22 May; Patricia Singh PAD pending before GLP issue.',
     linkedObjects: [
       { kind: 'case', id: CI, label: 'Sophie Chen · CI' },
       { kind: 'case', id: DI, label: 'Marc Tremblay · DI' },
@@ -54,7 +54,7 @@ export const EMPIRE_ASSISTANT_RESPONSES: DemoAssistantResponse[] = [
     workflowTemplateId: 'ct_nb_full_uw',
     prompt: 'Summarize Amélie Dubois\'s application status.',
     response:
-      'Amélie Dubois · Solution 20 participating $500,000 · APP-4401. MIB clear; financial questionnaire validated. APS from Clinique Médicale du Plateau overdue — provisional standard terms until medical received.',
+      'Amélie Dubois · Solution 20 participating $500,000 · APP-4401. MIB clear at submission. Rx received 11 May — AI recommends APS for treated hypertension (lisinopril, amlodipine); approve APS follow-up to order. Blood/urine and scuba questionnaire still open.',
     linkedObjects: [{ kind: 'case', id: NB, label: 'Amélie Dubois' }],
   },
   {

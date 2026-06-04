@@ -19,6 +19,7 @@ import { EMPIRE_DOCUMENT_EVIDENCE_RECORDS } from './empire-document-evidence-rec
 import { EMPIRE_REQUEST_RECORDS } from './empire-request-records';
 import { EMPIRE_ASSISTANT_RESPONSES } from './empire-assistant-responses';
 import { EMPIRE_ACTIVITY_RECORDS } from './empire-activity-records';
+import { applyEmpireAddressChangeOverlay } from './empireAddressChangeOverlay';
 
 function tabIdFromLabel(label: string): CaseTabConfiguration {
   const normalized = label.toLowerCase();
@@ -127,7 +128,7 @@ function withCaseWorkflowGi(caseRecord: CaseRecord): CaseRecord {
   };
 }
 
-export const EMPIRE_DATASET: SystemDataset = {
+export const EMPIRE_DATASET: SystemDataset = applyEmpireAddressChangeOverlay({
   id: EMPIRE_DATASET_ID,
   schemaVersion: 2,
   label: 'Empire Life Canada demo',
@@ -166,4 +167,4 @@ export const EMPIRE_DATASET: SystemDataset = {
   assistantResponses: EMPIRE_ASSISTANT_RESPONSES,
   aiActions: [],
   legacyMockOverlayEnabled: false,
-};
+});

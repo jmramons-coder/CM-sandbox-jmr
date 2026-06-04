@@ -4,7 +4,28 @@
 
 import type { Task, SortableColumn, SortDirection } from '../types';
 import { sortTasksByRelevance } from './module-relevance-sort';
+import { isAddressChangeServiceTask } from './taskSimpleService';
 import { getPriorityOrder, isValidDateString } from './task-helpers';
+
+/** Demo showcase: policy-service address change with no claim case. */
+export const ADDRESS_CHANGE_REVIEW_TASK_ID = 'task_ps_addr_001';
+export const EMPIRE_ADDRESS_CHANGE_REVIEW_TASK_ID = 'task_emp_addr_001';
+
+const ADDRESS_CHANGE_PIN_IDS = [ADDRESS_CHANGE_REVIEW_TASK_ID, EMPIRE_ADDRESS_CHANGE_REVIEW_TASK_ID];
+
+/** Keeps the no-case address change review task first under default (relevance) ordering. */
+export function pinAddressChangeReviewTaskFirst(tasks: Task[]): Task[] {
+  const index = tasks.findIndex(
+    (task) =>
+      ADDRESS_CHANGE_PIN_IDS.some(
+        (id) => task.id === id || task.taskId === id,
+      )
+      || (!task.caseId && isAddressChangeServiceTask(task)),
+  );
+  if (index <= 0) return tasks;
+  const pinned = tasks[index];
+  return [pinned, ...tasks.filter((_, i) => i !== index)];
+}
 
 /**
  * Sorts an array of tasks based on the specified column and direction
@@ -14,7 +35,7 @@ export function sortTasks(
   column: SortableColumn | null,
   direction: SortDirection
 ): Task[] {
-  if (!column) return sortTasksByRelevance(tasks);
+  if (!column) return pinAddressChangeReviewTaskFirst(sortTasksByRelevance(tasks));
 
   return [...tasks].sort((a, b) => {
     let aValue: string | number;

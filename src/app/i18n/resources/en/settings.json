@@ -60,7 +60,7 @@
     "activeToggleAria": "Activate {{name}} demo environment",
     "builtIn": "Built-in · included with the app",
     "deleteAria": "Delete {{name}} demo environment",
-    "sharedDatasetNote": "Equisoft and SBLI use the US demo cases dataset; Guardian 1821 uses the UK Guardian dataset (GBP). Toggle active to switch environment.",
+    "sharedDatasetNote": "Equisoft and SBLI share the US demo cases dataset (neutral labels on Equisoft, SBLI branding on SBLI). Guardian 1821 and Empire use their own datasets. Toggle active to switch environment.",
     "exportDeployAria": "Export {{name}} for deploy",
     "exportDeployDone": "Downloaded {{filename}}. Replace {{path}} in the repo, commit, and deploy so everyone sees this configuration.",
     "summary": {

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Briefcase, Scale, Stamp, type LucideIcon } from 'lucide-react';
+import { Scale, Stamp, type LucideIcon } from 'lucide-react';
 import type { CaseDocument, CaseOverview, CasePhase } from '../../types';
 import type { EffectiveCaseTypeAnatomy } from '../../domain/entityAnatomy';
 
@@ -26,6 +26,8 @@ export type CaseDocumentContextRow = {
   uploaded: string;
   source: string;
   aiSummary: string;
+  reqContext?: string;
+  claimant?: string;
   linkedRequirement: string;
   linkedRequirementId?: string;
   fileSize?: string;
@@ -83,6 +85,7 @@ export function caseTabFromWorkflowLabel(label: string): CaseTab | null {
   if (normalized === 'relationships') return 'related_cases';
   if (normalized === 'activities') return 'history';
   if (normalized === 'scoring') return 'scoring';
+  if (normalized === 'decision') return 'scoring';
   if (normalized === 'application') return 'activation';
   return null;
 }
@@ -96,6 +99,8 @@ export function documentToCaseContextRow(document: CaseDocument): CaseDocumentCo
     uploaded: document.uploaded,
     source: document.source,
     aiSummary: document.aiSummary,
+    reqContext: document.reqContext,
+    claimant: document.claimant,
     linkedRequirement: document.linkedRequirement,
     linkedRequirementId: document.linkedRequirementId,
     fileSize: document.fileSize,
@@ -124,18 +129,30 @@ export function resolveCaseWorkspaceTabIcon(
     return caseTabMilestoneIcon(Stamp);
   }
 
-  if (caseKind === 'new_business') {
-    return caseTabMilestoneIcon(Briefcase);
+  if (normalizedLabel === 'decision' || anatomyId === 'decision') {
+    return caseTabMilestoneIcon(Scale);
   }
 
-  if (normalizedLabel === 'decision' || anatomyId === 'decision') {
+  if (caseKind === 'new_business') {
     return caseTabMilestoneIcon(Scale);
   }
 
   return undefined;
 }
 
-/** Prefer merged case-type anatomy labels (e.g. Resolution for service) over static defaults. */
+/** Prefer workflow tab label, then merged case-type anatomy labels (e.g. Resolution for service). */
+export function resolveCaseTabDisplayLabel(
+  tab: CaseTab,
+  options: {
+    anatomy?: EffectiveCaseTypeAnatomy;
+    workflowTabLabels?: string[];
+  },
+): string {
+  const workflowLabel = options.workflowTabLabels?.find((label) => caseTabFromWorkflowLabel(label) === tab);
+  if (workflowLabel) return workflowLabel;
+  return resolveCaseWorkspaceTabLabel(tab, options.anatomy);
+}
+
 export function resolveCaseWorkspaceTabLabel(tab: CaseTab, anatomy: EffectiveCaseTypeAnatomy | undefined): string {
   const rows = anatomy?.tabs ?? [];
   const byId = rows.find((row) => row.id === tab);

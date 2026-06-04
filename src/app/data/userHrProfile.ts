@@ -1,4 +1,6 @@
 import type { PlatformUser, PlatformUserRole, TrainingRecord } from '../domain/access/platformUser';
+import { getActiveDemoConfigurationId } from './datasetResolutionContext';
+import { applyNeutralCarrierToText, usesSbliBrandedDemoData } from './sharedDemoDatasetNeutralize';
 import { getPlatformUserById } from './platformUserCatalog';
 
 export type UserHrExperience = {
@@ -189,8 +191,32 @@ function roleLabel(role: PlatformUserRole): string {
   }
 }
 
+function neutralizeHrProfile(profile: UserHrProfile): UserHrProfile {
+  return {
+    ...profile,
+    headline: applyNeutralCarrierToText(profile.headline),
+    department: applyNeutralCarrierToText(profile.department),
+    about: applyNeutralCarrierToText(profile.about),
+    specialties: profile.specialties.map((item) => applyNeutralCarrierToText(item)),
+    experience: profile.experience.map((item) => ({
+      ...item,
+      title: applyNeutralCarrierToText(item.title),
+      organization: applyNeutralCarrierToText(item.organization),
+      period: applyNeutralCarrierToText(item.period),
+      location: item.location ? applyNeutralCarrierToText(item.location) : undefined,
+    })),
+    education: profile.education.map((item) => ({
+      ...item,
+      school: applyNeutralCarrierToText(item.school),
+      degree: applyNeutralCarrierToText(item.degree),
+    })),
+  };
+}
+
 export function getUserHrProfile(user: PlatformUser): UserHrProfile {
-  return HR_BY_USER_ID[user.id] ?? defaultHrProfile(user);
+  const profile = HR_BY_USER_ID[user.id] ?? defaultHrProfile(user);
+  if (usesSbliBrandedDemoData(getActiveDemoConfigurationId())) return profile;
+  return neutralizeHrProfile(profile);
 }
 
 export type TrainingGroup = {

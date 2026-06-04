@@ -13,6 +13,12 @@ const BODY_TEXT_WIDTH = 93;
 const FORM_FIELD_LEFT = 20;
 const FORM_FIELD_WIDTH = 72;
 
+/** Full-width form section blocks (Harbor Life / neutral address-change form). */
+const FORM_SECTION_LEFT = 6;
+const FORM_SECTION_WIDTH = 88;
+
+export type DocumentHighlightPreviewVariant = 'sbli' | 'equisoft';
+
 const FINDING_HIGHLIGHT_BY_ID: Record<string, DocumentHighlightRect> = {
   // Attending Physician Statement (Dr. Chen ortho)
   doc_aps_cd26_anchor_1: { top: '37.8%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '5.8%' },
@@ -37,13 +43,28 @@ const FINDING_HIGHLIGHT_BY_ID: Record<string, DocumentHighlightRect> = {
   // Attending physician statement (CD44)
   doc_aps_cd44_anchor_1: { top: '36%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '7%' },
   doc_aps_cd44_anchor_2: { top: '54%', left: `${BODY_TEXT_LEFT}%`, width: `${BODY_TEXT_WIDTH}%`, height: '11%' },
-  // Simple service — address / beneficiary forms
-  doc_addr_change_form_anchor_1: { top: '42%', left: `${FORM_FIELD_LEFT}%`, width: `${FORM_FIELD_WIDTH}%`, height: '9%' },
+  // Simple service — address / beneficiary forms (SBLI Policy Service Request layout)
+  doc_addr_change_form_anchor_1: {
+    top: '34.2%',
+    left: `${FORM_SECTION_LEFT}%`,
+    width: `${FORM_SECTION_WIDTH}%`,
+    height: '14.8%',
+  },
   doc_beneficiary_change_form_anchor_1: { top: '46%', left: `${FORM_FIELD_LEFT}%`, width: `${FORM_FIELD_WIDTH}%`, height: '9%' },
   // Legacy mock request package (DOC-1001)
   'missing-government-id': { top: '52.0%', left: `${BODY_TEXT_LEFT}%`, width: '68%', height: '3.4%' },
   'client-statement-scope': { top: '27.1%', left: '58%', width: '36%', height: '10%' },
   'unit-format-variance': { top: '61.6%', left: '28%', width: '48%', height: '11.2%' },
+};
+
+/** Harbor Life mailing-address form (`Mailing_address_change_form_whitfield.png`). */
+const EQUISOFT_FINDING_HIGHLIGHT_BY_ID: Record<string, DocumentHighlightRect> = {
+  doc_addr_change_form_anchor_1: {
+    top: '30.8%',
+    left: `${FORM_SECTION_LEFT}%`,
+    width: `${FORM_SECTION_WIDTH}%`,
+    height: '11.4%',
+  },
 };
 
 const DEFAULT_BODY_HIGHLIGHTS: DocumentHighlightRect[] = [
@@ -79,10 +100,23 @@ export function normalizeDocumentHighlight(rect: DocumentHighlightRect): Documen
 export function resolveDocumentFindingHighlight(
   findingId: string,
   fallbackIndex = 0,
+  options?: { previewVariant?: DocumentHighlightPreviewVariant },
 ): DocumentHighlightRect {
-  const preset = FINDING_HIGHLIGHT_BY_ID[findingId];
+  const variantPreset =
+    options?.previewVariant === 'equisoft'
+      ? EQUISOFT_FINDING_HIGHLIGHT_BY_ID[findingId]
+      : undefined;
+  const preset = variantPreset ?? FINDING_HIGHLIGHT_BY_ID[findingId];
   const rect = preset ?? DEFAULT_BODY_HIGHLIGHTS[fallbackIndex % DEFAULT_BODY_HIGHLIGHTS.length];
   return normalizeDocumentHighlight(rect);
+}
+
+export function resolveDocumentPreviewHighlightVariant(
+  previewUrl: string,
+): DocumentHighlightPreviewVariant | undefined {
+  if (previewUrl.includes('/documents/equisoft/')) return 'equisoft';
+  if (previewUrl.includes('/documents/sbli/')) return 'sbli';
+  return undefined;
 }
 
 /** Every SBLI seeded finding id should resolve to a document-specific preset (not generic fallback). */

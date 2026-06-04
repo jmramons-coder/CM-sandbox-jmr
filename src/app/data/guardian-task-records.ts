@@ -44,16 +44,7 @@ function task(
     aiSummary: extra.aiSummary,
     description,
     ...extra,
-    summary: extra.summary ?? {
-      contextLabel: 'Task context',
-      title: label,
-      description,
-      checklist: extra.summary?.checklist ?? [
-        `Review ${label.toLowerCase()}`,
-        'Update case notes and adviser copy',
-        'Confirm requirement status in Amplify',
-      ],
-    },
+    summary: extra.summary,
     linkedObjects: [
       { kind: 'case', id: caseId, label: caseId },
       ...(extra.linkedObjects ?? []).filter((ref) => ref.kind !== 'case'),

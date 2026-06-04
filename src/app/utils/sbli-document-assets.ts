@@ -1,5 +1,16 @@
+import { getActiveDemoConfigurationId } from '../data/datasetResolutionContext';
+
+const DEMO_SBLI_ENVIRONMENT_ID = 'demo-sbli';
+
+function usesSbliBrandedDocumentPreviews(demoEnvironmentId: string | null | undefined): boolean {
+  return demoEnvironmentId === DEMO_SBLI_ENVIRONMENT_ID;
+}
+
 /** Public preview assets for SBLI sandbox documents (`public/documents/sbli/`). */
 export const SBLI_DOCUMENT_PREVIEW_BASE = '/documents/sbli';
+
+/** Equisoft / neutral demo overrides (`public/documents/equisoft/`). */
+export const EQUISOFT_DOCUMENT_PREVIEW_BASE = '/documents/equisoft';
 
 const LEGACY_PLACEHOLDER_PREVIEW = '/evidence-medical-report-page.png';
 
@@ -28,6 +39,17 @@ export const SBLI_DOCUMENT_ASSET_BY_ID: Record<string, string> = {
   doc_beneficiary_change_form: 'Beneficiary_change_form_chen.png',
 };
 
+/** Per-doc overrides when demo uses neutral Harbor Life branding (not SBLI). */
+export const EQUISOFT_DOCUMENT_ASSET_BY_ID: Record<string, string> = {
+  doc_addr_change_form: 'Mailing_address_change_form_whitfield.png',
+};
+
+export function getEquisoftDocumentPreviewUrl(documentId: string): string {
+  const basename = EQUISOFT_DOCUMENT_ASSET_BY_ID[documentId];
+  if (!basename) return '';
+  return `${EQUISOFT_DOCUMENT_PREVIEW_BASE}/${basename}`;
+}
+
 export function getSbliDocumentAssetBasename(documentId: string, filename?: string): string | null {
   if (SBLI_DOCUMENT_ASSET_BY_ID[documentId]) {
     return SBLI_DOCUMENT_ASSET_BY_ID[documentId];
@@ -53,8 +75,14 @@ export function resolveDocumentPreviewUrl(options: {
   fileAvailable?: boolean;
   pageImage?: string;
   legacyFallback?: string;
+  demoEnvironmentId?: string | null;
 }): string {
   if (options.fileAvailable === false) return '';
+  const demoEnvironmentId = options.demoEnvironmentId ?? getActiveDemoConfigurationId();
+  if (!usesSbliBrandedDocumentPreviews(demoEnvironmentId)) {
+    const equisoft = getEquisoftDocumentPreviewUrl(options.documentId);
+    if (equisoft) return equisoft;
+  }
   if (options.fileUrl?.trim()) return options.fileUrl.trim();
   const sbli = getSbliDocumentPreviewUrl(options.documentId, options.filename);
   if (sbli) return sbli;

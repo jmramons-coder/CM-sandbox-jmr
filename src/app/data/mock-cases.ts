@@ -12,6 +12,7 @@ import { claimSubTypeLabel, resolveClaimSubType } from '../domain/claimSubTypes'
 import type { AnatomySettings } from '../contexts/PlatformSettingsContext';
 import { resolveCaseAnatomyForSettings } from '../domain/runtimeDataConfig';
 import type { EntityAnatomySection } from '../domain/entityAnatomy';
+import { inferRequirementAiGenerated } from '../utils/requirementAiSource';
 
 const PRE_APPROVAL_STAGES: string[] = [
   'FNOL Received',
@@ -933,6 +934,14 @@ function createOverviewFromSystemRecord(record: SystemDataset['cases'][number], 
       history: requirement.history,
       objectRefs: requirement.linkedObjects,
       workflowStepId: requirement.workflowStepId,
+      aiInsight: requirement.aiInsight,
+      aiConfidence: requirement.aiConfidence,
+      aiGenerated: inferRequirementAiGenerated({
+        source: requirement.source ?? 'dataset',
+        trigger: requirement.trigger ?? requirement.workflowStepId ?? 'Business line',
+        aiGenerated: requirement.aiGenerated,
+        history: requirement.history,
+      }),
     }));
 
   return {

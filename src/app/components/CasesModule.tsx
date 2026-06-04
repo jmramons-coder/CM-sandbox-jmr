@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { LayoutGrid, List, Plus, RefreshCw } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
-import { AiInsightInline, FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
+import { FilterDropdown, LozengeTag, ModuleTablePaginationFooter, ReorderIcon } from './index';
 import { PriorityChip, SearchBar } from './ds';
 import { filterDatasetBySettings, getSystemDataset, listCaseSummaries } from '../data/objectRepository';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
@@ -25,19 +25,18 @@ import type { CaseSummary, SortDirection } from '../types';
 import type { CaseKind, ClaimSubType } from '../domain/objectRefs';
 import { claimSubTypeLabel } from '../domain/claimSubTypes';
 import {
-  isCaseAiSourced,
-  MiniAiSourceBadge,
   SummaryTableColumnHeader,
   TABLE_CELL_ALIGN_CLASS,
   TABLE_LINK_CLASS,
   TABLE_SUBTEXT_CLASS,
   TABLE_TEXT_CLASS,
-  TableFirstColumnContent,
-  TwoLineSummaryCell,
 } from './ModuleCellHelpers';
+import { CaseTableAiDigestCell } from './cases/CaseTableAiDigestCell';
+import { CASE_TABLE_WORK_COLUMN_LABEL } from '../utils/caseTableAiDigest';
 import { CreateCaseModal } from './CreateCaseModal';
 import { ModuleMobileListCardShell } from './ModuleMobileListCard';
 import { sortCasesByRelevance } from '../utils/module-relevance-sort';
+import { appToast } from '../utils/app-toast';
 
 type CasesSortableColumn =
   | 'id'
@@ -67,7 +66,7 @@ const CASES_TH_LABEL_STYLE: CSSProperties = { fontVariationSettings: "'wdth' 100
 const priorityOrder: Record<string, number> = { High: 2, Normal: 1 };
 const aiOrder: Record<string, number> = { Pending: 4, Monitor: 3, Approve: 2, Close: 1 };
 
-/** Sticky Case column — wide enough for case ID + optional AI badge on one line. */
+/** Sticky Case column — wide enough for case ID + claimant on one block. */
 const CASE_TABLE_CASE_COL_WIDTH = 220;
 
 /** Column order: case identity → AI insight → operational triage → plan detail → audit. */
@@ -75,13 +74,13 @@ const CASE_HEADERS: CaseHeaderConfig[] = [
   { key: 'id', label: 'Case', tooltip: 'Unique case reference number and claimant.' },
   {
     key: 'claimSubType',
-    label: 'Claim sub-type',
+    label: 'Sub-type',
     tooltip: 'Death benefit vs disability benefit (and future claim variants).',
   },
   {
     key: 'aiRecommendation',
-    label: 'Summary',
-    tooltip: 'AI-generated summary and recommended next action.',
+    label: CASE_TABLE_WORK_COLUMN_LABEL,
+    tooltip: 'Case context and the next action Amplify suggests for this file.',
     accent: 'ai',
   },
   { key: 'priority', label: 'Priority' },
@@ -134,25 +133,23 @@ function CaseCardMetaField({ label, children }: { label: string; children: React
 function CaseMobileListCard({
   item,
   currency,
+  dataset,
   onOpen,
   onCaseLink,
 }: {
   item: CaseSummary;
   currency: ReturnType<typeof useCurrencyFormatter>;
+  dataset: ReturnType<typeof filterDatasetBySettings>;
   onOpen: () => void;
   onCaseLink: () => void;
 }) {
   const partyLabel = item.primaryPartyLabel ?? 'Claimant';
-  const showAiSourceBadge = isCaseAiSourced(item);
 
   return (
     <ModuleMobileListCardShell onSelect={onOpen}>
-      {(showAiSourceBadge || (item.caseKind === 'claim' && item.claimSubType)) ? (
+      {item.caseKind === 'claim' && item.claimSubType ? (
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          {showAiSourceBadge ? <MiniAiSourceBadge /> : null}
-          {item.caseKind === 'claim' && item.claimSubType ? (
-            <LozengeTag label={claimSubTypeLabel(item.claimSubType)} type="Neutral" subtle size="compact" />
-          ) : null}
+          <LozengeTag label={claimSubTypeLabel(item.claimSubType)} type="Neutral" subtle size="compact" />
         </div>
       ) : null}
 
@@ -168,11 +165,9 @@ function CaseMobileListCard({
         {item.title?.trim() || item.claimant}
       </h3>
 
-      {item.aiSummary ? (
-        <div className="mb-3">
-          <AiInsightInline summary={item.aiSummary} action={item.aiRecommendation} showSourceBadge={false} />
-        </div>
-      ) : null}
+      <div className="mb-3">
+        <CaseTableAiDigestCell summary={item} dataset={dataset} />
+      </div>
 
       <div className="grid grid-cols-2 gap-x-3 gap-y-3">
         <CaseCardMetaField label="Case">
@@ -216,10 +211,14 @@ export function CasesModule() {
   const [businessLineTab, setBusinessLineTab] = useState<'all' | CaseKind>('all');
   const [createCaseOpen, setCreateCaseOpen] = useState(false);
   const dataSource = useDataSourceSettings();
+  const activeDataset = useMemo(
+    () => filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource),
+    [dataSource],
+  );
   const currency = useCurrencyFormatter();
   const caseSummaries = useMemo(
-    () => listCaseSummaries(filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource)),
-    [dataSource],
+    () => listCaseSummaries(activeDataset),
+    [activeDataset],
   );
   const enabledBusinessLineKinds = useMemo(
     () => new Set(dataSource.enabledWorkflows),
@@ -373,7 +372,7 @@ export function CasesModule() {
             <FilterDropdown label="Priority" options={['All', 'High', 'Normal']} value={priorityFilter} onChange={setPriorityFilter} />
             <FilterDropdown label="Product" options={['All', ...new Set(caseSummaries.map((i) => i.product))]} value={productFilter} onChange={setProductFilter} />
             <FilterDropdown
-              label="Claim sub-type"
+              label="Sub-type"
               options={claimSubTypeOptions}
               value={claimSubTypeFilter}
               onChange={setClaimSubTypeFilter}
@@ -490,40 +489,28 @@ export function CasesModule() {
                     {showLeftStickyEdge ? (
                       <span className="pointer-events-none absolute right-[-1px] top-0 z-[8] h-full w-px bg-[#dbdee1]/60" />
                     ) : null}
-                    <TableFirstColumnContent aiSourced={isCaseAiSourced(item)}>
-                      <div className="min-w-0">
-                        <Link
-                          to={`/cases/${item.id}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addOpenCase(item.id);
-                          }}
-                          className={`block whitespace-nowrap ${TABLE_LINK_CLASS}`}
-                          title={item.id}
-                        >
-                          {item.id}
-                        </Link>
-                        <span className={`mt-0.5 block truncate ${TABLE_SUBTEXT_CLASS}`} title={item.claimant}>
-                          {item.claimant}
-                        </span>
-                      </div>
-                    </TableFirstColumnContent>
+                    <div className="min-w-0">
+                      <Link
+                        to={`/cases/${item.id}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addOpenCase(item.id);
+                        }}
+                        className={`block whitespace-nowrap ${TABLE_LINK_CLASS}`}
+                        title={item.id}
+                      >
+                        {item.id}
+                      </Link>
+                      <span className={`mt-0.5 block truncate ${TABLE_SUBTEXT_CLASS}`} title={item.claimant}>
+                        {item.claimant}
+                      </span>
+                    </div>
                   </td>
                   <td className={`whitespace-nowrap border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${TABLE_TEXT_CLASS} ${cellSurface}`}>
                     {item.caseKind === 'claim' && item.claimSubType ? claimSubTypeLabel(item.claimSubType) : '—'}
                   </td>
                   <td className={`min-w-[320px] max-w-[420px] border-b border-border-default px-3 py-3 ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
-                    <TwoLineSummaryCell
-                      className="max-w-[420px]"
-                      title={item.aiRecommendation === 'Approve'
-                        ? 'Approval ready'
-                        : item.aiRecommendation === 'Close'
-                          ? 'Closure ready'
-                          : item.aiRecommendation === 'Monitor'
-                            ? 'Monitor next action'
-                            : 'Review required'}
-                      summary={item.aiSummary}
-                    />
+                    <CaseTableAiDigestCell summary={item} dataset={activeDataset} />
                   </td>
                   <td className={`border-b border-border-default px-3 py-3 whitespace-nowrap ${TABLE_CELL_ALIGN_CLASS} ${cellSurface}`}>
                     <PriorityChip priority={item.priority} />
@@ -574,6 +561,7 @@ export function CasesModule() {
                   key={item.id}
                   item={item}
                   currency={currency}
+                  dataset={activeDataset}
                   onOpen={() => {
                     addOpenCase(item.id);
                     navigate(`/cases/${item.id}`);
@@ -596,6 +584,7 @@ export function CasesModule() {
           const createdCaseSummary = listCaseSummaries(filterDatasetBySettings(getSystemDataset(datasetId), nextDataSource)).find((item) => item.id === caseId);
           updateDataSource({ activeDatasetId: datasetId });
           addOpenCase(caseId, createdCaseSummary);
+          appToast.success(`Case ${caseId} created`);
         }}
       />
     </div>

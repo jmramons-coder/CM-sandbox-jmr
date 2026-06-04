@@ -33,7 +33,7 @@ import { DynamicDocumentSidePanel, type DynamicDocumentData } from './DynamicDoc
 import { getDocumentEvidence } from '../data/mock-document-evidence';
 import { resolveDocumentPreviewUrl } from '../utils/sbli-document-assets';
 import { getDocumentFileType } from '../data/documentMetadata';
-import { getDefaultSidePanelWidth } from '../utils/sidepanel-width';
+import { getDocumentSidePanelWidth, resolveDocumentSidePanelWidth } from '../utils/sidepanel-width';
 import { WorkspaceAssistantPanel } from './WorkspaceAssistantPanel';
 import { useDataSourceSettings } from '../contexts/PlatformSettingsContext';
 import type { SystemDataset } from '../data/multi-case-dataset';
@@ -287,6 +287,7 @@ export function DocumentModule() {
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
 
   const selectDocument = (doc: CaseDocument) => {
+    setPanelWidth((current) => resolveDocumentSidePanelWidth(current));
     setSelectedDocument(doc);
     const data = toDynamicDocumentData(doc, activeDataset);
     const context: WorkspacePanelContext = {
@@ -355,7 +356,7 @@ export function DocumentModule() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [sourceFilter, setSourceFilter] = useState('All');
 
-  const [panelWidth, setPanelWidth] = useState(() => getDefaultSidePanelWidth({ min: 400 }));
+  const [panelWidth, setPanelWidth] = useState(() => getDocumentSidePanelWidth());
   const [isResizing, setIsResizing] = useState(false);
   const { workspaceRef } = useMobileSidePanelLayout(panelWidth, sidePanelOpen);
   const mobilePanelWidth =

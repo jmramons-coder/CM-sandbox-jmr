@@ -27,12 +27,14 @@ import {
   FileText,
   Save,
   Scale,
+  Gauge,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { getCaseOverview } from '../data/mock-cases';
 import { resolveCaseRouteId } from '../data/demoCaseIds';
 import { deleteEntity, upsertRequirement } from '../data/datasetMutations';
-import { executeTaskAction } from '../data/workflowActions';
+import { approveNb66RequirementGatheringPackage, isNb66RecommendRequirementsTask } from '../data/nb66RequirementGatheringActions';
+import { isTaskCompleteActionSuccess, runTaskWorkflowAction } from '../data/workflowActions';
 import { useActiveUser } from '../contexts/ActiveUserContext';
 import { useCasesNav } from '../contexts/CasesNavContext';
 import { AiCueSparkle } from './AiCueSparkle';
@@ -42,11 +44,13 @@ import { Checkbox } from './ui/checkbox';
 import { DecisionTab } from './DecisionTab';
 import { getInsightBundle } from './caseInsightsData';
 import { AiClientProfilePanel } from './AiClientProfilePanel';
-import { AiCopilotDock, type ChatTurn } from './AiCopilotFooter';
+import { CaseCopilotPanel } from './copilot/CaseCopilotPanel';
 import { CaseInsightsPanel } from './CaseInsightsPanel';
 import type { CaseDocument, CaseOverview, CasePhase, CaseRequirement, HumanDecision, Task } from '../types';
 import type { UnderwritingScoring, UnderwritingScoringItem } from '../domain/objectRefs';
 import { resolveTaskForCaseContextRow } from '../utils/caseContextualTask';
+import { appToast } from '../utils/app-toast';
+import { isSemiAutoTask } from '../utils/taskReviewProjection';
 import { TaskDetailEmbeddedView, TaskDetailSidePanel, type TaskPanelNavigationPayload } from './TaskDetailSidePanel';
 import {
   documentIdFromPanelContext,
@@ -59,13 +63,11 @@ import { CreateTaskModal } from './CreateTaskModal';
 import { RequirementContextBody } from './RequirementContextBody';
 import { WorkspaceObjectSidePanel, type WorkspacePanelContext } from './WorkspaceObjectSidePanel';
 import { DynamicDocumentSidePanel, type DynamicDocumentData } from './DynamicDocumentSidePanel';
-import { getDocumentEvidence } from '../data/mock-document-evidence';
-import { getDocumentFileType } from '../data/documentMetadata';
 import { AiActivityToast, type AiActivitySequence } from './AiActivityToast';
 import { deleteScoringItem, upsertScoringItem, type ScoringItemType } from '../domain/scoring';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
-import { getDefaultSidePanelWidth } from '../utils/sidepanel-width';
-import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
+import { getDefaultSidePanelWidth, getDocumentSidePanelWidth, resolveDocumentSidePanelWidth } from '../utils/sidepanel-width';
+import { useDataSourceSettings, usePlatformSettings, useResolvedSystemDataset } from '../contexts/PlatformSettingsContext';
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter';
 import { getCaseType, parseCaseTypeCodeFromId, resolveCopy } from '../domain/caseTypes';
 import { claimSubTypeLabel, resolveClaimSubType } from '../domain/claimSubTypes';
@@ -82,8 +84,23 @@ import { PriorityChip, SectionLabel } from './ds';
 import { WorkspaceAssistantPanel } from './WorkspaceAssistantPanel';
 import { ModuleTabsBar } from './ModuleTabsBar';
 import { useViewportLayout } from '../hooks/useViewportLayout';
+import { setCaseCopilotPanelOpenAttribute } from '../hooks/useCaseBriefCompanionPanelOpen';
 import { AI_PANEL_MIN_WIDTH, clampAiPanelWidth, defaultAiPanelWidth } from '../utils/caseViewAiPanelUtils';
 import { APP_EVENTS, STORAGE_KEYS } from '../constants/storage-keys';
+import { isGlobalCopilotOwningCase, notifyGlobalCopilotTaskOutcome, requestGlobalCopilotCaseFocus } from '../utils/caseGlobalCopilotFocus';
+import { caseWorkspaceIdsMatch } from '../utils/caseWorkspaceSurface';
+import { taskOutcomeAlternateIds } from '../domain/copilotSessionMessages';
+import {
+  scoringPanelContextId,
+  usesScoringSidePanel,
+} from '../utils/underwritingScoringPresentation';
+import {
+  buildCaseWorkspaceObjectHref,
+  openCaseWorkspaceObject,
+  type FocusCaseWorkspaceObjectDetail,
+  type OpenCaseWorkspaceObjectHandler,
+  type OpenCaseWorkspaceObjectInput,
+} from '../utils/openCaseWorkspaceObject';
 import {
   CaseDocumentMobileCard,
   CaseRequirementMobileCard,
@@ -96,14 +113,27 @@ import { CaseOverviewTab } from './cases/CaseOverviewTab';
 import { buildCaseBrief } from '../data/caseBrief';
 import { CaseRequirementModal } from './cases/CaseRequirementModal';
 import { ScoreItemModal, UnderwritingScoringTab } from './cases/CaseScoringPanel';
+import { CaseScoringApplicantAffordance, CaseScoringSidePanel } from './cases/CaseScoringSidePanel';
 import { CaseLegacyWorkflowStepper } from './cases/CaseLegacyWorkflowStepper';
 import { CaseCommunicationsList, CaseHistoryEventsList, CaseRelationshipsList } from './cases/CaseSecondaryTabLists';
+import { CaseStageLensBanner } from './cases/CaseStageLensBanner';
 import { CaseTabToolbar } from './cases/CaseTabToolbar';
 import { WorkflowMetaSubway } from './cases/CaseWorkflowMap';
+import {
+  enrichLegacyStepStates,
+  isStepSelectable,
+  matchesStageLens,
+  resolveLensBannerMode,
+  resolveLensStepLabel,
+  resolveProgressOrder,
+  resolveWorkflowSteps,
+  usesExactStageLens,
+} from '../utils/caseStageLens';
 import {
   CASE_TAB_ORDER,
   caseTabFromWorkflowLabel,
   documentToCaseContextRow,
+  resolveCaseTabDisplayLabel,
   resolveCaseWorkspaceTabIcon,
   resolveCaseWorkspaceTabLabel,
   RESTORABLE_CASE_TABS,
@@ -118,7 +148,6 @@ const CASE_TABS_WITH_TABLE = new Set<CaseTab>(['tasks', 'requirements', 'documen
 import { requirementExternalCode, requirementExternalHref } from '../utils/caseViewRequirementUtils';
 import { deriveDocumentSummaryTitle, documentSummarySubtitle } from '../utils/summaryText';
 import {
-  isRequirementAiSourced,
   SummaryTableColumnHeader,
   TABLE_LINK_CLASS,
   TABLE_SUBTEXT_CLASS,
@@ -133,7 +162,16 @@ import {
   sortCaseTaskRowsByRelevance,
   sortRequirementsByRelevance,
 } from '../utils/module-relevance-sort';
-import { filterDatasetBySettings, getSystemDataset, listActivityEvents, listCaseSummaries, listCommunications, listDocuments, listRequirements, listTasks } from '../data/objectRepository';
+import {
+  filterDatasetBySettings,
+  getSystemDataset,
+  listActivityEvents,
+  listCaseSummaries,
+  listCommunications,
+  listDocuments,
+  listRequirements,
+  listTasks,
+} from '../data/objectRepository';
 import { isEntityEnabled, resolveEffectiveCaseTypeAnatomy } from '../domain/runtimeDataConfig';
 
 export function CaseView({
@@ -165,7 +203,7 @@ export function CaseView({
   contracts: 'table',
   activation: 'table',
   });
-  const [stageFilters, setStageFilters] = useState<Record<string, string>>({});
+  const [stageLensOrder, setStageLensOrder] = useState<number | null>(null);
   const [tabSearchQueries, setTabSearchQueries] = useState<Partial<Record<'tasks' | 'documents' | 'requirements', string>>>({});
   const [selectedRequirementIds, setSelectedRequirementIds] = useState<Array<number | string>>([]);
   const [reqPhaseTab, setReqPhaseTab] = useState<'pre-approval' | 'post-approval'>('pre-approval');
@@ -176,10 +214,6 @@ export function CaseView({
     typeof window !== 'undefined' ? defaultAiPanelWidth(window.innerWidth) : AI_PANEL_MIN_WIDTH,
   );
   const [isResizing, setIsResizing] = useState(false);
-  const [aiPanelTab, setAiPanelTab] = useState<AIPanelTab>('insights');
-  const [aiCopilotMessages, setAiCopilotMessages] = useState<ChatTurn[]>([]);
-  const [copilotSurfaceOpen, setCopilotSurfaceOpen] = useState(false);
-  const [toast, setToast] = useState<{ message: string; tone: 'success' | 'neutral' } | null>(null);
   const [phaseTransition, setPhaseTransition] = useState<'idle' | 'completing' | 'scrolling'>('idle');
   const [selectionMenu, setSelectionMenu] = useState<{ visible: boolean; x: number; y: number; text: string }>({
     visible: false,
@@ -206,7 +240,7 @@ export function CaseView({
   const [selectedCaseDocument, setSelectedCaseDocument] = useState<CaseDocumentContextRow | null>(null);
   const [reqDetailPanelWidth, setReqDetailPanelWidth] = useState(() => getDefaultSidePanelWidth({ min: 420 }));
   const [reqDetailPanelResizing, setReqDetailPanelResizing] = useState(false);
-  const [docDetailPanelWidth, setDocDetailPanelWidth] = useState(() => getDefaultSidePanelWidth({ min: 480 }));
+  const [docDetailPanelWidth, setDocDetailPanelWidth] = useState(() => getDocumentSidePanelWidth());
   const [docDetailPanelResizing, setDocDetailPanelResizing] = useState(false);
   const [casePanelContexts, setCasePanelContexts] = useState<WorkspacePanelContext[]>([]);
   const [activeCasePanelContextId, setActiveCasePanelContextId] = useState('');
@@ -221,45 +255,6 @@ export function CaseView({
     setSelectedRequirement(null);
     setSelectedCaseDocument(null);
   }, []);
-  const openCaseTaskPanel = useCallback((task: Task | null) => {
-    if (!task) {
-      closeCaseSidePanel();
-      return;
-    }
-    setSelectedCaseTask(task);
-    openCasePanelContext({
-      id: taskPanelContextId(task.id),
-      label: task.taskId ?? task.id,
-      icon: ClipboardList,
-      clearable: true,
-    });
-  }, [closeCaseSidePanel, openCasePanelContext]);
-  const openRequirementPanel = useCallback((requirement: CaseRequirement | null) => {
-    if (!requirement) {
-      setSelectedRequirement(null);
-      return;
-    }
-    setSelectedRequirement(requirement);
-    openCasePanelContext({
-      id: requirementPanelContextId(String(requirement.datasetRequirementId ?? requirement.id)),
-      label: `R-${requirement.datasetRequirementId ?? requirement.id}`,
-      icon: ClipboardCheck,
-      clearable: true,
-    });
-  }, [openCasePanelContext]);
-  const openCaseDocumentPanel = useCallback((document: CaseDocumentContextRow | null) => {
-    if (!document) {
-      setSelectedCaseDocument(null);
-      return;
-    }
-    setSelectedCaseDocument(document);
-    openCasePanelContext({
-      id: documentPanelContextId(document.id ?? document.name),
-      label: document.name,
-      icon: FileText,
-      clearable: true,
-    });
-  }, [openCasePanelContext]);
   const [aiActivitySeq, setAiActivitySeq] = useState<AiActivitySequence | null>(null);
   const [dataVersion, setDataVersion] = useState(0);
   const bumpData = useCallback(() => setDataVersion((v) => v + 1), []);
@@ -298,10 +293,7 @@ export function CaseView({
   const { profile: activeProfile } = useActiveUser();
   const currency = useCurrencyFormatter();
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
-  const activeDataset = useMemo(
-    () => filterDatasetBySettings(getSystemDataset(dataSource.activeDatasetId), dataSource),
-    [dataSource],
-  );
+  const activeDataset = useResolvedSystemDataset();
   const caseId = useMemo(
     () => resolveCaseRouteId(routeCaseId, activeDataset),
     [routeCaseId, activeDataset],
@@ -328,7 +320,85 @@ export function CaseView({
       platformSettings.anatomy,
     ],
   );
+
+  const openCaseTaskPanel = useCallback((task: Task | null) => {
+    if (!task) {
+      closeCaseSidePanel();
+      return;
+    }
+    if (requestGlobalCopilotCaseFocus({ caseId: data.id, kind: 'task', objectId: task.id })) return;
+    setSelectedCaseTask(task);
+    openCasePanelContext({
+      id: taskPanelContextId(task.id),
+      label: task.taskId ?? task.id,
+      icon: ClipboardList,
+      clearable: true,
+    });
+  }, [closeCaseSidePanel, data.id, openCasePanelContext]);
+
+  const openRequirementPanel = useCallback((requirement: CaseRequirement | null) => {
+    if (!requirement) {
+      setSelectedRequirement(null);
+      return;
+    }
+    const reqId = String(requirement.datasetRequirementId ?? requirement.id);
+    if (requestGlobalCopilotCaseFocus({ caseId: data.id, kind: 'requirement', objectId: reqId })) return;
+    setSelectedRequirement(requirement);
+    openCasePanelContext({
+      id: requirementPanelContextId(String(requirement.datasetRequirementId ?? requirement.id)),
+      label: `R-${requirement.datasetRequirementId ?? requirement.id}`,
+      icon: ClipboardCheck,
+      clearable: true,
+    });
+  }, [closeCaseSidePanel, data.id, openCasePanelContext]);
+
+  const openCaseDocumentPanel = useCallback((document: CaseDocumentContextRow | null) => {
+    if (!document) {
+      setSelectedCaseDocument(null);
+      return;
+    }
+    const docId = document.id ?? document.name;
+    if (requestGlobalCopilotCaseFocus({ caseId: data.id, kind: 'document', objectId: docId })) return;
+    setDocDetailPanelWidth((current) => resolveDocumentSidePanelWidth(current));
+    setSelectedCaseDocument(document);
+    openCasePanelContext({
+      id: documentPanelContextId(document.id ?? document.name),
+      label: document.name,
+      icon: FileText,
+      clearable: true,
+    });
+  }, [closeCaseSidePanel, data.id, openCasePanelContext]);
+
   const [scoringDraft, setScoringDraft] = useState(data.underwritingScoring);
+  const scoringSidePanelEnabled = usesScoringSidePanel(scoringDraft);
+  const scoringPanelActive =
+    Boolean(activeCasePanelContextId)
+    && activeCasePanelContextId === scoringPanelContextId(data.id);
+  const openScoringPanel = useCallback(() => {
+    if (!scoringDraft) return;
+    openCasePanelContext({
+      id: scoringPanelContextId(data.id),
+      label: 'Scoring',
+      icon: Gauge,
+      clearable: false,
+    });
+  }, [data.id, openCasePanelContext, scoringDraft]);
+
+  const scoringPanelContext = useMemo((): WorkspacePanelContext | null => {
+    if (!scoringSidePanelEnabled || !scoringDraft) return null;
+    return {
+      id: scoringPanelContextId(data.id),
+      label: 'Scoring',
+      icon: Gauge,
+      clearable: false,
+    };
+  }, [data.id, scoringDraft, scoringSidePanelEnabled]);
+
+  const casePanelContextsWithScoring = useMemo(() => {
+    if (!scoringPanelContext || casePanelContexts.length === 0) return casePanelContexts;
+    if (casePanelContexts.some((ctx) => ctx.id === scoringPanelContext.id)) return casePanelContexts;
+    return [...casePanelContexts, scoringPanelContext];
+  }, [casePanelContexts, scoringPanelContext]);
   const [scoreModal, setScoreModal] = useState<{ type: ScoringItemType; item?: UnderwritingScoringItem } | null>(null);
   useEffect(() => {
     setScoringDraft(data.underwritingScoring);
@@ -345,6 +415,7 @@ export function CaseView({
     if (!scoringDraft || !scoreModal) return;
     updateScoring(upsertScoringItem(scoringDraft, scoreModal.type, item));
     setScoreModal(null);
+    appToast.success('Scoring factor saved');
   }, [scoreModal, scoringDraft, updateScoring]);
   const deleteScoreItem = useCallback(() => {
     if (!scoringDraft || !scoreModal?.item) return;
@@ -369,7 +440,10 @@ export function CaseView({
   );
 
   // Live context: case + active tab; refines further when a task or requirement is opened.
-  const tabLabel = resolveCaseWorkspaceTabLabel(activeTab, caseAnatomy);
+  const tabLabel = resolveCaseTabDisplayLabel(activeTab, {
+    anatomy: caseAnatomy,
+    workflowTabLabels: data.workflowMeta?.tabs,
+  });
   const baseHref = `/cases/${caseId}${activeTab === 'overview' ? '' : `#tab=${activeTab}`}`;
   const caseTabOverlay = useMemo(
     () => ({
@@ -416,32 +490,11 @@ export function CaseView({
   );
   useLiveContextOverlay(requirementOverlay);
 
-  // Restore tab + selection from URL hash so the AI context history can navigate back here.
-  useEffect(() => {
-    const hash = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash;
-    if (!hash) return;
-    const params = new URLSearchParams(hash);
-    const tab = params.get('tab');
-    if (tab === 'activation' && data.caseKind === 'new_business') {
-      setActiveTab(data.underwritingScoring ? 'scoring' : 'requirements');
-    } else if (tab && RESTORABLE_CASE_TABS.includes(tab as CaseTab)) {
-      setActiveTab(tab as CaseTab);
-    }
-    const reqIdRaw = params.get('req');
-    if (reqIdRaw) {
-      const found = data.requirements.find((r) => String(r.id) === reqIdRaw || r.datasetRequirementId === reqIdRaw);
-      if (found) openRequirementPanel(found);
-    }
-    // Task restoration is best-effort: if the contextual task list contains it.
-    // (The case-task data source lives below; we leave the overlay's own setter to handle it.)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.caseKind, data.underwritingScoring, location.hash, caseId]);
-
   useEffect(() => {
     if (data.caseKind === 'new_business' && activeTab === 'activation') {
-      setActiveTab(data.underwritingScoring ? 'scoring' : 'requirements');
+      setActiveTab(scoringSidePanelEnabled || !data.underwritingScoring ? 'requirements' : 'scoring');
     }
-  }, [activeTab, data.caseKind, data.underwritingScoring]);
+  }, [activeTab, data.caseKind, data.underwritingScoring, scoringSidePanelEnabled]);
 
   useCaseViewGuideEffects(location.search, data, {
     setActiveTab,
@@ -516,6 +569,7 @@ export function CaseView({
   );
   const workflowMeta = data.workflowMeta;
   const workflowContextSlots = workflowMeta?.contextBar ? [...workflowMeta.contextBar].sort((a, b) => a.slot - b.slot) : [];
+  const isApplicantContextSlot = (label: string) => label.trim().toLowerCase() === 'applicant';
   const richGeneralInfoCards = data.generalInformation?.cards ?? [];
   const richGeneralInfoCollapsibles = data.generalInformation?.collapsibles ?? [];
   const structuredGeneralSections =
@@ -741,13 +795,19 @@ export function CaseView({
   const activeStepForPhase = data.activeStage;
   const isTerminated = (caseSummary?.status ?? data.caseStatus).startsWith('Terminated:');
 
-  const handleWorkflowStepSelect = useCallback(
+  const workflowLensSteps = useMemo(
+    () => enrichLegacyStepStates(resolveWorkflowSteps(data), resolveProgressOrder(data)),
+    [data],
+  );
+
+  const handleStageLensSelect = useCallback(
     (order: number) => {
       if (isStepperBusy) return;
-      data.activeStage = order;
-      bumpData();
+      const step = workflowLensSteps.find((item) => item.order === order);
+      if (!step || !isStepSelectable(step.state)) return;
+      setStageLensOrder((current) => (current === order ? null : order));
     },
-    [bumpData, data, isStepperBusy],
+    [isStepperBusy, workflowLensSteps],
   );
 
   useEffect(() => {
@@ -755,24 +815,13 @@ export function CaseView({
     const phase = singlePhase ?? (data.phase === 'post-approval' ? 'post-approval' : 'pre-approval');
     setReqPhaseTab(phase);
     setSelectedRequirementIds([]);
+    setStageLensOrder(null);
   }, [caseId, addOpenCase, data.phase, dataOverride, singlePhase]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const ms = toast.tone === 'success' ? 4500 : 4000;
-    const timer = setTimeout(() => setToast(null), ms);
-    return () => clearTimeout(timer);
-  }, [toast]);
-
-  useEffect(() => {
-    if (!showAIPanel) setCopilotSurfaceOpen(false);
-  }, [showAIPanel]);
 
   useEffect(() => {
     if (!casesAiAssistantEnabled) {
       setShowAIPanel(false);
       setAiPanelExiting(false);
-      setCopilotSurfaceOpen(false);
     }
   }, [casesAiAssistantEnabled]);
 
@@ -783,7 +832,6 @@ export function CaseView({
   }, [casesAiAssistantEnabled]);
 
   const closeAiPanel = useCallback(() => {
-    setCopilotSurfaceOpen(false);
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setShowAIPanel(false);
       setAiPanelExiting(false);
@@ -800,6 +848,12 @@ export function CaseView({
     }, 300);
     return () => clearTimeout(id);
   }, [aiPanelExiting]);
+
+  useEffect(() => {
+    const open = casesAiAssistantEnabled && showAIPanel && !aiPanelExiting;
+    setCaseCopilotPanelOpenAttribute(open);
+    return () => setCaseCopilotPanelOpenAttribute(false);
+  }, [casesAiAssistantEnabled, showAIPanel, aiPanelExiting]);
 
   useEffect(() => {
     if (!showAIPanel || aiPanelExiting) return;
@@ -1018,31 +1072,6 @@ export function CaseView({
     [data.id, data.phase, data.preApprovalStages, data.postApprovalStages, data.decisionTabState, data.claimSubType, data.caseKind],
   );
 
-  const handleCopilotSend = useCallback((text: string) => {
-    const uid = `u-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    setAiCopilotMessages((m) => [...m, { id: uid, role: 'user', text, at: Date.now() }]);
-    const short = text.length > 80 ? `${text.slice(0, 80)}…` : text;
-    const hint = copilotClaimContextHint(data.caseKind, data.claimSubType);
-    const datasetReply = buildAssistantReply(activeDataset, text, `case:${data.id}`);
-    const fallback = `Preview — copilot would respond about “${short}” using case ${data.id} and this workspace. A live integration would stream an answer with citations, policy hooks, and suggested follow-ups.`;
-    const body = datasetReply?.text ?? fallback;
-    const replyText = hint ? `${hint}\n\n${body}` : body;
-    window.setTimeout(() => {
-      const aid = `a-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      setAiCopilotMessages((m) => [
-        ...m,
-        {
-          id: aid,
-          role: 'assistant',
-          text: replyText,
-          at: Date.now(),
-          artifact: datasetReply?.artifact,
-          followUps: datasetReply?.followUps,
-        },
-      ]);
-    }, 420);
-  }, [activeDataset, data.id, data.caseKind, data.claimSubType]);
-
   const canUseLegacyCaseFallbacks =
     dataSource.legacyMockOverlayEnabled && data.id === DEMO_CASE_IDS.wopClaim;
 
@@ -1078,73 +1107,6 @@ export function CaseView({
     }
     return prioritizeCreatedTask(datasetRows);
   }, [activeDataset, canUseLegacyCaseFallbacks, data.id, data.phase, data.decisionTabState, newCaseTaskReady, overdueTaskReady, overdueTaskCompleted, dataVersion, createdTaskId]);
-
-  const caseBrief = useMemo(() => {
-    const primarySlot = data.workflowMeta?.contextBar?.[0];
-    const clientHeadline = [
-      primarySlot?.value ?? data.primaryPartyName ?? data.claimantName,
-      data.workflowMeta?.breadcrumb?.replace(/^Claim ·\s*/i, '') ?? data.caseTypeLabel,
-    ]
-      .filter(Boolean)
-      .join(' · ');
-
-    return buildCaseBrief({
-      caseId: data.id,
-      clientHeadline,
-      aiSummary: data.generalInformation?.aiSummary,
-      requirements: data.requirements.map((req) => ({
-        id: req.id,
-        datasetRequirementId: req.datasetRequirementId,
-        name: req.name,
-        status: req.status,
-        linkedTasks: req.linkedTasks,
-        blockingImpact: req.blockingImpact,
-      })),
-      tasks: contextualTasks.map((row) => ({
-        id: row.id,
-        label:
-          (row.task as { label?: string } | undefined)?.label ??
-          row.task?.taskType ??
-          row.taskType ??
-          row.id,
-        status: row.status,
-        aiGenerated: row.aiGenerated ?? row.task?.aiGenerated,
-      })),
-    });
-  }, [contextualTasks, data]);
-
-  useEffect(() => {
-    const hash = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash;
-    if (!hash) return;
-    const params = new URLSearchParams(hash);
-    const taskId = params.get('task');
-    if (!taskId) return;
-    const found = contextualTasks.find((row) => row.id === taskId);
-    if (!found) return;
-    setActiveTab('tasks');
-    setTabViews((prev) => ({ ...prev, tasks: 'table' }));
-    openCaseTaskPanel(found.task ?? resolveTaskForCaseContextRow(found, data));
-  }, [contextualTasks, data, location.hash, openCaseTaskPanel]);
-
-  const communications = useMemo(
-    () => {
-      const datasetRows = listCommunications(activeDataset, data.id).map((row) => ({
-        date: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : row.id,
-        channel: row.channel,
-        direction: row.direction,
-        contact: row.contact ?? row.linkedObjects.find((ref) => ref.kind === 'client')?.label ?? data.claimantName,
-        summary: row.subject,
-        owner: row.assignee ?? row.status,
-        stage: row.stage,
-      }));
-      if (!canUseLegacyCaseFallbacks) return datasetRows;
-      return datasetRows.length ? datasetRows : WOP_FALLBACK_COMMUNICATIONS.map((row) => ({
-        ...row,
-        contact: row.contact || data.claimantName,
-      }));
-    },
-    [activeDataset, canUseLegacyCaseFallbacks, data.claimantName, data.id]
-  );
 
   const documents = useMemo(
     () => {
@@ -1192,67 +1154,174 @@ export function CaseView({
         },
       ];
     },
+    [activeDataset, canUseLegacyCaseFallbacks, data.claimantName, data.id],
+  );
+
+  const focusCaseWorkspaceObject = useCallback(
+    (input: OpenCaseWorkspaceObjectInput) => {
+      if (input.caseId !== data.id) return;
+      if (isGlobalCopilotOwningCase(data.id)) {
+        requestGlobalCopilotCaseFocus(input);
+        return;
+      }
+      if (input.kind === 'task') {
+        setActiveTab('tasks');
+        setTabViews((prev) => ({ ...prev, tasks: 'table' }));
+        const found = contextualTasks.find((row) => row.id === input.objectId);
+        if (found) openCaseTaskPanel(found.task ?? resolveTaskForCaseContextRow(found, data));
+        return;
+      }
+      if (input.kind === 'document') {
+        setActiveTab('documents');
+        const found = documents.find(
+          (row) => row.id === input.objectId || row.name === input.objectId,
+        );
+        if (found) openCaseDocumentPanel(documentToCaseContextRow(found));
+        return;
+      }
+      setActiveTab('requirements');
+      const found = data.requirements.find(
+        (row) =>
+          String(row.id) === input.objectId
+          || String(row.datasetRequirementId ?? '') === input.objectId,
+      );
+      if (found) openRequirementPanel(found);
+    },
+    [contextualTasks, data, documents, openCaseDocumentPanel, openCaseTaskPanel, openRequirementPanel],
+  );
+
+  const handleOpenCaseWorkspaceObject = useCallback<OpenCaseWorkspaceObjectHandler>(
+    (input) => {
+      if (input.caseId !== data.id) {
+        openCaseWorkspaceObject(navigate, input);
+        return;
+      }
+      navigate(buildCaseWorkspaceObjectHref(input), { replace: false });
+      focusCaseWorkspaceObject(input);
+    },
+    [data.id, focusCaseWorkspaceObject, navigate],
+  );
+
+  const caseBrief = useMemo(() => {
+    const primarySlot = data.workflowMeta?.contextBar?.[0];
+    const clientHeadline = [
+      primarySlot?.value ?? data.primaryPartyName ?? data.claimantName,
+      data.workflowMeta?.breadcrumb?.replace(/^Claim ·\s*/i, '') ?? data.caseTypeLabel,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+
+    return buildCaseBrief({
+      caseId: data.id,
+      clientHeadline,
+      aiSummary: data.generalInformation?.aiSummary,
+      requirements: data.requirements.map((req) => ({
+        id: req.id,
+        datasetRequirementId: req.datasetRequirementId,
+        name: req.name,
+        status: req.status,
+        linkedTasks: req.linkedTasks,
+        blockingImpact: req.blockingImpact,
+      })),
+      tasks: contextualTasks.map((row) => ({
+        id: row.id,
+        label:
+          (row.task as { label?: string } | undefined)?.label ??
+          row.task?.taskType ??
+          row.taskType ??
+          row.id,
+        status: row.status,
+        aiGenerated: row.aiGenerated ?? row.task?.aiGenerated,
+      })),
+    });
+  }, [contextualTasks, data]);
+
+  const caseClientHeadline = useMemo(() => {
+    const primarySlot = data.workflowMeta?.contextBar?.[0];
+    return [
+      primarySlot?.value ?? data.primaryPartyName ?? data.claimantName,
+      data.workflowMeta?.breadcrumb?.replace(/^Claim ·\s*/i, '') ?? data.caseTypeLabel,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  }, [data]);
+
+  useEffect(() => {
+    const onFocus = (event: Event) => {
+      const detail = (event as CustomEvent<FocusCaseWorkspaceObjectDetail>).detail;
+      if (!detail || detail.caseId !== data.id) return;
+      focusCaseWorkspaceObject(detail);
+      detail.handled = true;
+    };
+    window.addEventListener(APP_EVENTS.focusCaseWorkspaceObject, onFocus);
+    return () => window.removeEventListener(APP_EVENTS.focusCaseWorkspaceObject, onFocus);
+  }, [data.id, focusCaseWorkspaceObject]);
+
+  // Restore tab + selection from URL hash (deep links from copilot, tables, etc.).
+  useEffect(() => {
+    const hash = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash;
+    if (!hash) return;
+    const params = new URLSearchParams(hash);
+    const tab = params.get('tab');
+    if (tab === 'activation' && data.caseKind === 'new_business') {
+      setActiveTab(scoringSidePanelEnabled || !data.underwritingScoring ? 'requirements' : 'scoring');
+    } else if (tab === 'scoring' && scoringSidePanelEnabled) {
+      openScoringPanel();
+    } else if (tab && RESTORABLE_CASE_TABS.includes(tab as CaseTab)) {
+      setActiveTab(tab as CaseTab);
+    }
+    const taskId = params.get('task');
+    if (taskId) {
+      try {
+        const suppressCaseId = sessionStorage.getItem(STORAGE_KEYS.suppressCaseHashTaskFocus);
+        if (suppressCaseId && caseWorkspaceIdsMatch(suppressCaseId, data.id)) {
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
+      focusCaseWorkspaceObject({ caseId: data.id, kind: 'task', objectId: taskId });
+      return;
+    }
+    const docId = params.get('doc');
+    if (docId) {
+      focusCaseWorkspaceObject({ caseId: data.id, kind: 'document', objectId: docId });
+      return;
+    }
+    const reqIdRaw = params.get('req');
+    if (reqIdRaw) {
+      focusCaseWorkspaceObject({ caseId: data.id, kind: 'requirement', objectId: reqIdRaw });
+    }
+  }, [data.caseKind, data.id, data.underwritingScoring, focusCaseWorkspaceObject, location.hash, openScoringPanel, scoringSidePanelEnabled]);
+
+  const communications = useMemo(
+    () => {
+      const datasetRows = listCommunications(activeDataset, data.id).map((row) => ({
+        date: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : row.id,
+        channel: row.channel,
+        direction: row.direction,
+        contact: row.contact ?? row.linkedObjects.find((ref) => ref.kind === 'client')?.label ?? data.claimantName,
+        summary: row.subject,
+        owner: row.assignee ?? row.status,
+        stage: row.stage,
+      }));
+      if (!canUseLegacyCaseFallbacks) return datasetRows;
+      return datasetRows.length ? datasetRows : WOP_FALLBACK_COMMUNICATIONS.map((row) => ({
+        ...row,
+        contact: row.contact || data.claimantName,
+      }));
+    },
     [activeDataset, canUseLegacyCaseFallbacks, data.claimantName, data.id]
   );
+
   const selectedCaseDocumentData = useMemo<DynamicDocumentData | null>(() => {
     if (!selectedCaseDocument) return null;
-    const datasetEvidence = getDocumentEvidence(selectedCaseDocument.id, activeDataset);
-    if (datasetEvidence) return datasetEvidence;
-    return {
-      documentId: selectedCaseDocument.name.replace(/\.[^.]+$/, '').slice(0, 12).toUpperCase(),
-      documentTitle: selectedCaseDocument.name,
-      category: `${selectedCaseDocument.category} document`,
-      status: selectedCaseDocument.status,
-      fileSize: selectedCaseDocument.fileSize ?? 'No file',
-      fileType: selectedCaseDocument.fileType ?? getDocumentFileType(selectedCaseDocument.name),
-      caseId: data.id,
-      caseReference: data.policyNumber ?? data.id,
-      claimant: data.claimantName,
-      source: selectedCaseDocument.source,
-      linkedRequirement: selectedCaseDocument.linkedRequirement,
-      linkedRequirementHref: `/cases/${data.id}#tab=requirements`,
-      received: selectedCaseDocument.uploaded,
-      totalPages: 12,
-      pages: [
-        { number: 2, image: '/evidence-medical-report-page-2.png', label: 'Physical examination' },
-        { number: 3, image: '/evidence-medical-report-page.png', label: 'Medical history and plan' },
-      ],
-      summary: {
-        label: 'Summary',
-        status: 'Review evidence',
-        text: selectedCaseDocument.aiSummary,
-      },
-      evidence: dataSource.legacyMockOverlayEnabled === false ? [] : [
-        {
-          id: 'treatment-gap',
-          marker: 1,
-          page: 3,
-          severity: 'Medium',
-          title: 'Confirm treatment continuity',
-          quote: 'He has attended physiotherapy intermittently and was prescribed NSAIDs for pain relief.',
-          reasoning: 'The report says physiotherapy was intermittent, but does not confirm visit frequency, duration, or adherence.',
-          impact: 'Ask for treatment frequency before using this as recovery evidence.',
-          tone: 'warning',
-          highlight: { top: '35.0%', left: '2.4%', width: '93%', height: '3.2%' },
-        },
-        {
-          id: 'rtw-gap',
-          marker: 2,
-          page: 3,
-          severity: 'High',
-          title: 'Request return-to-work plan',
-          quote: 'Patient reports difficulty with prolonged sitting (>30 mins) and bending. Capable of light duties with restrictions.',
-          reasoning: 'Restrictions are documented, but there is no timeline, activity plan, or employer accommodation path.',
-          impact: 'Do not close the control gap until an RTW plan is requested.',
-          tone: 'danger',
-          highlight: { top: '64.3%', left: '2.4%', width: '93%', height: '6.2%' },
-        },
-      ],
-      actions: [
-        { id: 'review-requirement', label: 'Review requirement' },
-        { id: 'create-follow-up', label: 'Create follow-up', variant: 'primary' },
-      ],
-    };
+    return buildCaseDocumentPanelData(
+      selectedCaseDocument,
+      { caseId: data.id, claimantName: data.claimantName, policyNumber: data.policyNumber },
+      activeDataset,
+      dataSource.legacyMockOverlayEnabled,
+    );
   }, [activeDataset, data.claimantName, data.id, data.policyNumber, dataSource.legacyMockOverlayEnabled, selectedCaseDocument]);
   const [activeDocumentInsightId, setActiveDocumentInsightId] = useState('');
   useEffect(() => {
@@ -1321,15 +1390,14 @@ export function CaseView({
     [activeDataset, canUseLegacyCaseFallbacks, data.id]
   );
 
-  const stageOptionsFor = useCallback(<T extends { stage?: string }>(rows: T[]) => {
-    return Array.from(new Set(rows.map((row) => row.stage).filter((stage): stage is string => Boolean(stage)))).sort();
-  }, []);
-  const stageMatches = useCallback(<T extends { stage?: string }>(tab: string, row: T) => {
-    const selectedStage = stageFilters[tab];
-    return !selectedStage || row.stage === selectedStage;
-  }, [stageFilters]);
-  const stagedTasks = useMemo(() => contextualTasks.filter((row) => stageMatches('tasks', row)), [contextualTasks, stageMatches]);
-  const stagedRequirements = useMemo(() => data.requirements.filter((row) => stageMatches('requirements', row)), [data.requirements, stageMatches]);
+  const progressOrder = resolveProgressOrder(data);
+  const stageLensMatches = useCallback(
+    <T extends { stage?: string }>(row: T) =>
+      matchesStageLens(row, stageLensOrder, workflowLensSteps, progressOrder),
+    [progressOrder, stageLensOrder, workflowLensSteps],
+  );
+  const stagedTasks = useMemo(() => contextualTasks.filter(stageLensMatches), [contextualTasks, stageLensMatches]);
+  const stagedRequirements = useMemo(() => data.requirements.filter(stageLensMatches), [data.requirements, stageLensMatches]);
   const requirementSearchQuery = (tabSearchQueries.requirements ?? '').trim().toLowerCase();
   const searchedRequirements = useMemo(() => {
     const filtered = !requirementSearchQuery
@@ -1363,7 +1431,7 @@ export function CaseView({
         });
     return sortRequirementsByRelevance(filtered);
   }, [stagedRequirements, requirementSearchQuery]);
-  const stagedDocuments = useMemo(() => documents.filter((row) => stageMatches('documents', row)), [documents, stageMatches]);
+  const stagedDocuments = useMemo(() => documents.filter(stageLensMatches), [documents, stageLensMatches]);
   const taskSearchQuery = (tabSearchQueries.tasks ?? '').trim().toLowerCase();
   const searchedTasks = useMemo(() => {
     const filtered = !taskSearchQuery
@@ -1411,16 +1479,74 @@ export function CaseView({
         });
     return sortCaseDocumentsByRelevance(filtered);
   }, [stagedDocuments, documentSearchQuery]);
-  const stagedCommunications = useMemo(() => communications.filter((row) => stageMatches('communications', row)), [communications, stageMatches]);
-  const stagedHistoryEvents = useMemo(() => historyEvents.filter((row) => stageMatches('history', row)), [historyEvents, stageMatches]);
-  const activeStageOptions = useMemo(() => {
-    if (activeTab === 'tasks') return stageOptionsFor(contextualTasks);
-    if (activeTab === 'requirements') return stageOptionsFor(data.requirements);
-    if (activeTab === 'documents') return stageOptionsFor(documents);
-    if (activeTab === 'communications') return stageOptionsFor(communications);
-    if (activeTab === 'history') return stageOptionsFor(historyEvents);
-    return [];
-  }, [activeTab, communications, contextualTasks, data.requirements, documents, historyEvents, stageOptionsFor]);
+  const stagedCommunications = useMemo(() => communications.filter(stageLensMatches), [communications, stageLensMatches]);
+  const stagedHistoryEvents = useMemo(() => historyEvents.filter(stageLensMatches), [historyEvents, stageLensMatches]);
+
+  const lensAwareTabStats = useMemo(() => {
+    const requirementCompleted = stagedRequirements.filter(
+      (item) => item.status === 'Fulfilled' || item.status === 'Waived',
+    ).length;
+    const requirementTotal = stagedRequirements.length;
+    const requirementCompletionPct = requirementTotal > 0
+      ? Math.round((requirementCompleted / requirementTotal) * 100)
+      : 0;
+    const reqCountByStatus: Record<string, number> = {
+      Fulfilled: 0,
+      Pending: 0,
+      Overdue: 0,
+      Waived: 0,
+      Completed: 0,
+    };
+    for (const row of stagedRequirements) {
+      reqCountByStatus[row.status] = (reqCountByStatus[row.status] || 0) + 1;
+    }
+    const completed = stagedRequirements.filter(
+      (item) => item.status === 'Fulfilled' || item.status === 'Waived' || item.status === 'Completed',
+    ).length;
+    const overdue = stagedRequirements.filter((item) => item.status === 'Overdue').length;
+    const pending = stagedRequirements.filter((item) => item.status === 'Pending').length;
+    const ordered = stagedRequirements.filter((item) => item.status === 'Ordered').length;
+    return {
+      tasks: stagedTasks.length,
+      documents: stagedDocuments.length,
+      communications: stagedCommunications.length,
+      history: stagedHistoryEvents.length,
+      requirementCompleted,
+      requirementTotal,
+      requirementCompletionPct,
+      reqCountByStatus,
+      requirementKpis: {
+        completed,
+        overdue,
+        pending,
+        ordered,
+        needsAttention: overdue + pending,
+      },
+    };
+  }, [stagedCommunications, stagedDocuments, stagedHistoryEvents, stagedRequirements, stagedTasks]);
+
+  const stageLensLabel = useMemo(
+    () => resolveLensStepLabel(workflowLensSteps, stageLensOrder),
+    [stageLensOrder, workflowLensSteps],
+  );
+  const stageLensBannerMode = useMemo(
+    () => resolveLensBannerMode(stageLensOrder, workflowLensSteps, progressOrder),
+    [progressOrder, stageLensOrder, workflowLensSteps],
+  );
+  const emptyLensMessage = useCallback(
+    (entityLabel: string, totalCount: number, searchActive: boolean) => {
+      if (totalCount === 0) return `No ${entityLabel} yet`;
+      if (searchActive) return `No ${entityLabel} match your search`;
+      if (stageLensLabel && stageLensOrder != null) {
+        const exact = usesExactStageLens(stageLensOrder, progressOrder, workflowLensSteps);
+        return exact
+          ? `No ${entityLabel} at ${stageLensLabel}`
+          : `No ${entityLabel} recorded through ${stageLensLabel}`;
+      }
+      return `No ${entityLabel} match your filters`;
+    },
+    [progressOrder, stageLensLabel, stageLensOrder, workflowLensSteps],
+  );
 
   const workflowMetaTabOrder = workflowMeta?.tabs
     .map(caseTabFromWorkflowLabel)
@@ -1450,7 +1576,7 @@ export function CaseView({
     : candidateCaseTabOrder;
   if (data.caseKind === 'new_business') {
     effectiveCaseTabOrder = effectiveCaseTabOrder.filter((tab) => tab !== 'activation');
-    if (hasUnderwritingScoring && !effectiveCaseTabOrder.includes('scoring')) {
+    if (hasUnderwritingScoring && !scoringSidePanelEnabled && !effectiveCaseTabOrder.includes('scoring')) {
       const requirementsIndex = effectiveCaseTabOrder.indexOf('requirements');
       effectiveCaseTabOrder = requirementsIndex >= 0
         ? [
@@ -1460,6 +1586,9 @@ export function CaseView({
           ]
         : ['overview', 'requirements', 'scoring', ...effectiveCaseTabOrder.filter((tab) => tab !== 'overview' && tab !== 'requirements')];
     }
+  }
+  if (scoringSidePanelEnabled) {
+    effectiveCaseTabOrder = effectiveCaseTabOrder.filter((tab) => tab !== 'scoring');
   }
   const effectiveCaseTabOrderWithDecision = [
     ...effectiveCaseTabOrder.filter((tab) => tab !== 'decision'),
@@ -1479,10 +1608,13 @@ export function CaseView({
     data.caseKind,
     caseAnatomy,
   );
+  const hasDecisionFlow = Boolean(data.decisionFlow);
+  const isDecisionTabLocked =
+    !hasDecisionFlow && data.decisionTabState === 'locked' && data.phase !== 'post-approval';
   const decisionButtonClass = `group/dec relative inline-flex items-center justify-center rounded-full transition-colors ${
     data.decisionTabState === 'completed'
       ? 'border border-[#008533] bg-[#e5f5ea] text-brand-green'
-      : data.decisionTabState === 'locked' && data.phase !== 'post-approval'
+      : isDecisionTabLocked
         ? 'cursor-not-allowed border border-[#e8eaed] text-[#b7bbc2]'
         : 'border border-brand-blue text-brand-blue hover:bg-surface-selected'
   }`;
@@ -1505,38 +1637,48 @@ export function CaseView({
       return true;
     })
     .map((tab) => {
-    const isDecisionLocked = tab === 'decision' && data.decisionTabState === 'locked' && data.phase !== 'post-approval';
+    const isDecisionLocked = tab === 'decision' && isDecisionTabLocked;
     const isDecisionCompleted = tab === 'decision' && data.decisionTabState === 'completed';
 
-    const label =
-      workflowMeta?.tabs.find((workflowLabel) => caseTabFromWorkflowLabel(workflowLabel) === tab) ??
-      resolveCaseWorkspaceTabLabel(tab, caseAnatomy);
+    const label = resolveCaseTabDisplayLabel(tab, {
+      anatomy: caseAnatomy,
+      workflowTabLabels: workflowMeta?.tabs,
+    });
 
     return {
       id: tab,
       label,
       icon: resolveCaseWorkspaceTabIcon(tab, label, data.caseKind, caseAnatomy),
-      count: tab === 'related_cases' && relationshipRows.length > 0 ? relationshipRows.length : null,
+      count:
+        tab === 'documents' && lensAwareTabStats.documents > 0
+          ? lensAwareTabStats.documents
+          : tab === 'communications' && lensAwareTabStats.communications > 0
+            ? lensAwareTabStats.communications
+            : tab === 'history' && lensAwareTabStats.history > 0
+              ? lensAwareTabStats.history
+              : tab === 'related_cases' && relationshipRows.length > 0
+                ? relationshipRows.length
+                : null,
       disabled: isDecisionLocked,
       title: isDecisionLocked ? 'Requirements must be met before making a decision' : undefined,
       suffix: (
         <>
-          {tab === 'requirements' ? (
+          {tab === 'requirements' && lensAwareTabStats.requirementTotal > 0 ? (
             <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold leading-none shadow-sm ${
-              requirementCompletionPct === 100
+              lensAwareTabStats.requirementCompletionPct === 100
                 ? 'border-[#a8d6b8] bg-[#e5f5ea] text-brand-green'
-                : reqCountByStatus.Overdue > 0
+                : (lensAwareTabStats.reqCountByStatus.Overdue ?? 0) > 0
                   ? 'border-[#f3b6b1] bg-[#fde5e4] text-brand-red'
                   : 'border-[#f1cf93] bg-[#fff4e6] text-[#8a5a00]'
             }`}>
-              {requirementCompletedCount}/{requirementTotalCount}
+              {lensAwareTabStats.requirementCompleted}/{lensAwareTabStats.requirementTotal}
             </span>
           ) : null}
-          {tab === 'tasks' && contextualTasks.length > 0 ? (
+          {tab === 'tasks' && lensAwareTabStats.tasks > 0 ? (
             <span className={`inline-flex h-[20px] min-w-[20px] items-center justify-center rounded-full border px-1.5 text-[11px] font-bold leading-none shadow-sm ${
               newTaskBadge ? 'animate-pulse border-[#cd2c23] bg-[#cd2c23] text-white' : 'border-border-soft bg-white text-text-secondary'
             }`}>
-              {contextualTasks.length}
+              {lensAwareTabStats.tasks}
             </span>
           ) : null}
           {isDecisionCompleted ? (
@@ -1581,7 +1723,10 @@ export function CaseView({
   );
 
   return (
-    <div className="relative flex h-full min-h-0 min-w-0 overflow-x-hidden bg-surface-primary">
+    <div
+      className="relative flex h-full min-h-0 min-w-0 overflow-x-hidden bg-surface-primary"
+      data-case-workspace={data.id}
+    >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="bg-surface-primary px-4 py-3 lg:px-6">
         <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
@@ -1637,7 +1782,7 @@ export function CaseView({
               className={`${decisionButtonClass} group/dec relative min-h-[40px] min-w-[40px] gap-0 px-0`}
               aria-label={decisionActionLabel}
               title={
-                data.decisionTabState === 'locked' && data.phase !== 'post-approval'
+                isDecisionTabLocked
                   ? 'Requirements must be met before making a decision'
                   : decisionActionLabel
               }
@@ -1653,7 +1798,7 @@ export function CaseView({
                   <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
                 </span>
               )}
-              {data.decisionTabState === 'locked' && data.phase !== 'post-approval' && (
+              {isDecisionTabLocked && (
                 <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border-default bg-white px-2.5 py-1.5 text-[11px] font-medium text-text-secondary shadow-[0_4px_10px_rgba(27,28,30,0.12)] group-hover/dec:inline-flex">
                   Requirements must be met before making a decision
                 </span>
@@ -1730,7 +1875,7 @@ export function CaseView({
             >
               {decisionActionLabel}
               {data.decisionTabState === 'completed' && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />}
-              {data.decisionTabState === 'locked' && data.phase !== 'post-approval' && (
+              {isDecisionTabLocked && (
                 <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border-default bg-white px-2.5 py-1.5 text-[11px] font-medium text-text-secondary shadow-[0_4px_10px_rgba(27,28,30,0.12)] group-hover/dec:inline-flex">
                   Requirements must be met before making a decision
                 </span>
@@ -1769,7 +1914,30 @@ export function CaseView({
         <div className="mb-4 rounded-lg border border-[#e8eaed] bg-white">
           {workflowContextSlots.length ? (
             <div className="grid grid-cols-2 divide-x divide-y divide-[#e8eaed] rounded-t-lg bg-white lg:grid-cols-4 lg:divide-y-0">
-              {workflowContextSlots.map((slot) => (
+              {workflowContextSlots.map((slot) => {
+                if (scoringSidePanelEnabled && scoringDraft && isApplicantContextSlot(slot.label)) {
+                  return (
+                    <div key={slot.slot} className="grid min-w-0 grid-cols-2 gap-4 px-4 py-3 sm:px-5">
+                      <div className="min-w-0">
+                        <SectionLabel>{slot.label}</SectionLabel>
+                        <span className={`block truncate text-[15px] font-semibold ${richValueClass(slot.valueColor)}`}>
+                          {slot.value}
+                        </span>
+                        {slot.sub ? (
+                          <span className={`mt-0.5 block truncate text-[11px] ${slot.subType === 'reference_link' ? 'text-brand-blue underline underline-offset-2' : 'text-text-muted'}`}>
+                            {slot.sub}
+                          </span>
+                        ) : null}
+                      </div>
+                      <CaseScoringApplicantAffordance
+                        scoring={scoringDraft}
+                        onOpen={openScoringPanel}
+                        active={scoringPanelActive}
+                      />
+                    </div>
+                  );
+                }
+                return (
                 <div key={slot.slot} className="flex min-w-0 flex-col justify-center px-4 py-3 sm:px-5">
                   <SectionLabel>{slot.label}</SectionLabel>
                     <span className={`text-[15px] font-semibold ${richValueClass(slot.valueColor)}`}>{slot.value}</span>
@@ -1779,13 +1947,25 @@ export function CaseView({
                       </span>
                     ) : null}
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : null}
           <div className={`${workflowContextSlots.length ? 'hidden' : 'grid'} grid-cols-2 divide-x divide-y divide-[#e8eaed] rounded-t-lg bg-white lg:grid-cols-4 lg:divide-y-0`}>
-          <div className="flex min-w-0 flex-col justify-center px-4 py-3">
-            <SectionLabel>{primaryPartyMetric?.label ?? 'Applicant'}</SectionLabel>
-            <span className="text-[15px] font-semibold text-text-primary">{primaryPartyMetric?.value ?? primaryPartyDisplayName}</span>
+          <div className={`${workflowContextSlots.length ? 'hidden' : ''} ${scoringSidePanelEnabled && scoringDraft ? 'grid min-w-0 grid-cols-2 gap-4 px-4 py-3 sm:px-5' : 'flex min-w-0 flex-col justify-center px-4 py-3'}`}>
+            <div className="min-w-0">
+              <SectionLabel>{primaryPartyMetric?.label ?? 'Applicant'}</SectionLabel>
+              <span className="block truncate text-[15px] font-semibold text-text-primary">
+                {primaryPartyMetric?.value ?? primaryPartyDisplayName}
+              </span>
+            </div>
+            {scoringSidePanelEnabled && scoringDraft ? (
+              <CaseScoringApplicantAffordance
+                scoring={scoringDraft}
+                onOpen={openScoringPanel}
+                active={scoringPanelActive}
+              />
+            ) : null}
           </div>
           <div className="flex min-w-0 flex-col justify-center px-4 py-3">
             <SectionLabel>{planMetric?.label ?? 'Plan'}</SectionLabel>
@@ -1846,8 +2026,9 @@ export function CaseView({
             <WorkflowMetaSubway
               stages={workflowMeta.subwayStages}
               mobileTabs={isCompactShell}
-              activeOrder={data.activeStage}
-              onStageSelect={handleWorkflowStepSelect}
+              progressOrder={resolveProgressOrder(data)}
+              lensOrder={stageLensOrder}
+              onStageSelect={handleStageLensSelect}
               disabled={isStepperBusy}
             />
           ) : null}
@@ -1858,9 +2039,10 @@ export function CaseView({
             isTerminated={isTerminated}
             isDecisionStep={isDecisionStep}
             activeStepForPhase={activeStepForPhase}
+            lensOrder={stageLensOrder}
             phaseTransition={phaseTransition}
             hasSubwayStages={Boolean(workflowMeta?.subwayStages?.length)}
-            onStageSelect={handleWorkflowStepSelect}
+            onStageSelect={handleStageLensSelect}
             isStepperBusy={isStepperBusy}
           />
         </div>
@@ -1894,6 +2076,7 @@ export function CaseView({
               data.caseStatus = `Closed: ${label}`;
               setActiveTab('decision');
               bumpData();
+              appToast.success(`Decision recorded — ${label}`);
               if (aiActivityEnabled && caseId === DEMO_CASE_IDS.wopClaim && decision.decisionType === 'approve') {
                 setTimeout(() => {
                   setAiActivitySeq({
@@ -1915,7 +2098,6 @@ export function CaseView({
             onOpenAIFactors={() => {
               if (!casesAiAssistantEnabled) return;
               openAiPanel();
-              setAiPanelTab('factors');
             }}
           />
         )}
@@ -1932,43 +2114,48 @@ export function CaseView({
         )}
         {activeTab === 'overview' && (
           <CaseOverviewTab
-            caseBrief={caseBrief}
             richCards={richGeneralInfoCards}
             richCollapsibles={richGeneralInfoCollapsibles}
             structuredSections={structuredGeneralSections}
             hasDatasetGeneralInformation={hasDatasetGeneralInformation}
             scoring={scoringDraft}
             onScoreAdd={(type) => openScoreModal(type)}
-            onScoreFullView={() => setActiveTab('scoring')}
+            onScoreFullView={() => (scoringSidePanelEnabled ? openScoringPanel() : setActiveTab('scoring'))}
             onScoreRowClick={(row) => openScoreModal(row.type, row)}
           />
         )}
 
         {activeTab !== 'overview' && activeTab !== 'decision' && (
           <div className="flex min-h-0 flex-1 flex-col bg-white">
+            {stageLensLabel && stageLensBannerMode ? (
+              <CaseStageLensBanner
+                stageLabel={stageLensLabel}
+                mode={stageLensBannerMode}
+                onClear={() => setStageLensOrder(null)}
+              />
+            ) : null}
             <CaseTabToolbar
               activeTab={activeTab}
               isCompactShell={isCompactShell}
               caseAnatomy={caseAnatomy}
+              workflowTabLabels={workflowMeta?.tabs}
               tabSearchQuery={tabSearchQueries[activeTab] ?? ''}
               onTabSearchChange={(value) => setTabSearchQueries((prev) => ({ ...prev, [activeTab]: value }))}
-              activeStageOptions={activeStageOptions}
-              stageFilter={stageFilters[activeTab] ?? ''}
-              onStageFilterChange={(value) => setStageFilters((prev) => ({ ...prev, [activeTab]: value }))}
               tabView={tabViews[activeTab as Exclude<CaseTab, 'overview' | 'decision'>]}
               onTabViewChange={(view) => setTabViews((prev) => ({ ...prev, [activeTab]: view }))}
               onAddRequirement={() => setShowAddReqModal(true)}
-              requirementCompletionPct={requirementCompletionPct}
-              requirementKpis={requirementKpis}
-              requirementTotalCount={requirementTotalCount}
+              requirementCompletionPct={lensAwareTabStats.requirementCompletionPct}
+              requirementKpis={lensAwareTabStats.requirementKpis}
+              requirementTotalCount={lensAwareTabStats.requirementTotal}
             />
 
-            {activeTab === 'scoring' && (
+            {activeTab === 'scoring' && !scoringSidePanelEnabled && (
               <UnderwritingScoringTab
                 caseId={data.id}
                 scoring={scoringDraft}
                 onChange={updateScoring}
                 onOpenScoreModal={openScoreModal}
+                itemsSectionTitle={`${tabLabel} items`}
               />
             )}
 
@@ -2017,7 +2204,7 @@ export function CaseView({
                         <div className="flex flex-col items-center gap-2 py-16">
                           <ListChecks className="h-8 w-8 text-[#dbdee1]" />
                           <p className="text-sm font-medium text-text-muted">
-                            {contextualTasks.length === 0 ? 'No tasks yet' : 'No tasks match your search'}
+                            {emptyLensMessage('tasks', contextualTasks.length, Boolean(taskSearchQuery))}
                           </p>
                         </div>
                       )}
@@ -2025,7 +2212,7 @@ export function CaseView({
                         const resolved = row.task ?? resolveTaskForCaseContextRow(row, data);
                         const selected = selectedCaseTask?.id === resolved.id;
                         return (
-                          <CaseTaskMobileCard key={row.id} row={row} selected={selected} onSelect={() => openCaseTaskPanel(resolved)} />
+                          <CaseTaskMobileCard key={row.id} row={row} task={resolved} selected={selected} onSelect={() => openCaseTaskPanel(resolved)} />
                         );
                       })}
                     </div>
@@ -2037,7 +2224,7 @@ export function CaseView({
                   <div className="space-y-3">
                     {searchedRequirements.length === 0 ? (
                       <p className="py-16 text-center text-sm font-medium text-text-muted">
-                        {data.requirements.length === 0 ? 'No requirements yet' : 'No requirements match your search'}
+                        {emptyLensMessage('requirements', data.requirements.length, Boolean(requirementSearchQuery))}
                       </p>
                     ) : null}
                     {searchedRequirements.map((row) => (
@@ -2055,6 +2242,7 @@ export function CaseView({
                           data.requirements = data.requirements.filter((r) => r.id !== row.id);
                           setReqKebabOpen(null);
                           bumpData();
+                          appToast.success('Requirement removed');
                         }}
                         externalHref={requirementExternalHref(data.id, row)}
                         externalCode={requirementExternalCode(row)}
@@ -2067,7 +2255,7 @@ export function CaseView({
                   <div className="space-y-3">
                     {searchedDocuments.length === 0 ? (
                       <p className="py-16 text-center text-sm font-medium text-text-muted">
-                        {documents.length === 0 ? 'No documents yet' : 'No documents match your search'}
+                        {emptyLensMessage('documents', documents.length, Boolean(documentSearchQuery))}
                       </p>
                     ) : null}
                     {searchedDocuments.map((row) => (
@@ -2093,11 +2281,12 @@ export function CaseView({
       </div>
       {casePanelContexts.length > 0 && activeCasePanelContextId ? (
         <WorkspaceObjectSidePanel
-          contexts={casePanelContexts}
+          contexts={casePanelContextsWithScoring}
           activeContextId={activeCasePanelContextId}
           onChangeContext={handleCasePanelContextChange}
           onClearContext={clearCasePanelContext}
           onClose={closeCaseSidePanel}
+          caseWorkspaceId={data.id}
           panelWidth={taskDetailPanelWidth}
           onPanelWidthChange={setTaskDetailPanelWidth}
           isResizing={taskDetailPanelResizing}
@@ -2116,36 +2305,84 @@ export function CaseView({
               variant="case"
               caseFileId={data.id}
               fixedOverlay
-              panelContexts={casePanelContexts}
+              panelContexts={casePanelContextsWithScoring}
               activePanelContextId={activeCasePanelContextId}
               onPanelNavigationChange={handleCasePanelNavigationChange}
-              onCompleteTask={(t) => {
-                const datasetTask = listTasks(activeDataset, { caseId: data.id }).find(
-                  (row) => row.id === t.id || row.taskId === t.id,
-                );
-                if (datasetTask) {
-                  const result = executeTaskAction(dataSource.activeDatasetId, datasetTask.id, 'complete', {
-                    name: activeProfile.name,
-                  });
-                  updateDataSource({ activeDatasetId: result.datasetId });
-                  closeCaseSidePanel();
+              onOpenCaseScoring={scoringSidePanelEnabled ? openScoringPanel : undefined}
+              onCompleteTask={(t, options) => {
+                const taskRef = t.taskId ?? t.id;
+                if (isNb66RecommendRequirementsTask(taskRef)) {
+                  const packageResult = approveNb66RequirementGatheringPackage(
+                    dataSource.activeDatasetId,
+                    data.id,
+                    taskRef,
+                    options?.requirementIds ?? [],
+                    { name: activeProfile.name },
+                    platformSettings.activeDemoConfigurationId,
+                  );
+                  if (!packageResult) {
+                    appToast.error('Could not approve requirement package. Try again.');
+                    return;
+                  }
+                  if (isGlobalCopilotOwningCase(data.id)) {
+                    notifyGlobalCopilotTaskOutcome({
+                      taskId: t.id,
+                      alternateTaskIds: taskOutcomeAlternateIds(t),
+                      outcome: 'accepted',
+                    });
+                  } else {
+                    closeCaseSidePanel();
+                  }
+                  updateDataSource({ activeDatasetId: packageResult.datasetId });
+                  const added = packageResult.addedCount;
+                  appToast.success(
+                    added > 0
+                      ? `Task approved — ${added} requirement${added === 1 ? '' : 's'} added to ${data.id}`
+                      : `Task approved on ${data.id}`,
+                  );
+                  bumpData();
                   return;
                 }
-                const ct = contextualTasks.find((x) => x.id === t.id);
-                if (ct) ct.status = 'Completed';
-                if (t.id === 'TSK-BB-OD-01') setOverdueTaskCompleted(true);
-                closeCaseSidePanel();
-                bumpData();
+                try {
+                  const result = runTaskWorkflowAction(
+                    dataSource.activeDatasetId,
+                    taskRef,
+                    'complete',
+                    { name: activeProfile.name },
+                  );
+                  if (!result || !isTaskCompleteActionSuccess(result, taskRef)) {
+                    appToast.error(`Could not complete task ${t.taskId ?? t.id}. Try again.`);
+                    return;
+                  }
+                  updateDataSource({ activeDatasetId: result.datasetId });
+                  appToast.success(
+                    isSemiAutoTask(t) ? `Task ${t.taskId ?? t.id} approved` : `Task ${t.taskId ?? t.id} completed`,
+                  );
+                  closeCaseSidePanel();
+                  bumpData();
+                } catch {
+                  const ct = contextualTasks.find((x) => x.id === t.id);
+                  if (ct) {
+                    ct.status = 'Completed';
+                    if (t.id === 'TSK-BB-OD-01') setOverdueTaskCompleted(true);
+                    appToast.success(`Task ${t.id} completed`);
+                    closeCaseSidePanel();
+                    bumpData();
+                    return;
+                  }
+                  appToast.alert(`Could not complete task ${t.taskId ?? t.id}. Try again.`);
+                }
               }}
               onTaskAction={(t, actionType) => {
-                const datasetTask = listTasks(activeDataset, { caseId: data.id }).find(
-                  (row) => row.id === t.id || row.taskId === t.id,
+                const result = runTaskWorkflowAction(
+                  dataSource.activeDatasetId,
+                  t.taskId ?? t.id,
+                  actionType,
+                  { name: activeProfile.name },
                 );
-                if (!datasetTask) return;
-                const result = executeTaskAction(dataSource.activeDatasetId, datasetTask.id, actionType, {
-                  name: activeProfile.name,
-                });
+                if (!result?.record.task) return;
                 updateDataSource({ activeDatasetId: result.datasetId });
+                appToast.success(`Action recorded on ${t.id}`);
                 closeCaseSidePanel();
               }}
               onAcceptMeeting={() => {
@@ -2173,7 +2410,7 @@ export function CaseView({
               documents={selectedRequirementDocuments}
               tasks={selectedRequirementTasks}
               scoring={scoringDraft}
-              onOpenScoring={() => setActiveTab('scoring')}
+              onOpenScoring={() => openScoringPanel()}
               onOpenDocument={(document) => {
                 openCaseDocumentPanel(documentToCaseContextRow(document));
               }}
@@ -2204,12 +2441,16 @@ export function CaseView({
               onResizeStart={() => undefined}
             />
           ) : null}
+          {activeCasePanelContextId.startsWith('scoring:') && scoringDraft ? (
+            <CaseScoringSidePanel scoring={scoringDraft} />
+          ) : null}
         </WorkspaceObjectSidePanel>
       ) : null}
       {casesAiAssistantEnabled && showAIPanel && (
           <aside
             ref={aiPanelAsideRef}
-            className={`fixed right-0 z-20 flex flex-col overflow-hidden border-l border-t border-border-default bg-white shadow-[-8px_0_24px_rgba(0,0,0,0.08)] motion-reduce:animate-none ${
+            data-case-workspace={data.id}
+            className={`fixed right-0 z-20 relative flex flex-col overflow-hidden border-l border-t border-border-default bg-white shadow-[-8px_0_24px_rgba(0,0,0,0.08)] motion-reduce:animate-none ${
               aiPanelExiting
                 ? 'animate-[slideOutRight_0.3s_ease-out_forwards]'
                 : 'animate-[slideInRight_0.3s_ease-out_forwards]'
@@ -2220,158 +2461,45 @@ export function CaseView({
               height: 'calc(100dvh - 48px)',
             }}
           >
-            <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-              <div className="shrink-0 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-start gap-0">
-                    <div>
-                      <p className="text-[10px] font-normal leading-tight tracking-wide text-text-muted">amplify</p>
-                      <h2 className="text-lg font-semibold leading-snug text-text-primary">Assistant</h2>
-                    </div>
-                    <span className="ml-1 mt-0.5 flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full bg-brand-accent">
-                      <AiCueSparkle size={8} className="!text-white" />
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => { closeAiPanel(); navigate('/copilot'); }}
-                    className="rounded-full p-1.5 text-text-secondary hover:bg-surface-muted"
-                    title="Open full page"
-                  >
-                    <Maximize2 className="h-4 w-4" />
-                  </button>
-                  <button onClick={closeAiPanel} className="rounded-full p-1.5 text-text-secondary hover:bg-surface-muted">
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-              </div>
-
-              <div className="shrink-0 border-b border-border-default bg-white px-6">
-              <div className="flex gap-6">
-                {([
-                  ['insights', 'Case overview'],
-                  ['summary', 'Client profile'],
-                  ['factors', 'Assessment Factors'],
-                ] as const).map(([tabId, label]) => (
-                  <button
-                    key={tabId}
-                    type="button"
-                    onClick={() => setAiPanelTab(tabId)}
-                    className={`relative z-0 pb-3 pt-4 px-3 text-sm font-semibold transition-colors rounded-t-md hover:bg-surface-muted ${
-                      aiPanelTab === tabId ? 'text-text-heading' : 'text-text-secondary'
-                    }`}
-                  >
-                    {aiPanelTab === tabId ? (
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute bottom-0 left-1/2 z-[1] h-1 w-[calc(100%+28px)] max-w-none -translate-x-1/2 bg-brand-blue"
-                      />
-                    ) : null}
-                    <span className="relative z-[2] inline-flex items-center gap-2">
-                      <span>{label}</span>
-                      {tabId === 'factors' && (
-                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-[#b7bbc2] bg-surface-muted px-1.5 text-[11px] font-bold text-text-secondary">
-                          {data.assessmentFactors.length}
-                        </span>
-                      )}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              </div>
-
-              <div className="relative flex min-h-0 min-w-0 flex-1 flex-col pb-[min(280px,36vh)]">
-              {aiPanelTab === 'insights' ? (
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                  <CaseInsightsPanel
-                    activeStage={data.activeStage}
-                    bundle={insightBundle}
-                    onTextMouseUp={handleSummarySelection}
-                    onCopilotToast={(msg) => setToast({ message: msg, tone: 'neutral' })}
-                  />
-                </div>
-              ) : (
-                <div className="h-full min-h-0 flex-1 overflow-y-auto">
-                  {aiPanelTab === 'summary' && (
-                    <AiClientProfilePanel data={data} onMouseUp={handleSummarySelection} />
-                  )}
-
-                  {aiPanelTab === 'factors' && (
-                    <div className="px-6 py-5">
-                      <h3 className="mb-4 text-sm font-semibold text-text-heading">Assessment Factors</h3>
-                      <table className="w-full text-[13px]">
-                        <thead>
-                          <tr className="border-b border-border-default">
-                            <th className="pb-2 pr-3 text-left font-medium text-text-secondary">Category</th>
-                            <th className="pb-2 pr-3 text-left font-medium text-text-secondary">Item</th>
-                            <th className="pb-2 pr-3 text-right font-medium text-text-secondary">Score</th>
-                            <th className="pb-2 text-left font-medium text-text-secondary">Source</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {data.assessmentFactors.map((factor, idx) => (
-                            <tr key={idx} className="border-b border-border-divider">
-                              <td className="py-2.5 pr-3 text-text-secondary">{factor.category}</td>
-                              <td className="py-2.5 pr-3 text-text-secondary">{factor.item}</td>
-                              <td className={`py-2.5 pr-3 text-right font-semibold ${factor.score < 0 ? 'text-brand-green' : 'text-brand-red'}`}>
-                                {factor.score > 0 ? `+${factor.score}` : factor.score}
-                              </td>
-                              <td className="py-2.5 font-mono text-[11px] text-text-muted">{factor.source}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr className="border-t-2 border-border-default">
-                            <td colSpan={2} className="py-3 text-sm font-semibold text-text-primary">
-                              <div className="flex gap-6">
-                                <span>Total Positive: <span className="text-brand-red">+{data.assessmentFactors.filter((f) => f.score > 0).reduce((s, f) => s + f.score, 0)}</span></span>
-                                <span>Total Negative: <span className="text-brand-green">{data.assessmentFactors.filter((f) => f.score < 0).reduce((s, f) => s + f.score, 0)}</span></span>
-                              </div>
-                            </td>
-                            <td className="py-3 text-right text-sm font-bold text-text-primary">{data.netAssessmentScore}</td>
-                            <td className="py-3 text-[11px] text-text-muted">Net Score</td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-                {/* Full-width fades only for Client profile / Factors (Case overview handles fades inside narrative column) */}
-                {aiPanelTab !== 'insights' ? (
-                  <>
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute inset-x-0 top-0 z-[8] h-[4.75rem] bg-[linear-gradient(to_bottom,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.42)_32%,rgba(255,255,255,0.14)_62%,rgba(255,255,255,0.03)_88%,transparent_100%)]"
-                    />
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute inset-x-0 bottom-0 z-[8] h-[6.5rem] bg-[linear-gradient(to_top,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.4)_30%,rgba(255,255,255,0.12)_58%,rgba(255,255,255,0.03)_85%,transparent_100%)]"
-                    />
-                  </>
-                ) : null}
-              </div>
-
-              <div
-                className={`pointer-events-none absolute inset-0 z-[12] bg-[#9ca3af]/18 transition-opacity duration-300 ease-in-out motion-reduce:transition-none motion-reduce:duration-0 ${
-                  copilotSurfaceOpen ? 'opacity-100' : 'opacity-0'
-                }`}
-                aria-hidden={!copilotSurfaceOpen}
-              />
-            </div>
-
-            <AiCopilotDock
+            <CaseCopilotPanel
               data={data}
-              messages={aiCopilotMessages}
-              onSendMessage={handleCopilotSend}
-              aiPanelTab={aiPanelTab}
-              onSurfaceOpenChange={setCopilotSurfaceOpen}
+              caseBrief={caseBrief}
+              contextualTasks={contextualTasks}
+              selectedCaseTask={selectedCaseTask}
+              selectedRequirement={selectedRequirement}
+              clientHeadline={caseClientHeadline}
+              onClose={closeAiPanel}
+              onOpenCaseWorkspaceObject={handleOpenCaseWorkspaceObject}
+              onTaskActionComplete={bumpData}
+              onApplyTaskAction={(taskId, actionType) => {
+                try {
+                  const result = runTaskWorkflowAction(
+                    dataSource.activeDatasetId,
+                    taskId,
+                    actionType,
+                    { name: activeProfile.name },
+                  );
+                  if (!result) return false;
+                  if (actionType === 'complete' && !isTaskCompleteActionSuccess(result, taskId)) {
+                    return false;
+                  }
+                  if (actionType !== 'complete' && !result.record.task) {
+                    return false;
+                  }
+                  updateDataSource({ activeDatasetId: result.datasetId });
+                  bumpData();
+                  return true;
+                } catch {
+                  /* fall through to legacy demo tasks */
+                }
+                const legacyRow = contextualTasks.find((row) => row.id === taskId);
+                if (!legacyRow) return false;
+                legacyRow.status = actionType === 'complete' ? 'Completed' : 'In Progress';
+                if (taskId === 'TSK-BB-OD-01' && actionType === 'complete') setOverdueTaskCompleted(true);
+                bumpData();
+                return true;
+              }}
             />
-            {/* Resize handle + grab dot */}
             <button
               type="button"
               aria-label="Resize AI panel"
@@ -2395,110 +2523,6 @@ export function CaseView({
               />
             </button>
           </aside>
-      )}
-      {casesAiAssistantEnabled && selectionMenu.visible && showAIPanel && (aiPanelTab === 'summary' || aiPanelTab === 'insights') && (
-        <div
-          data-ai-panel-ignore-outside
-          className="fixed z-[90] -translate-x-1/2 -translate-y-full rounded-lg border border-border-default bg-white p-1 shadow-[0_8px_24px_rgba(27,28,30,0.18)]"
-          style={{ left: `${selectionMenu.x}px`, top: `${selectionMenu.y}px` }}
-        >
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => {
-                setAiPanelTab('insights');
-                hideSelectionMenu();
-              }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded text-text-secondary hover:bg-surface-muted hover:text-text-heading"
-              title="Dig deeper"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => {
-                setAiPanelTab('insights');
-                hideSelectionMenu();
-              }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded text-text-secondary hover:bg-surface-muted hover:text-text-heading"
-              title="Explain"
-            >
-              <MessageSquareText className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => {
-                setAiPanelTab('insights');
-                hideSelectionMenu();
-              }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded text-text-secondary hover:bg-surface-muted hover:text-text-heading"
-              title="Suggest"
-            >
-              <Lightbulb className="h-4 w-4" />
-            </button>
-            <div className="mx-1 h-6 w-px bg-[#dbdee1]" />
-            <button
-              onClick={() => {
-                setActiveTab('tasks');
-                closeAiPanel();
-                hideSelectionMenu();
-              }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded text-text-secondary hover:bg-surface-muted hover:text-text-heading"
-              title="Open tasks"
-            >
-              <ListChecks className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('requirements');
-                closeAiPanel();
-                hideSelectionMenu();
-              }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded text-text-secondary hover:bg-surface-muted hover:text-text-heading"
-              title="Open requirements"
-            >
-              <ClipboardList className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => {
-                navigate(`/cases/${data.id}`);
-                closeAiPanel();
-                hideSelectionMenu();
-              }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded text-text-secondary hover:bg-surface-muted hover:text-text-heading"
-              title="Open case"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-      {/* Toast — bottom-right; vivid green for confirmations, slate for copilot previews */}
-      {toast && (
-        <div
-          data-ai-panel-ignore-outside
-          className="fixed bottom-6 right-6 z-[200] max-w-[min(440px,calc(100vw-3rem))] animate-[fadeInUp_0.35s_ease-out]"
-          role="status"
-          aria-live="polite"
-        >
-          <div
-            className={`flex items-start gap-3 rounded-lg border-2 px-5 py-4 ${
-              toast.tone === 'success'
-                ? 'border-white/30 bg-[#00a651] shadow-[0_12px_40px_rgba(0,133,65,0.5),0_4px_12px_rgba(0,0,0,0.15)]'
-                : 'border-white/15 bg-[#2d3748] shadow-[0_12px_40px_rgba(0,0,0,0.22),0_4px_12px_rgba(0,0,0,0.12)]'
-            }`}
-          >
-            <span
-              className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
-                toast.tone === 'success' ? 'bg-white/20' : 'bg-white/10'
-              }`}
-            >
-              {toast.tone === 'success' ? (
-                <Check className="h-6 w-6 text-white" strokeWidth={2.5} aria-hidden />
-              ) : (
-                <MessageSquareText className="h-5 w-5 text-white/90" strokeWidth={2} aria-hidden />
-              )}
-            </span>
-            <span className="min-w-0 pt-0.5 text-base font-semibold leading-snug text-white">{toast.message}</span>
-          </div>
-        </div>
       )}
       {(showAddReqModal || editingReq) && createPortal(
         <CaseRequirementModal
@@ -2541,6 +2565,7 @@ export function CaseView({
             setShowAddReqModal(false);
             setEditingReq(null);
             bumpData();
+            appToast.success(editingReq ? 'Requirement updated' : 'Requirement added');
           }}
         />,
         document.body,
@@ -2562,6 +2587,7 @@ export function CaseView({
           if (createdTask) openCaseTaskPanel(createdTask);
           navigate(`/cases/${caseId}#tab=tasks&task=${encodeURIComponent(taskId)}`, { replace: true });
           bumpData();
+          appToast.success(`Task ${taskId} created`);
         }}
       />
       {scoreModal ? (

@@ -104,7 +104,7 @@ export function isSubTypeAllowedForCaseKind(caseKind: CaseKind, subType: ClaimSu
 }
 
 export function subTypeSectionLabel(caseKind: CaseKind): string {
-  if (caseKind === 'claim') return 'Claim sub-type';
+  if (caseKind === 'claim') return 'Sub-type';
   if (caseKind === 'new_business') return 'Underwriting type';
   return 'Sub-type';
 }

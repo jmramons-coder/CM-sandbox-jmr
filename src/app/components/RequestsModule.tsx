@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ClipboardCheck,
+  ClipboardList,
   Clock,
   ExternalLink,
   FileText,
@@ -30,6 +31,8 @@ import {
 } from 'lucide-react';
 import { AiCueSparkle } from './AiCueSparkle';
 import { SidePanelSummaryBox } from './AiSummaryWithConfidenceCard';
+import { SidePanelHeaderTag } from './SidePanelHeaderTag';
+import { RequestOverviewBody, resolveRequestSourceChannelMeta } from './requests/RequestOverviewBody';
 import { useLiveContextOverlay } from '../contexts/LiveContextProvider';
 import { filterDatasetBySettings, getSystemDataset, listRequests, listRequirements, listTasks } from '../data/objectRepository';
 import {
@@ -40,6 +43,7 @@ import {
   tasksForRequest,
   type PanelAction,
 } from '../domain/objectWorkflow';
+import { appToast, appToastFromRequestAction } from '../utils/app-toast';
 import { ObjectPanelFooter } from './ObjectPanelFooter';
 import { useActiveUser } from '../contexts/ActiveUserContext';
 import { getDocumentEvidence } from '../data/mock-document-evidence';
@@ -65,7 +69,7 @@ import { sortRequestsByRelevance } from '../utils/module-relevance-sort';
 import { WorkspaceObjectSidePanel, type WorkspacePanelContext } from './WorkspaceObjectSidePanel';
 import { documentPanelContextId, pushWorkspacePanelContext, requestPanelContextId } from '../utils/workspacePanelContextUtils';
 import { DynamicDocumentSidePanel, type DynamicDocumentData } from './DynamicDocumentSidePanel';
-import { getDefaultSidePanelWidth } from '../utils/sidepanel-width';
+import { getDefaultSidePanelWidth, getDocumentSidePanelWidth, resolveDocumentSidePanelWidth } from '../utils/sidepanel-width';
 import { WorkspaceAssistantPanel } from './WorkspaceAssistantPanel';
 import { useDataSourceSettings, usePlatformSettings } from '../contexts/PlatformSettingsContext';
 import { CreateRequestModal } from './CreateRequestModal';
@@ -81,6 +85,8 @@ import {
   TABLE_SUBTEXT_CLASS,
   TABLE_TEXT_CLASS,
   TwoLineSummaryCell,
+  isRequirementAiSourced,
+  MiniAiSourceBadge,
 } from './ModuleCellHelpers';
 import { useTableHorizontalScroll } from '../hooks/useTableHorizontalScroll';
 import {
@@ -124,7 +130,7 @@ function sortRequests(rows: ServiceRequest[], column: RequestSortableColumn | nu
   });
 }
 
-type RequestPanelTab = 'overview' | 'form' | 'activity' | 'links';
+type RequestPanelTab = 'overview' | 'form' | 'activity' | 'relationships';
 
 function requestStatusType(status: ServiceRequest['status']) {
   if (status === 'Completed') return 'Success' as const;
@@ -172,6 +178,7 @@ export function RequestsModule() {
   const handleRequestPanelAction = (requestId: string, action: PanelAction) => {
     const result = executePanelAction(dataSource.activeDatasetId, action, workflowActor);
     refreshSelectedRequest(result.datasetId, requestId);
+    appToastFromRequestAction(action, requestId);
   };
 
   const handleDocumentWorkflow = (actionId: string, documentId: string) => {
@@ -203,7 +210,7 @@ export function RequestsModule() {
   const [sortColumn, setSortColumn] = useState<RequestSortableColumn | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [activeTab, setActiveTab] = useState<RequestTabType>('all');
-  const [panelWidth, setPanelWidth] = useState(() => getDefaultSidePanelWidth({ min: 420 }));
+  const [panelWidth, setPanelWidth] = useState(() => getDocumentSidePanelWidth());
   const [requestsTableScrollEl, setRequestsTableScrollEl] = useState<HTMLDivElement | null>(null);
   const { showLeftStickyEdge, showRightStickyEdge, hasHorizontalOverflow } =
     useTableHorizontalScroll(requestsTableScrollEl);
@@ -333,6 +340,7 @@ export function RequestsModule() {
 
   const openEvidenceDocument = () => {
     if (!evidenceDocument || !selectedRequest) return;
+    setPanelWidth((current) => resolveDocumentSidePanelWidth(current));
     const documentContext: WorkspacePanelContext = {
       id: documentContextId,
       label: evidenceDocument.documentTitle,
@@ -752,6 +760,7 @@ export function RequestsModule() {
           setSortDirection('asc');
           if (createdRequest) setSelectedRequest(createdRequest);
           navigate(`/requests#request=${encodeURIComponent(requestId)}`);
+          appToast.success(`Request ${requestId} created`);
         }}
       />
     </div>
@@ -801,73 +810,75 @@ function RequestDetailBody({
     const ctx = buildRequestActionContext(request, linkedTasks, evidenceDocument);
     return resolveRequestPanelActions(ctx);
   }, [evidenceDocument, linkedTasks, request]);
-  const allActions = [...(request.aiActions ?? []), ...(request.humanActions ?? [])]
-    .sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
-  const stats = [
-    { label: 'Case created', value: request.linkedCase?.id ?? request.caseId ?? 'N/A', href: request.caseId ? `/cases/${request.caseId}` : undefined },
-    { label: 'Current stage', value: request.linkedCase?.stage ?? 'N/A' },
-    { label: 'Requirements', value: `${request.linkedReqs?.length ?? linkedRequirements.length} generated` },
-    { label: 'Tasks created', value: `${request.linkedTasks?.length ?? linkedTasks.length} created` },
-    { label: 'AI crew actions', value: `${request.aiActions?.length ?? 0} steps` },
-    { label: 'Human actions', value: `${request.humanActions?.length ?? 0} recorded` },
-  ];
-
+  const caseTagLabel = request.caseId
+    ? [request.caseId, request.primaryPartyName].filter(Boolean).join(' · ')
+    : null;
+  const sourceChannel = resolveRequestSourceChannelMeta(request);
+  const SourceChannelIcon = sourceChannel.icon;
+  const receivedLabel = request.receivedTime
+    ? `${request.received} · ${request.receivedTime}`
+    : request.received;
+  const sourceTagTitle = [sourceChannel.label, request.sourceDetail].filter(Boolean).join(' · ');
   return (
     <>
-      <div className="shrink-0 bg-white px-6">
-        <div className="py-4">
-          <div className="mb-2 flex w-full flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25px]">
-          <LozengeTag label={request.category} type={requestCategoryType(request.category)} subtle />
-          <PriorityChip priority={request.priority} />
-          <LozengeTag label={request.status} type={requestStatusType(request.status)} subtle />
-          <span className="ml-auto shrink-0 text-text-muted">#{request.id}</span>
+      <div className="shrink-0 border-b border-border-default bg-white px-6 py-4">
+        <div className="flex w-full items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <LozengeTag label={request.status} type={requestStatusType(request.status)} subtle />
+            <PriorityChip priority={request.priority} />
+            <LozengeTag label={request.category} type={requestCategoryType(request.category)} subtle />
+          </div>
+          <span className="shrink-0 pt-0.5 text-[12px] font-semibold leading-none text-text-muted/70">
+            {request.id}
+          </span>
         </div>
-        <h2 className="text-[18px] font-semibold leading-tight text-text-heading">{request.title}</h2>
-        <dl className="mt-4 grid grid-cols-3 overflow-hidden rounded-lg border border-border-soft bg-[#fbfcfd] text-[12px]">
-          <MetaItem icon={<ClipboardCheck className="size-3.5" />} label="Sub-type" value={request.subtype ?? request.category} />
-          <MetaItem icon={<CalendarDays className="size-3.5" />} label="Received" value={`${request.received}${request.receivedTime ? ` · ${request.receivedTime}` : ''}`} />
-          <MetaItem icon={<Globe className="size-3.5" />} label="Channel" value={request.channel ?? request.source} />
-          <MetaItem icon={<UserRound className="size-3.5" />} label="Assignee" value={request.assignedTo} />
-          <MetaItem icon={<UserRound className="size-3.5" />} label="Requester" value={request.requester} />
-          <MetaItem icon={<ShieldCheck className="size-3.5" />} label="Role" value={request.requesterRole ?? 'Requester'} />
+
+        <h2 className="mt-2 text-[18px] font-semibold leading-tight text-text-heading">{request.title}</h2>
+
+        <dl className="mt-3 flex flex-wrap gap-2">
+          <SidePanelHeaderTag icon={CalendarDays} label={`Received ${receivedLabel}`} />
+          <SidePanelHeaderTag
+            icon={SourceChannelIcon}
+            label={sourceChannel.label}
+            title={sourceTagTitle}
+          />
+          {request.subtype && request.subtype !== request.category ? (
+            <SidePanelHeaderTag icon={ClipboardList} label={request.subtype} />
+          ) : null}
+          {caseTagLabel && request.caseId ? (
+            <SidePanelHeaderTag
+              icon={Briefcase}
+              label={caseTagLabel}
+              title={caseTagLabel}
+              onClick={() => onNavigate(`/cases/${request.caseId}`)}
+            />
+          ) : null}
+          <SidePanelHeaderTag icon={Clock} label={`Due ${request.due}`} />
+          <SidePanelHeaderTag icon={UserRound} label={request.assignedTo} title="Assignee" />
         </dl>
-        </div>
+
         <ModuleTabsBar
           tabs={[
             { id: 'overview', label: 'Overview' },
             { id: 'form', label: 'Submitted form' },
             { id: 'activity', label: 'Activity log' },
-            { id: 'links', label: 'Linked records' },
+            { id: 'relationships', label: 'Relationship' },
           ]}
           activeId={activeTab}
           onChange={setActiveTab}
+          className="mt-4"
         />
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden bg-surface-primary">
         <div className="app-scrollbar h-full overflow-y-auto px-5 py-4">
           {activeTab === 'overview' ? (
-            <div className="space-y-3">
-              {request.systemSteps?.length ? (
-                <SystemInitiatedStepsSection request={request} onNavigate={onNavigate} />
-              ) : null}
-              <SidePanelSummaryBox>
-                <p className="text-[12px] leading-relaxed text-text-primary">{request.summary ?? request.aiSummary}</p>
-              </SidePanelSummaryBox>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-lg border border-border-soft bg-white p-3">
-                    <p className="text-[10px] uppercase tracking-[0.3px] text-text-muted">{stat.label}</p>
-                    {stat.href ? (
-                      <button type="button" onClick={() => onNavigate(stat.href!)} className="mt-1 text-[13px] font-semibold text-brand-blue underline underline-offset-2">{stat.value}</button>
-                    ) : (
-                      <p className="mt-1 text-[13px] font-semibold text-text-primary">{stat.value}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <TimelineSection title="Recent activity" actions={allActions.slice(0, 3)} />
-            </div>
+            <RequestOverviewBody
+              request={request}
+              linkedTasks={linkedTasks}
+              linkedRequirements={linkedRequirements}
+              onNavigate={onNavigate}
+            />
           ) : null}
           {activeTab === 'form' && request.form ? <RequestFormTab request={request} /> : null}
           {activeTab === 'activity' ? (
@@ -876,7 +887,7 @@ function RequestDetailBody({
               <TimelineSection title="Human actions" subtitle={`${request.humanActions?.length ?? 0} actions`} actions={request.humanActions ?? []} />
             </div>
           ) : null}
-          {activeTab === 'links' ? (
+          {activeTab === 'relationships' ? (
             <div className="space-y-3">
               <LinkedRequestCaseSection request={request} onNavigate={onNavigate} />
               <LinkedRequestTasksSection request={request} linkedTasks={linkedTasks} onNavigate={onNavigate} />
@@ -896,15 +907,6 @@ function RequestDetailBody({
         onAction={onPanelAction}
       />
     </>
-  );
-}
-
-function MetaItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
-  return (
-    <div className="min-w-0 border-b border-r border-border-soft px-3 py-2 [&:nth-child(3n)]:border-r-0 [&:nth-child(n+4)]:border-b-0">
-      <dt className="flex items-center gap-1.5 text-[11px] text-text-muted">{icon}{label}</dt>
-      <dd className="mt-0.5 truncate font-semibold text-text-primary">{value}</dd>
-    </div>
   );
 }
 
@@ -1042,7 +1044,10 @@ function LinkedRequestRequirementsSection({
             className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-primary"
           >
             <span className="min-w-0">
-              <span className="block text-[12px] font-semibold text-text-primary">{requirement.name}</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                {isRequirementAiSourced(requirement) ? <MiniAiSourceBadge size="compact" /> : null}
+                <span className="text-[12px] font-semibold text-text-primary">{requirement.name}</span>
+              </span>
               <span className="mt-0.5 block text-[11px] text-text-secondary">{requirement.category} · {requirement.status}</span>
             </span>
             <ExternalLink className="size-3.5 shrink-0 text-text-muted" />
@@ -1247,6 +1252,7 @@ const SOURCE_CHANNEL_META: Record<RequestSourceChannel, { label: string; icon: L
   'Broker portal': { label: 'Broker portal', icon: Globe },
   'SBLI broker portal': { label: 'SBLI broker portal', icon: Globe },
   'SBLI.com': { label: 'SBLI.com', icon: Globe },
+  'harborlife.com': { label: 'harborlife.com', icon: Globe },
   Mail: { label: 'Mail', icon: Mail },
   Fax: { label: 'Fax', icon: FileText },
   'Agent portal': { label: 'Agent portal', icon: Globe },

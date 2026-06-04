@@ -125,6 +125,7 @@ export function getRequirementStatusLozengeType(
   const lower = normalized.toLowerCase();
   if (['fulfilled', 'waived', 'completed'].includes(lower)) return 'Success';
   if (lower === 'overdue') return 'Alert';
+  if (lower === 'outstanding') return 'Warning';
   if (lower === 'ordered' || lower === 'scheduled') return 'Informative';
   if (['pending', 'in_review'].includes(lower)) {
     return style === 'panel' ? 'Warning' : 'Discovery';

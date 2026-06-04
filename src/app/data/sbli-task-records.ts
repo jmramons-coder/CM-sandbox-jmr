@@ -825,7 +825,7 @@ export const SBLI_TASK_RECORDS: DatasetTaskRecord[] = [
     "sourceContext": "SBLI task seed",
     "createdDate": "2026-03-09",
     "description": "AI has analyzed all available medical evidence and generated a structured disability assessment narrative. The narrative covers functional limitation, disability definition compliance, and absence of exclusions. Review and confirm the AI output is accurate before proceeding to decision.",
-    "queue": "team_tasks",
+    "queue": "my_tasks",
     "requiredAuthorityLevel": 1,
     "panelContext": {
       "summaryStatus": "Completed",
@@ -1502,7 +1502,7 @@ export const SBLI_TASK_RECORDS: DatasetTaskRecord[] = [
     "sourceContext": "SBLI task seed",
     "createdDate": "2026-05-10",
     "description": "AI agent runs a systematic comparison between the MIB report for Thomas Dupont and the original application disclosures. Identifies any discrepancies that could indicate material misrepresentation. Output is a structured comparison document.",
-    "queue": "team_tasks",
+    "queue": "my_tasks",
     "requiredAuthorityLevel": 1,
     "panelContext": {
       "summaryStatus": "Completed",
@@ -2229,6 +2229,54 @@ export const SBLI_TASK_RECORDS: DatasetTaskRecord[] = [
     ]
   },
   {
+    "id": "task_nb4031",
+    "kind": "task",
+    "taskId": "task_nb4031",
+    "label": "Paramedical exam — blood draw follow-up",
+    "status": "Open",
+    "priority": "Normal",
+    "assignee": "Quest Diagnostics",
+    "assigneeKind": "user",
+    "caseType": "NB",
+    "caseSubtype": "full_underwriting",
+    "hasAI": true,
+    "aiSummary": "Paramedical exam scheduled with Quest Diagnostics for May 19, 2026. Blood draw and vitals capture required. Results will feed into final UW scoring alongside APS.",
+    "aiAction": "Review requirement",
+    "alert": null,
+    "dueDate": "2026-05-19",
+    "stage": "requirement_gathering",
+    "slaRemaining": "2026-05-19",
+    "slaStatus": "normal",
+    "origin": "paramedical_vendor",
+    "sourceContext": "SBLI task seed",
+    "createdDate": "2026-05-14",
+    "description": "Paramedical exam scheduled with Quest Diagnostics for May 19, 2026. Blood draw and vitals capture required. Results will feed into final UW scoring alongside APS.",
+    "queue": "my_tasks",
+    "requiredAuthorityLevel": 1,
+    "panelContext": {
+      "summaryStatus": "Scheduled",
+      "contextTitle": "Paramedical exam — blood draw",
+      "contextSummary": "Paramedical exam scheduled with Quest Diagnostics for May 19, 2026. Blood draw and vitals capture required. Results will feed into final UW scoring alongside APS.",
+      "suggestions": [
+        "Paramedical exam completed at scheduled time",
+        "Blood draw processed by accredited lab",
+        "Vitals recorded: height, weight, BP, pulse"
+      ]
+    },
+    "linkedObjects": [
+      {
+        "kind": "case",
+        "id": "NB66-7622343",
+        "label": "New Business — Full Underwriting"
+      },
+      {
+        "kind": "requirement",
+        "id": "req_mt_006",
+        "label": "Paramedical exam — blood draw"
+      }
+    ]
+  },
+  {
     "id": "task_nb4032",
     "kind": "task",
     "taskId": "task_nb4032",
@@ -2638,7 +2686,7 @@ export const SBLI_TASK_RECORDS: DatasetTaskRecord[] = [
     "sourceContext": "SBLI task seed",
     "createdDate": "2026-05-13",
     "description": "AI agent runs MIB check and evaluates all four SBLI Simple Term Life eligibility criteria simultaneously. If all criteria pass, the case is routed to the accelerated (no-exam) path. If any criterion fails, the case is escalated to traditional underwriting.",
-    "queue": "team_tasks",
+    "queue": "my_tasks",
     "requiredAuthorityLevel": 1,
     "panelContext": {
       "summaryStatus": "Completed",
@@ -2794,7 +2842,7 @@ export const SBLI_TASK_RECORDS: DatasetTaskRecord[] = [
     "kind": "task",
     "taskId": "task_nb2030",
     "label": "AI: score health questionnaire responses",
-    "status": "To Do",
+    "status": "Completed",
     "priority": "High",
     "assignee": "AI Agent",
     "assigneeKind": "team",
@@ -2802,6 +2850,8 @@ export const SBLI_TASK_RECORDS: DatasetTaskRecord[] = [
     "caseSubtype": "simplified_underwriting",
     "hasAI": true,
     "aiGenerated": true,
+    "aiConfidence": 97,
+    "aiSummary": "Questionnaire scoring complete — all four sections clean. Cardiovascular, respiratory, musculoskeletal, and mental health: no adverse responses. Eligibility criteria satisfied. Standard rates recommended. No manual review flags.",
     "alert": null,
     "summary": {
       "contextLabel": "Task context",
@@ -2817,21 +2867,26 @@ export const SBLI_TASK_RECORDS: DatasetTaskRecord[] = [
         "Generate scoring summary for task_nb2031"
       ]
     },
-    "aiNarrative": null,
+    "aiNarrative": {
+      "text": "Questionnaire scoring complete — all four sections clean. Cardiovascular, respiratory, musculoskeletal, and mental health: no adverse responses. Eligibility criteria satisfied. Standard rates recommended. No manual review flags.",
+      "confidence": 97,
+      "generatedBy": "AI Agent",
+      "generatedAt": "2026-05-17"
+    },
     "evidenceDocuments": [],
     "contextCards": [
       {
         "type": "application_snapshot",
         "contextLabel": "application context",
-        "title": "Application — pending interview",
-        "description": "Scoring will run automatically once tele-interview is completed.",
+        "title": "Application — NB98-9989870",
+        "description": "Tele-interview responses scored. All sections passed — ready for human review (task_nb2031).",
         "kv": [
           {
             "label": "Status",
-            "value": "Pending tele-interview"
+            "value": "Scoring complete"
           },
           {
-            "label": "Expected outcome",
+            "label": "Outcome",
             "value": "Clean pass — standard rates"
           }
         ]
@@ -2852,10 +2907,10 @@ export const SBLI_TASK_RECORDS: DatasetTaskRecord[] = [
     "sourceContext": "SBLI task seed",
     "createdDate": "2026-05-17",
     "description": "AI agent scores all four sections of the SBLI health questionnaire against the Simple Term Life eligibility criteria. Adverse responses are flagged with confidence scores. Output feeds directly into the human review task (task_nb2031).",
-    "queue": "team_tasks",
+    "queue": "my_tasks",
     "requiredAuthorityLevel": 1,
     "panelContext": {
-      "summaryStatus": "To Do",
+      "summaryStatus": "Completed",
       "contextTitle": "AI: score health questionnaire responses",
       "contextSummary": "AI agent scores all four sections of the SBLI health questionnaire against the Simple Term Life eligibility criteria. Adverse responses are flagged with confidence scores. Output feeds directly into the human review task (task_nb2031).",
       "suggestions": [

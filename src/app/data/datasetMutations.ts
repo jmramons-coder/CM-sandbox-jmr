@@ -17,7 +17,14 @@ import {
   caseTypeMetadataForSubType,
   normalizeCaseSubTypeForStorage,
 } from '../domain/claimSubTypes';
-import type { CaseKind, CaseRecord, ClaimSubType, ObjectRef, WorkObjectKind } from '../domain/objectRefs';
+import { DEFAULT_DATASET_ID, type CaseKind, CaseRecord, ClaimSubType, ObjectRef, WorkObjectKind } from '../domain/objectRefs';
+import { getActiveDemoConfigurationId } from './datasetResolutionContext';
+import {
+  applyEquisoftNb66ReqGatheringOverlay,
+  isSharedMultiCaseDemoDatasetId,
+} from './equisoftNb66ReqGatheringOverlay';
+import { applyEmpireAddressChangeOverlay, isEmpireDatasetId } from './empireAddressChangeOverlay';
+import { usesSbliBrandedDemoData } from './sharedDemoDatasetNeutralize';
 import { getWorkflowDefinition } from '../domain/workflows';
 import { resolveAssigneeIdentity } from './userDirectory';
 
@@ -56,8 +63,26 @@ function cloneDataset(dataset: SystemDataset): SystemDataset {
   return structuredClone(dataset);
 }
 
+function withDemoWriteOverlays(dataset: SystemDataset): SystemDataset {
+  if (usesSbliBrandedDemoData(getActiveDemoConfigurationId())) return dataset;
+  if (isSharedMultiCaseDemoDatasetId(dataset.id)) {
+    return applyEquisoftNb66ReqGatheringOverlay(dataset, {
+      preserveAddedProposals: dataset.id !== DEFAULT_DATASET_ID,
+    });
+  }
+  if (isEmpireDatasetId(dataset.id)) {
+    return applyEmpireAddressChangeOverlay(dataset);
+  }
+  return dataset;
+}
+
+/** Apply demo overlays when branching a writable copy from a seeded dataset. */
+function withEquisoftNb66GatheringForWrite(dataset: SystemDataset): SystemDataset {
+  return withDemoWriteOverlays(dataset);
+}
+
 function getWritableDataset(datasetId: string): WritableDataset {
-  const source = datasetRegistry.getDataset(datasetId);
+  const source = withEquisoftNb66GatheringForWrite(datasetRegistry.getDataset(datasetId));
   if (isGeneratedDataset(source.id)) {
     return { dataset: cloneDataset(source), datasetId: source.id };
   }
@@ -428,6 +453,47 @@ export function updateRequestStatus(datasetId: string, requestId: string, status
   });
   const saved = commitDataset(dataset);
   return { datasetId: saved.id, dataset: saved, record: updated };
+}
+
+export function applyNb66SuggestedRequirements(
+  datasetId: string,
+  caseId: string,
+  requirementIds: string[],
+  templates: Record<string, DatasetRequirementRecord>,
+  linkedTaskByRequirement: Record<string, string>,
+): MutationResult<{ added: DatasetRequirementRecord[] }> {
+  const writable = getWritableDataset(datasetId);
+  const dataset = writable.dataset;
+  const added: DatasetRequirementRecord[] = [];
+
+  for (const requirementId of requirementIds) {
+    const template = templates[requirementId];
+    if (!template) continue;
+    const exists = dataset.requirements.some((row) => row.id === requirementId);
+    if (exists) continue;
+
+    dataset.requirements = [structuredClone(template), ...dataset.requirements];
+    added.push(template);
+
+    const taskId = linkedTaskByRequirement[requirementId];
+    if (taskId) {
+      dataset.tasks = dataset.tasks.map((task) =>
+        task.id === taskId && taskLinkedToCase(task, caseId)
+          ? { ...task, status: 'In Queue', queue: task.queue ?? 'my_tasks' }
+          : task,
+      );
+    }
+  }
+
+  const saved = commitDataset(dataset);
+  return { datasetId: saved.id, dataset: saved, record: { added } };
+}
+
+function taskLinkedToCase(
+  task: DatasetTaskRecord,
+  caseId: string,
+): boolean {
+  return task.linkedObjects.some((ref) => ref.kind === 'case' && ref.id === caseId);
 }
 
 export function upsertRequirement(

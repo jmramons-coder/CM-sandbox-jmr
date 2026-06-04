@@ -150,7 +150,7 @@ function buildClaimInformation(record: CaseRecord): CaseInformationSection | nul
     fields: compactFields([
       {
         id: 'claim-sub-type',
-        label: 'Claim sub-type',
+        label: 'Sub-type',
         value: claimSubTypeLabel(resolveClaimSubType(record)),
         type: 'status',
       },

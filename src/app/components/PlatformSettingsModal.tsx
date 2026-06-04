@@ -2639,9 +2639,10 @@ function DatasetPreviewPanel({
       <div className="rounded-xl border border-border-soft bg-surface-primary p-4">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Demo data</p>
         <p className="mt-1 text-[12px] leading-snug text-text-secondary">
-          The built-in <span className="font-semibold text-text-primary">SBLI demo cases</span> dataset is shared by the
-          Equisoft, SBLI, and Guardian 1821 demo environments. Use <span className="font-semibold text-text-primary">Demo environment</span>{' '}
-          in settings to switch branding without changing records.
+          The built-in <span className="font-semibold text-text-primary">US demo cases</span> dataset is shared by the
+          Equisoft and SBLI demo environments. Guardian 1821 and Empire use their own datasets. Use{' '}
+          <span className="font-semibold text-text-primary">Demo environment</span> in settings to switch branding; Equisoft
+          shows neutral carrier copy while SBLI keeps carrier-specific labels in the same records.
         </p>
         <p className="mt-2 text-[11px] text-text-muted">
           Advanced: create a new data context from the toolbar above if you need a custom simulation or imported JSON

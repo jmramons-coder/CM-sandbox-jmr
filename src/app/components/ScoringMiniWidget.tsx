@@ -22,7 +22,7 @@ export function ScoringMiniWidget({
         </div>
         {onOpenScoring ? (
           <button type="button" onClick={onOpenScoring} className="rounded-full border border-border-soft px-2 py-1 text-[11px] font-semibold text-text-secondary hover:border-brand-blue hover:text-brand-blue">
-            Edit →
+            View →
           </button>
         ) : null}
       </div>

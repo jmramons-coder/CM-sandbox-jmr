@@ -23,7 +23,8 @@
       "aiActivityEnabled": true,
       "aiSidePanelEnabled": true,
       "casesAiAssistantEnabled": false,
-      "aiActivityVisible": false
+      "aiActivityVisible": false,
+      "presentationModeEnabled": true
     },
     "modules": {
       "home": true,

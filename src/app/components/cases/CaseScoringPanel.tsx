@@ -98,11 +98,13 @@ export function UnderwritingScoringTab({
   onOpenScoreModal,
   scoring,
   onChange,
+  itemsSectionTitle = 'Scoring items',
 }: {
   caseId: string;
   onOpenScoreModal: (type: ScoringItemType, item?: UnderwritingScoringItem) => void;
   scoring: CaseOverview['underwritingScoring'];
   onChange: (next: NonNullable<CaseOverview['underwritingScoring']>) => void;
+  itemsSectionTitle?: string;
 }) {
   const value = scoring ?? createEmptyScoring(caseId);
   const normalized = normalizeScoring(value);
@@ -118,7 +120,7 @@ export function UnderwritingScoringTab({
         <section className="overflow-hidden rounded-xl border border-border-soft bg-white">
           <div className="flex items-center justify-between border-b border-border-soft bg-white px-4 py-3">
             <div>
-              <p className="text-[13px] font-semibold text-text-primary">Scoring items</p>
+              <p className="text-[13px] font-semibold text-text-primary">{itemsSectionTitle}</p>
               <p className="mt-0.5 text-[11px] text-text-muted">Review and edit debit/credit factors.</p>
             </div>
             <div className="flex overflow-hidden rounded-full border border-border-default bg-white p-0.5">

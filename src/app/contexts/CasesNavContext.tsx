@@ -61,7 +61,13 @@ export function CasesNavProvider({ children }: React.PropsWithChildren) {
       const caseMatch = caseSummary ?? caseSummaryById.get(caseId);
       if (!caseMatch) return prev;
       const nextItem = toCaseNavItem(caseMatch);
-      return [nextItem, ...prev.filter((item) => item.caseId !== caseId && caseSummaryById.has(item.caseId))];
+      const existingIndex = prev.findIndex((item) => item.caseId === caseId);
+      if (existingIndex >= 0) {
+        const next = [...prev];
+        next[existingIndex] = nextItem;
+        return next;
+      }
+      return [nextItem, ...prev.filter((item) => caseSummaryById.has(item.caseId))];
     });
   }, [caseSummaryById]);
 

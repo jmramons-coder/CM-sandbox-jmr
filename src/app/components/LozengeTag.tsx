@@ -16,8 +16,8 @@ export interface LozengeTagProps {
   subtle?: boolean;
   /** Whether to show sparkle icon (for AI-related tags) */
   showSparkles?: boolean;
-  /** Compact is used for dense table/sidebar badges. */
-  size?: 'compact' | 'default';
+  /** Compact is used for dense table/sidebar badges; micro for copilot chips. */
+  size?: 'micro' | 'compact' | 'default';
   /** Additional CSS classes */
   className?: string;
 }
@@ -112,12 +112,16 @@ export function LozengeTag({
   className,
 }: LozengeTagProps) {
   const styles = subtle ? LOZENGE_STYLES[type].subtle : LOZENGE_STYLES[type].solid;
-  const heightClass = size === 'compact' ? 'h-[20px]' : 'h-[24px]';
-  const paddingClass = size === 'compact' ? 'px-[6px]' : 'px-2';
+  const heightClass =
+    size === 'micro' ? 'h-[18px]' : size === 'compact' ? 'h-[20px]' : 'h-[24px]';
+  const paddingClass =
+    size === 'micro' ? 'px-1' : size === 'compact' ? 'px-[6px]' : 'px-2';
   const textClass =
-    size === 'compact'
-      ? 'text-[11px] leading-none'
-      : 'text-[12px] leading-none';
+    size === 'micro'
+      ? 'text-[10px] leading-none'
+      : size === 'compact'
+        ? 'text-[11px] leading-none'
+        : 'text-[12px] leading-none';
 
   return (
     <div className={`inline-flex items-center align-middle ${className ?? ''}`}>
