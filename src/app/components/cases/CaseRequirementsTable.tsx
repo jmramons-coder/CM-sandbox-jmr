@@ -21,8 +21,9 @@ import { getRequirementStatusLozengeType } from '../../utils/status-display';
 import { requirementExternalCode, requirementExternalHref } from '../../utils/caseViewRequirementUtils';
 import { LozengeTag } from '../LozengeTag';
 import { isRequirementAiSourced, TableFirstColumnContent } from '../ModuleCellHelpers';
+import { requirementReceivedDateLabel } from '../../utils/requirement-dates';
 
-const REQ_TABLE_MIN_WIDTH = 1240;
+const REQ_TABLE_MIN_WIDTH = 1360;
 
 type CaseRequirementsTableProps = {
   caseId: string;
@@ -66,6 +67,7 @@ export function CaseRequirementsTable({
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Stage</th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Due Date</th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>{followUpDateColumnLabel}</th>
+              <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Received</th>
               <th className={`max-w-[160px] ${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>Notes</th>
               <th className={`${MODULE_TABLE_TH_SCROLL_CLASS} px-3 py-2 text-left text-sm font-medium text-text-secondary whitespace-nowrap`}>External Source</th>
               <th
@@ -87,7 +89,7 @@ export function CaseRequirementsTable({
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={MODULE_TABLE_ROW_KEBAB_ENABLED ? 9 : 8} className="px-6 py-16 text-center">
+                <td colSpan={MODULE_TABLE_ROW_KEBAB_ENABLED ? 10 : 9} className="px-6 py-16 text-center">
                   <p className="text-sm font-medium text-text-muted">
                     {totalRows === 0 ? 'No requirements yet' : 'No requirements match your search'}
                   </p>
@@ -128,6 +130,9 @@ export function CaseRequirementsTable({
                   </td>
                   <td className={`border-b border-border-default px-3 py-3 text-sm ${cellSurface}`}>{row.dueDate}</td>
                   <td className={`border-b border-border-default px-3 py-3 text-sm ${cellSurface}`}>{row.followUpDate}</td>
+                  <td className={`border-b border-border-default px-3 py-3 text-sm whitespace-nowrap ${cellSurface}`}>
+                    {requirementReceivedDateLabel(row)}
+                  </td>
                   <td className={`max-w-[160px] border-b border-border-default px-3 py-3 text-sm ${cellSurface}`}>
                     <span className="block truncate text-[12px] text-text-secondary">{row.notes ?? '—'}</span>
                   </td>

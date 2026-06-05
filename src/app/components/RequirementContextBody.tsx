@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Check, Circle, ClipboardList, Clock, Database, FileText, Link2, UserRound } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Clock, Database, FileText, Link2, UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { CaseDocument, CaseRequirement, RequirementContextType, RequirementHistoryDot, Task } from '../types';
@@ -11,6 +11,11 @@ import { getRequirementStatusLozengeType } from '../utils/status-display';
 import { LozengeTag } from './LozengeTag';
 import { ScoringMiniWidget } from './ScoringMiniWidget';
 import { appToast } from '../utils/app-toast';
+import { TaskEvidencePreviewCard } from './TaskEvidencePreviewCard';
+import { getDocumentEvidence } from '../data/mock-document-evidence';
+import type { SystemDataset } from '../data/multi-case-dataset';
+import { formatRequirementDate, requirementReceivedDateLabel } from '../utils/requirement-dates';
+import { resolveDocumentPreviewUrl } from '../utils/sbli-document-assets';
 
 type RequirementPanelTab = 'overview' | 'context' | 'relationships' | 'activity';
 
@@ -63,22 +68,96 @@ function contextIcon(type?: RequirementContextType) {
 
 const INTERNAL_NOTES_MAX = 250;
 
-function formatRequirementDate(value?: string) {
-  if (!value || value === 'TBD') return '—';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return new Date(`${value}T12:00:00`).toLocaleDateString('en-CA', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-  return value;
-}
-
 function requirementOrderDate(requirement: CaseRequirement) {
   return requirement.followUpDate && requirement.followUpDate !== 'TBD'
     ? requirement.followUpDate
     : requirement.dueDate;
+}
+
+function ReceivedDocumentsPreviewList({
+  documents,
+  dataset,
+  onOpenDocument,
+}: {
+  documents: CaseDocument[];
+  dataset?: SystemDataset;
+  onOpenDocument?: (document: CaseDocument) => void;
+}) {
+  if (!documents.length) return null;
+
+  return (
+    <section>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">
+        Received · {documents.length}
+      </p>
+      <div className="mt-2 space-y-2">
+        {documents.map((document) => {
+          const documentId = String(document.id ?? document.name);
+          const documentData = dataset ? getDocumentEvidence(documentId, dataset) : null;
+          const datasetDoc = dataset?.documents.find((row) => row.id === documentId);
+          const previewUrl = documentData
+            ? resolveDocumentPreviewUrl({
+                documentId,
+                filename: datasetDoc?.filename ?? document.filename,
+                fileUrl: datasetDoc?.fileUrl ?? document.fileUrl,
+                fileAvailable: datasetDoc?.fileAvailable ?? document.fileAvailable,
+                pageImage: documentData.pages[0]?.image,
+              })
+            : '';
+          return (
+            <TaskEvidencePreviewCard
+              key={documentId}
+              title={document.filename ?? document.name}
+              fileType={documentData?.fileType ?? document.fileType}
+              fileSize={document.fileSize ?? documentData?.fileSize}
+              previewUrl={previewUrl}
+              documentData={documentData}
+              fallbackSummary={document.tableDescription ?? document.reqContext ?? document.aiSummary}
+              onOpen={() => onOpenDocument?.(document)}
+              disabled={!onOpenDocument}
+            />
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function InternalNotesSection({
+  notesDraft,
+  onNotesChange,
+  onChange,
+  onBlur,
+}: {
+  notesDraft: string;
+  onNotesChange?: (notes: string) => void;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+}) {
+  return (
+    <section className="overflow-hidden rounded-lg border border-border-soft bg-white">
+      <div className="border-b border-border-soft px-4 py-3">
+        <p className="text-[13px] font-semibold text-text-primary">Internal notes</p>
+        <p className="mt-0.5 text-[11px] text-text-secondary">Underwriting team only</p>
+      </div>
+      <div className="px-4 py-3">
+        <textarea
+          className="w-full resize-y rounded-md border border-border-default bg-white p-3 text-[12px] leading-relaxed text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-blue/40 disabled:cursor-not-allowed disabled:bg-surface-muted"
+          placeholder="Add internal notes about this requirement…"
+          rows={3}
+          maxLength={INTERNAL_NOTES_MAX}
+          value={notesDraft}
+          readOnly={!onNotesChange}
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={onBlur}
+        />
+        <p className="mt-1 text-[11px] text-text-muted">
+          {notesDraft.length}/{INTERNAL_NOTES_MAX} characters
+          {onNotesChange ? ' · saved on blur' : ''}
+        </p>
+      </div>
+    </section>
+  );
 }
 
 function empireNbActionLabels(status: CaseRequirement['status']) {
@@ -150,6 +229,7 @@ function actionLabels(status: CaseRequirement['status'], preset?: 'empire_nb') {
 export function RequirementContextBody({
   caseId,
   documents = [],
+  evidenceDataset,
   hideScoringWidget = false,
   onNotesChange,
   onOpenDocument,
@@ -162,6 +242,7 @@ export function RequirementContextBody({
 }: {
   caseId: string;
   documents?: CaseDocument[];
+  evidenceDataset?: SystemDataset;
   hideScoringWidget?: boolean;
   onNotesChange?: (notes: string) => void;
   onOpenScoring?: () => void;
@@ -180,7 +261,6 @@ export function RequirementContextBody({
   const receivedDocuments = fulfilled ? documents : [];
   const ContextIcon = contextIcon(requirement.context?.type);
   const history = [...(requirement.history ?? [])].sort((a, b) => b.date.localeCompare(a.date));
-  const criteria = requirement.fulfillmentCriteria ?? [];
   const requirementId = String(requirement.datasetRequirementId ?? requirement.id);
   const relationshipCount = tasks.length;
   const contextItemCount = (requirement.context ? 1 : 0) + (fulfilled ? receivedDocuments.length : 0);
@@ -222,6 +302,8 @@ export function RequirementContextBody({
 
   const showOrderDate = requirementActionPreset === 'empire_nb';
   const orderDateLabel = formatRequirementDate(requirementOrderDate(requirement));
+  const isEmpireNb = requirementActionPreset === 'empire_nb';
+  const receivedDateLabel = requirementReceivedDateLabel(requirement);
 
   return (
     <>
@@ -285,64 +367,65 @@ export function RequirementContextBody({
                 </p>
               </SidePanelSummaryBox>
 
-              {requirementActionPreset === 'empire_nb' ? (
-                <section className="overflow-hidden rounded-lg border border-border-soft bg-white">
-                  <div className="border-b border-border-soft px-4 py-3">
-                    <p className="text-[13px] font-semibold text-text-primary">Internal notes</p>
-                    <p className="mt-0.5 text-[11px] text-text-secondary">Underwriting team only</p>
-                  </div>
-                  <div className="px-4 py-3">
-                    <textarea
-                      className="w-full resize-y rounded-md border border-border-default bg-white p-3 text-[12px] leading-relaxed text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-blue/40 disabled:cursor-not-allowed disabled:bg-surface-muted"
-                      placeholder="Add internal notes about this requirement…"
-                      rows={3}
-                      maxLength={INTERNAL_NOTES_MAX}
-                      value={notesDraft}
-                      readOnly={!onNotesChange}
-                      onChange={(event) => setNotesDraft(event.target.value)}
-                      onBlur={commitNotes}
-                    />
-                    <p className="mt-1 text-[11px] text-text-muted">
-                      {notesDraft.length}/{INTERNAL_NOTES_MAX} characters
-                      {onNotesChange ? ' · saved on blur' : ''}
-                    </p>
-                  </div>
-                </section>
+              {isEmpireNb && receivedDocuments.length > 0 ? (
+                <ReceivedDocumentsPreviewList
+                  documents={receivedDocuments}
+                  dataset={evidenceDataset}
+                  onOpenDocument={onOpenDocument}
+                />
               ) : null}
 
-              <div className="grid gap-2 sm:grid-cols-2">
-                <StatCard label="Category" value={requirement.category} />
-                <StatCard label="Stage" value={formatStage(requirement.stage)} />
-                {showOrderDate ? <StatCard label="Order date" value={orderDateLabel} /> : null}
-                <StatCard label="Due date" value={formatRequirementDate(requirement.dueDate)} urgent={overdue} />
-                <StatCard label="Source system" value={sourceLabel(requirement.source)} />
-                <StatCard label="Responsible party" value={requirement.responsibleParty ?? 'Not assigned'} className="sm:col-span-2" />
-              </div>
-
-              <section className="overflow-hidden rounded-lg border border-border-soft bg-white">
-                <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
-                  <div>
-                    <p className="text-[13px] font-semibold text-text-primary">Fulfilment criteria</p>
-                    <p className="mt-0.5 text-[11px] text-text-secondary">
-                      {criteria.length ? `${criteria.length} criteria` : 'No criteria recorded'}
-                    </p>
+              {!isEmpireNb ? (
+                <>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <StatCard label="Category" value={requirement.category} />
+                    <StatCard label="Stage" value={formatStage(requirement.stage)} />
+                    {showOrderDate ? <StatCard label="Order date" value={orderDateLabel} /> : null}
+                    <StatCard label="Due date" value={formatRequirementDate(requirement.dueDate)} urgent={overdue} />
+                    {receivedDateLabel !== '—' ? <StatCard label="Received" value={receivedDateLabel} /> : null}
+                    <StatCard label="Source system" value={sourceLabel(requirement.source)} />
+                    <StatCard label="Responsible party" value={requirement.responsibleParty ?? 'Not assigned'} className="sm:col-span-2" />
                   </div>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${fulfilled ? 'bg-[#e5f5ea] text-brand-green' : 'bg-[#fff4e6] text-[#8a5a00]'}`}>
-                    {fulfilled ? 'All met' : 'Pending'}
-                  </span>
-                </div>
-                <div className="space-y-2 p-3">
-                  {(criteria.length ? criteria : ['No fulfilment criteria recorded for this requirement.']).map((criterion) => (
-                    <div key={criterion} className="flex gap-2 rounded-md border border-border-soft bg-surface-muted px-3 py-2 text-[12px]">
-                      {fulfilled ? <Check className="mt-0.5 size-3.5 shrink-0 text-brand-green" /> : <Circle className="mt-0.5 size-3.5 shrink-0 text-text-muted" />}
-                      <span className={fulfilled ? 'text-text-primary' : 'text-text-secondary'}>{criterion}</span>
+
+                  <section className="overflow-hidden rounded-lg border border-border-soft bg-white">
+                    <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
+                      <div>
+                        <p className="text-[13px] font-semibold text-text-primary">Fulfilment criteria</p>
+                        <p className="mt-0.5 text-[11px] text-text-secondary">
+                          {(requirement.fulfillmentCriteria ?? []).length
+                            ? `${(requirement.fulfillmentCriteria ?? []).length} criteria`
+                            : 'No criteria recorded'}
+                        </p>
+                      </div>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${fulfilled ? 'bg-[#e5f5ea] text-brand-green' : 'bg-[#fff4e6] text-[#8a5a00]'}`}>
+                        {fulfilled ? 'All met' : 'Pending'}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </section>
+                    <div className="space-y-2 p-3">
+                      {((requirement.fulfillmentCriteria ?? []).length
+                        ? requirement.fulfillmentCriteria!
+                        : ['No fulfilment criteria recorded for this requirement.']
+                      ).map((criterion) => (
+                        <div key={criterion} className="flex gap-2 rounded-md border border-border-soft bg-surface-muted px-3 py-2 text-[12px]">
+                          <span className={fulfilled ? 'text-text-primary' : 'text-text-secondary'}>{criterion}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </>
+              ) : null}
 
               {!hideScoringWidget ? (
                 <ScoringMiniWidget scoring={scoring} onOpenScoring={onOpenScoring} />
+              ) : null}
+
+              {isEmpireNb ? (
+                <InternalNotesSection
+                  notesDraft={notesDraft}
+                  onNotesChange={onNotesChange}
+                  onChange={setNotesDraft}
+                  onBlur={commitNotes}
+                />
               ) : null}
             </div>
           ) : null}
@@ -379,42 +462,21 @@ export function RequirementContextBody({
                 )}
               </section>
 
-              <section className="overflow-hidden rounded-lg border border-border-soft bg-white">
-                <div className="border-b border-border-soft px-4 py-3">
-                  <p className="text-[13px] font-semibold text-text-primary">Received documents</p>
-                  <p className="mt-0.5 text-[11px] text-text-secondary">
-                    {fulfilled
-                      ? `${receivedDocuments.length} document(s) on file`
-                      : 'Documents appear here once the requirement is receipted'}
-                  </p>
-                </div>
-                {receivedDocuments.length ? (
-                  <div className="divide-y divide-border-soft">
-                    {receivedDocuments.map((document) => (
-                      <button
-                        key={document.id}
-                        type="button"
-                        onClick={() => onOpenDocument?.(document)}
-                        className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-primary"
-                      >
-                        <span className="min-w-0">
-                          <span className="flex items-center gap-2 text-[12px] font-semibold text-text-primary">
-                            <FileText className="size-3.5 shrink-0 text-brand-blue" />
-                            <span className="truncate">{document.filename ?? document.name}</span>
-                          </span>
-                          <span className="mt-0.5 block text-[11px] text-text-secondary">
-                            {document.fileType ?? 'Document'} · {document.fileSize} · Uploaded {document.uploaded}
-                          </span>
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="px-4 py-6 text-[12px] text-text-secondary">
-                    No received documents yet.
-                  </p>
-                )}
-              </section>
+              {fulfilled && receivedDocuments.length > 0 ? (
+                <ReceivedDocumentsPreviewList
+                  documents={receivedDocuments}
+                  dataset={evidenceDataset}
+                  onOpenDocument={onOpenDocument}
+                />
+              ) : fulfilled ? (
+                <p className="rounded-lg border border-border-soft bg-white px-4 py-6 text-[12px] text-text-secondary">
+                  No received documents yet.
+                </p>
+              ) : (
+                <p className="rounded-lg border border-border-soft bg-white px-4 py-6 text-[12px] text-text-secondary">
+                  Documents appear here once the requirement is receipted.
+                </p>
+              )}
 
               {!requirement.context && !fulfilled ? (
                 <p className="rounded-lg border border-border-soft bg-white px-4 py-6 text-[12px] text-text-secondary">

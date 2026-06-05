@@ -14,6 +14,7 @@ import {
 } from '../ModuleCellHelpers';
 import { getDocumentSourceLabel } from '../ModuleCellHelpers';
 import { getStatusLozengeType } from '../../utils/status-display';
+import { requirementReceivedDateLabel } from '../../utils/requirement-dates';
 import { ModuleMobileListCardShell } from '../ModuleMobileListCard';
 
 export function CaseTabCardMetaField({ label, children }: { label: string; children: ReactNode }) {
@@ -321,6 +322,9 @@ export function CaseRequirementMobileCard({
         </CaseTabCardMetaField>
         <CaseTabCardMetaField label="Follow-up">
           <span className="break-words">{row.followUpDate || '—'}</span>
+        </CaseTabCardMetaField>
+        <CaseTabCardMetaField label="Received">
+          <span className="break-words">{requirementReceivedDateLabel(row)}</span>
         </CaseTabCardMetaField>
         <CaseTabCardMetaField label="Stage">
           <span className="break-words">{row.stage || '—'}</span>

@@ -242,6 +242,7 @@ export interface DatasetRequirementRecord {
   rag?: 'Green' | 'Amber' | 'Red';
   dueDate?: string;
   followUpDate?: string;
+  receivedDate?: string;
   source?: string;
   sourceType?: RequirementSourceType;
   responsibleParty?: string;

@@ -2407,6 +2407,7 @@ export function CaseView({
               requirement={selectedRequirement}
               caseId={data.id}
               documents={selectedRequirementDocuments}
+              evidenceDataset={activeDataset}
               tasks={selectedRequirementTasks}
               scoring={scoringDraft}
               hideScoringWidget={scoringSidePanelEnabled}

@@ -471,6 +471,7 @@ function toRequirement(row: DatasetRequirementRecord): CaseRequirement {
     stage: row.stage,
     dueDate: row.dueDate ?? 'TBD',
     followUpDate: row.followUpDate ?? 'TBD',
+    receivedDate: row.receivedDate,
     source: row.source ?? 'dataset',
     sourceType: row.sourceType,
     responsibleParty: row.responsibleParty,

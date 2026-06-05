@@ -750,6 +750,7 @@ export function GlobalAiCopilotSidePanel({
           requirement={panelRequirement}
           caseId={briefingCaseId}
           documents={panelRequirementDocuments}
+          evidenceDataset={activeDataset}
           tasks={panelRequirementTasks}
           onOpenDocument={(document) => {
             openInCopilotPanel({
