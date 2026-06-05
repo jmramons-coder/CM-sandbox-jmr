@@ -1614,9 +1614,12 @@ export function CaseView({
     'decision' as CaseTab,
   ];
 
-  const decisionActionLabel =
-    workflowMeta?.headerActions.find((action) => action.type === 'primary')?.label.toUpperCase()
-    ?? resolveCaseWorkspaceTabLabel('decision', caseAnatomy).toUpperCase();
+  const decisionActionLabel = hasDecisionFlow
+    ? 'DECISION'
+    : (
+      workflowMeta?.headerActions.find((action) => action.type === 'primary')?.label.toUpperCase()
+      ?? resolveCaseWorkspaceTabLabel('decision', caseAnatomy).toUpperCase()
+    );
   const createTaskActionLabel =
     workflowMeta?.headerActions.find((action) => action.label.toLowerCase().includes('task'))?.label.toUpperCase()
     ?? 'CREATE TASK';
@@ -1631,11 +1634,9 @@ export function CaseView({
   const isDecisionTabLocked =
     !hasDecisionFlow && data.decisionTabState === 'locked' && data.phase !== 'post-approval';
   const decisionButtonClass = `group/dec relative inline-flex items-center justify-center rounded-full transition-colors ${
-    data.decisionTabState === 'completed'
-      ? 'border border-[#008533] bg-[#e5f5ea] text-brand-green'
-      : isDecisionTabLocked
-        ? 'cursor-not-allowed border border-[#e8eaed] text-[#b7bbc2]'
-        : 'border border-brand-blue text-brand-blue hover:bg-surface-selected'
+    isDecisionTabLocked
+      ? 'cursor-not-allowed border border-[#e8eaed] text-[#b7bbc2]'
+      : 'border border-brand-blue text-brand-blue hover:bg-surface-selected'
   }`;
   const openDecisionTab = () => {
     setActiveTab('decision');
@@ -1812,11 +1813,6 @@ export function CaseView({
               ) : (
                 <Scale className="h-5 w-5 shrink-0" strokeWidth={2.25} aria-hidden />
               )}
-              {data.decisionTabState === 'completed' && (
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-green text-white ring-2 ring-white">
-                  <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
-                </span>
-              )}
               {isDecisionTabLocked && (
                 <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border-default bg-white px-2.5 py-1.5 text-[11px] font-medium text-text-secondary shadow-[0_4px_10px_rgba(27,28,30,0.12)] group-hover/dec:inline-flex">
                   Requirements must be met before making a decision
@@ -1893,7 +1889,6 @@ export function CaseView({
               disabled={false}
             >
               {decisionActionLabel}
-              {data.decisionTabState === 'completed' && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />}
               {isDecisionTabLocked && (
                 <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border-default bg-white px-2.5 py-1.5 text-[11px] font-medium text-text-secondary shadow-[0_4px_10px_rgba(27,28,30,0.12)] group-hover/dec:inline-flex">
                   Requirements must be met before making a decision

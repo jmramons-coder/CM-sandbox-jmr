@@ -196,7 +196,7 @@ export const EMPIRE_CASE_WORKFLOW_GI_RECORDS: Record<string, EmpireCaseWorkflowG
         { order: 4, name: 'Decision', slug: 'decision', state: 'next', subLabel: null },
       ],
       tabs: ['General information', 'Requirements', 'Tasks', 'Documents', 'Communications', 'Relationships', 'Activities'],
-      headerActions: [{ label: 'Issue terms', type: 'primary' }],
+      headerActions: [{ label: 'Decision', type: 'primary' }],
     },
     generalInformation: {
       sections: [],
