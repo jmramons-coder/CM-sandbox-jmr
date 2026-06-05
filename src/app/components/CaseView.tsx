@@ -190,6 +190,7 @@ export function CaseView({
   const location = useLocation();
   const { addOpenCase } = useCasesNav();
   const [activeTab, setActiveTab] = useState<CaseTab>('overview');
+  const prevCaseTabRef = useRef(activeTab);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [aiPanelExiting, setAiPanelExiting] = useState(false);
   const [tabViews, setTabViews] = useState<Record<Exclude<CaseTab, 'overview' | 'decision'>, 'table' | 'list'>>({
@@ -376,15 +377,6 @@ export function CaseView({
   const scoringPanelActive =
     Boolean(activeCasePanelContextId)
     && activeCasePanelContextId === scoringPanelContextId(data.id);
-  const openScoringPanel = useCallback(() => {
-    if (!scoringDraft) return;
-    openCasePanelContext({
-      id: scoringPanelContextId(data.id),
-      label: 'Scoring',
-      icon: Gauge,
-      clearable: false,
-    });
-  }, [data.id, openCasePanelContext, scoringDraft]);
 
   const scoringPanelContext = useMemo((): WorkspacePanelContext | null => {
     if (!scoringSidePanelEnabled || !scoringDraft) return null;
@@ -395,6 +387,11 @@ export function CaseView({
       clearable: false,
     };
   }, [data.id, scoringDraft, scoringSidePanelEnabled]);
+
+  const openScoringPanel = useCallback(() => {
+    if (!scoringPanelContext) return;
+    openCasePanelContext(scoringPanelContext);
+  }, [openCasePanelContext, scoringPanelContext]);
 
   const casePanelContextsWithScoring = useMemo(() => {
     if (!scoringPanelContext || casePanelContexts.length === 0) return casePanelContexts;
@@ -961,7 +958,13 @@ export function CaseView({
 
   useEffect(() => {
     const ctx = activeCasePanelContextId;
-    if (!ctx) return;
+    if (!ctx) {
+      prevCaseTabRef.current = activeTab;
+      return;
+    }
+    const tabChanged = prevCaseTabRef.current !== activeTab;
+    prevCaseTabRef.current = activeTab;
+    if (!tabChanged) return;
     if (ctx.startsWith('document:') && activeTab === 'documents') return;
     if (ctx.startsWith('task:') && activeTab === 'tasks') return;
     if (ctx.startsWith('requirement:') && activeTab === 'requirements') return;
@@ -971,7 +974,9 @@ export function CaseView({
 
   useEffect(() => {
     setActiveTab('overview');
-  }, [caseId]);
+    prevCaseTabRef.current = 'overview';
+    closeCaseSidePanel();
+  }, [caseId, closeCaseSidePanel]);
 
   useEffect(() => {
     if (!reqDetailPanelResizing) return;
@@ -1364,6 +1369,10 @@ export function CaseView({
       const id = documentIdFromPanelContext(contextId) ?? contextId.slice('document:'.length);
       const found = documents.find((document) => document.id === id || document.name === id);
       if (found) setSelectedCaseDocument(found);
+      return;
+    }
+    if (contextId.startsWith('scoring:')) {
+      return;
     }
   }, [activeDataset, data.id, data.requirements, documents]);
   const handleCasePanelContextChange = useCallback((contextId: string) => {
@@ -2301,6 +2310,7 @@ export function CaseView({
               panelContexts={casePanelContextsWithScoring}
               activePanelContextId={activeCasePanelContextId}
               onPanelNavigationChange={handleCasePanelNavigationChange}
+              scoringPanelContext={scoringSidePanelEnabled ? scoringPanelContext : undefined}
               onOpenCaseScoring={scoringSidePanelEnabled ? openScoringPanel : undefined}
               onCompleteTask={(t, options) => {
                 const taskRef = t.taskId ?? t.id;
@@ -2409,9 +2419,39 @@ export function CaseView({
               onNotesChange={(notes) => updateRequirementNotes(selectedRequirement.id, notes)}
               onOpenScoring={() => openScoringPanel()}
               onOpenDocument={(document) => {
-                openCaseDocumentPanel(documentToCaseContextRow(document));
+                const row = documentToCaseContextRow(document);
+                const docContext: WorkspacePanelContext = {
+                  id: documentPanelContextId(row.id ?? row.name),
+                  label: row.name,
+                  icon: FileText,
+                  clearable: true,
+                };
+                if (casePanelContexts.length > 0) {
+                  setDocDetailPanelWidth((current) => resolveDocumentSidePanelWidth(current));
+                  setSelectedCaseDocument(row);
+                  handleCasePanelNavigationChange({
+                    contexts: pushWorkspacePanelContext(casePanelContexts, docContext),
+                    activeContextId: docContext.id,
+                  });
+                  return;
+                }
+                openCaseDocumentPanel(row);
               }}
               onOpenTask={(task) => {
+                const taskContext: WorkspacePanelContext = {
+                  id: taskPanelContextId(task.id),
+                  label: task.taskId ?? task.id,
+                  icon: ClipboardList,
+                  clearable: true,
+                };
+                if (casePanelContexts.length > 0) {
+                  setSelectedCaseTask(task);
+                  handleCasePanelNavigationChange({
+                    contexts: pushWorkspacePanelContext(casePanelContexts, taskContext),
+                    activeContextId: taskContext.id,
+                  });
+                  return;
+                }
                 openCaseTaskPanel(task);
               }}
             />

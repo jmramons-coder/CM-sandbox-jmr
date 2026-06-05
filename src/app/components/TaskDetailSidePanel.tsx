@@ -94,6 +94,8 @@ export type TaskDetailSidePanelProps = {
   activePanelContextId?: string;
   onPanelNavigationChange?: (payload: TaskPanelNavigationPayload) => void;
   onOpenCaseScoring?: () => void;
+  /** When set with panel navigation control, scoring opens as a context tab in the same stack. */
+  scoringPanelContext?: WorkspacePanelContext | null;
 };
 export type TaskDetailEmbeddedViewProps = TaskDetailSidePanelProps;
 
@@ -174,6 +176,7 @@ function EmpowerTaskDetailContent({
   activePanelContextId,
   onPanelNavigationChange,
   onOpenCaseScoring,
+  scoringPanelContext,
 }: TaskDetailSidePanelProps) {
   const isPanelNavControlled = Boolean(onPanelNavigationChange);
   const [internalActiveContextId, setInternalActiveContextId] = useState(() => taskPanelContextId(task.id));
@@ -376,6 +379,19 @@ function EmpowerTaskDetailContent({
     pushPanelNavigation({ contexts, activeContextId: reqContext.id });
   };
 
+  const openScoringView = () => {
+    if (scoringPanelContext && onPanelNavigationChange) {
+      const contexts = pushWorkspacePanelContext(panelContexts ?? [taskContext()], scoringPanelContext);
+      pushPanelNavigation({ contexts, activeContextId: scoringPanelContext.id });
+      return;
+    }
+    if (onOpenCaseScoring) {
+      onOpenCaseScoring();
+      return;
+    }
+    if (caseId) navigate(`/cases/${caseId}#tab=scoring`);
+  };
+
   const panelBody = activeView === 'document' ? (
     viewingDocumentData ? (
         <DynamicDocumentSidePanel
@@ -470,8 +486,9 @@ function EmpowerTaskDetailContent({
             <ScoringMiniWidget
               scoring={taskCaseRecord?.underwritingScoring}
               onOpenScoring={
-                onOpenCaseScoring
-                ?? (caseId ? () => navigate(`/cases/${caseId}#tab=scoring`) : undefined)
+                scoringPanelContext || onOpenCaseScoring || caseId
+                  ? openScoringView
+                  : undefined
               }
             />
           ) : null}

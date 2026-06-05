@@ -50,6 +50,7 @@ export function TaskEvidencePreviewCard({
       type="button"
       onClick={onOpen}
       disabled={disabled}
+      data-keep-sidepanel="context"
       data-testid="task-evidence-preview-card"
       className="group flex w-full items-stretch overflow-hidden rounded-lg border border-border-soft bg-white text-left transition-colors hover:border-brand-blue/40 disabled:cursor-default disabled:opacity-60"
     >

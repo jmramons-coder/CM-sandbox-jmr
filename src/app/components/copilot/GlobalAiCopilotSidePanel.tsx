@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router';
-import { ClipboardCheck, ClipboardList, FileText, Maximize2, MessageSquare, Pencil, Plus } from 'lucide-react';
+import { ClipboardCheck, ClipboardList, FileText, Gauge, Maximize2, MessageSquare, Pencil, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   AiCopilotDock,
@@ -11,6 +11,7 @@ import {
 } from '../AiCopilotFooter';
 import { DynamicDocumentSidePanel } from '../DynamicDocumentSidePanel';
 import { RequirementContextBody } from '../RequirementContextBody';
+import { CaseScoringSidePanel } from '../cases/CaseScoringSidePanel';
 import { TaskDetailEmbeddedView } from '../TaskDetailSidePanel';
 import { MiniAiSourceBadge } from '../ModuleCellHelpers';
 import { WorkspaceObjectSidePanel, type WorkspacePanelContext } from '../WorkspaceObjectSidePanel';
@@ -24,6 +25,7 @@ import { isTaskCompleteActionSuccess, runTaskWorkflowAction } from '../../data/w
 import { filterDatasetBySettings, getSystemDataset, listDocuments, listTasks } from '../../data/objectRepository';
 import { getCaseOverview } from '../../data/mock-cases';
 import type { CaseRequirement, Task } from '../../types';
+import type { UnderwritingScoring } from '../../domain/objectRefs';
 import { buildCaseDocumentPanelData } from '../../utils/buildCaseDocumentPanelData';
 import {
   setGlobalCopilotCaseOwner,
@@ -47,6 +49,10 @@ import {
   requirementPanelContextId,
   taskPanelContextId,
 } from '../../utils/workspacePanelContextUtils';
+import {
+  scoringPanelContextId,
+  usesScoringSidePanel,
+} from '../../utils/underwritingScoringPresentation';
 import { useDataSourceSettings, usePlatformSettings } from '../../contexts/PlatformSettingsContext';
 import { useActiveUser } from '../../contexts/ActiveUserContext';
 import type { ChatTurn } from '../AiCopilotFooter';
@@ -164,6 +170,7 @@ export function GlobalAiCopilotSidePanel({
   const [panelTask, setPanelTask] = useState<Task | null>(null);
   const [panelRequirement, setPanelRequirement] = useState<CaseRequirement | null>(null);
   const [panelDocument, setPanelDocument] = useState<CaseDocumentContextRow | null>(null);
+  const [scoringDraft, setScoringDraft] = useState<UnderwritingScoring | undefined>(undefined);
   const [activeDocumentInsightId, setActiveDocumentInsightId] = useState('');
   const [assistantViewLocked, setAssistantViewLocked] = useState(false);
   const suppressCopilotObjectFocusRef = useRef(false);
@@ -191,6 +198,27 @@ export function GlobalAiCopilotSidePanel({
     dataSource.legacyMockOverlayEnabled,
     platformSettings.anatomy,
   ]);
+
+  useEffect(() => {
+    setScoringDraft(caseOverview?.underwritingScoring);
+  }, [briefingCaseId, caseOverview?.underwritingScoring]);
+
+  const scoringSidePanelEnabled = usesScoringSidePanel(scoringDraft);
+  const scoringPanelContext = useMemo((): WorkspacePanelContext | null => {
+    if (!briefingCaseId || !scoringSidePanelEnabled || !scoringDraft) return null;
+    return {
+      id: scoringPanelContextId(briefingCaseId),
+      label: 'Scoring',
+      icon: Gauge,
+      clearable: false,
+    };
+  }, [briefingCaseId, scoringDraft, scoringSidePanelEnabled]);
+
+  const panelContextsWithScoring = useMemo(() => {
+    if (!scoringPanelContext || panelContexts.length === 0) return panelContexts;
+    if (panelContexts.some((ctx) => ctx.id === scoringPanelContext.id)) return panelContexts;
+    return [...panelContexts, scoringPanelContext];
+  }, [panelContexts, scoringPanelContext]);
 
   const resetPanelStack = useCallback(() => {
     setAssistantViewLocked(false);
@@ -288,10 +316,20 @@ export function GlobalAiCopilotSidePanel({
           setPanelTask(null);
           setPanelRequirement(null);
         }
+        return;
+      }
+      if (contextId.startsWith('scoring:')) {
+        return;
       }
     },
     [activeDataset, assistantViewLocked, briefingCaseId, caseOverview?.requirements],
   );
+
+  const openScoringPanel = useCallback(() => {
+    if (!scoringPanelContext) return;
+    setPanelContexts((current) => pushWorkspacePanelContext(current, scoringPanelContext));
+    resolvePanelContext(scoringPanelContext.id);
+  }, [resolvePanelContext, scoringPanelContext]);
 
   const handlePanelContextChange = useCallback(
     (contextId: string) => {
@@ -557,6 +595,7 @@ export function GlobalAiCopilotSidePanel({
   const showTask = !assistantViewLocked && activeContextId.startsWith('task:') && panelTask;
   const showRequirement = activeContextId.startsWith('requirement:') && panelRequirement;
   const showDocument = activeContextId.startsWith('document:') && panelDocumentData;
+  const showScoring = activeContextId.startsWith('scoring:') && scoringDraft;
 
   const preserveOnOutsideClick = useCallback(
     (target: Element) => {
@@ -568,7 +607,7 @@ export function GlobalAiCopilotSidePanel({
 
   return (
     <WorkspaceObjectSidePanel
-      contexts={panelContexts}
+      contexts={panelContextsWithScoring}
       activeContextId={activeContextId}
       onChangeContext={handlePanelContextChange}
       onClearContext={handleClearPanelContext}
@@ -670,9 +709,11 @@ export function GlobalAiCopilotSidePanel({
           variant="case"
           caseFileId={briefingCaseId}
           fixedOverlay
-          panelContexts={panelContexts}
+          panelContexts={panelContextsWithScoring}
           activePanelContextId={activeContextId}
           onPanelNavigationChange={handlePanelNavigationChange}
+          scoringPanelContext={scoringPanelContext}
+          onOpenCaseScoring={scoringSidePanelEnabled ? openScoringPanel : undefined}
           onCompleteTask={(task, options) => {
             const taskRef = task.taskId ?? task.id;
             const caseId = briefingCaseId ?? task.caseId;
@@ -752,6 +793,9 @@ export function GlobalAiCopilotSidePanel({
           documents={panelRequirementDocuments}
           evidenceDataset={activeDataset}
           tasks={panelRequirementTasks}
+          scoring={scoringDraft}
+          hideScoringWidget={scoringSidePanelEnabled}
+          onOpenScoring={scoringSidePanelEnabled ? openScoringPanel : undefined}
           onOpenDocument={(document) => {
             openInCopilotPanel({
               caseId: briefingCaseId,
@@ -778,6 +822,16 @@ export function GlobalAiCopilotSidePanel({
           panelWidth={panelWidth}
           isResizing={false}
           onResizeStart={() => undefined}
+        />
+      ) : null}
+
+      {showScoring && scoringDraft ? (
+        <CaseScoringSidePanel
+          scoring={scoringDraft}
+          onChange={(next) => {
+            setScoringDraft(next);
+            if (caseOverview) caseOverview.underwritingScoring = next;
+          }}
         />
       ) : null}
     </WorkspaceObjectSidePanel>

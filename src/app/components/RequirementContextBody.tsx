@@ -499,6 +499,7 @@ export function RequirementContextBody({
                       <button
                         key={task.id}
                         type="button"
+                        data-keep-sidepanel="context"
                         onClick={() => onOpenTask?.(task)}
                         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-primary"
                       >
