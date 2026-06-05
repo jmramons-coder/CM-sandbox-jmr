@@ -14,16 +14,12 @@ export const EMPIRE_DOCUMENT_ASSET_BY_ID: Record<string, string> = {
   doc_emp_nb_add_ins_decline: 'letter_add_insured_decline_luc_dubois.png',
 };
 
-export function getEmpireDocumentAssetBasename(documentId: string, filename?: string): string | null {
-  if (EMPIRE_DOCUMENT_ASSET_BY_ID[documentId]) {
-    return EMPIRE_DOCUMENT_ASSET_BY_ID[documentId];
-  }
-  if (!filename?.trim()) return null;
-  return filename.replace(/\.pdf$/i, '.png');
+export function getEmpireDocumentAssetBasename(documentId: string): string | null {
+  return EMPIRE_DOCUMENT_ASSET_BY_ID[documentId] ?? null;
 }
 
-export function getEmpireDocumentPreviewUrl(documentId: string, filename?: string): string {
-  const basename = getEmpireDocumentAssetBasename(documentId, filename);
+export function getEmpireDocumentPreviewUrl(documentId: string, _filename?: string): string {
+  const basename = getEmpireDocumentAssetBasename(documentId);
   if (!basename) return '';
   return `${EMPIRE_DOCUMENT_PREVIEW_BASE}/${basename}`;
 }

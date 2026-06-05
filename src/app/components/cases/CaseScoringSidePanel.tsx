@@ -212,8 +212,8 @@ export function CaseScoringApplicantAffordance({
       type="button"
       data-keep-sidepanel
       onClick={onOpen}
-      title={`Decision — ${summary}`}
-      aria-label={`Open decision notes — ${summary}`}
+      title={`Scoring — ${summary}`}
+      aria-label={`Open scoring — ${summary}`}
       aria-pressed={active}
       className="group/score flex min-w-0 w-full flex-col text-left transition-colors"
     >
@@ -224,7 +224,7 @@ export function CaseScoringApplicantAffordance({
             strokeWidth={2.25}
             aria-hidden
           />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Decision</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Scoring</span>
         </span>
         <span
           className={`shrink-0 text-[15px] font-semibold tabular-nums leading-none ${
@@ -273,8 +273,8 @@ export function CaseScoringHeaderButton({
       type="button"
       data-keep-sidepanel
       onClick={onOpen}
-      title={`Decision — ${summary}`}
-      aria-label={`Open decision notes — ${summary}`}
+      title={`Scoring — ${summary}`}
+      aria-label={`Open scoring — ${summary}`}
       aria-pressed={active}
       className={`group/score inline-flex items-center justify-center gap-1.5 rounded-full border transition-colors ${
         active

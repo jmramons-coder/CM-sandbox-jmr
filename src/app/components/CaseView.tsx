@@ -50,6 +50,7 @@ import type { CaseDocument, CaseOverview, CasePhase, CaseRequirement, HumanDecis
 import type { UnderwritingScoring, UnderwritingScoringItem } from '../domain/objectRefs';
 import { resolveTaskForCaseContextRow } from '../utils/caseContextualTask';
 import { appToast } from '../utils/app-toast';
+import { applyDecisionToCaseWorkflow } from '../utils/applyDecisionToCaseWorkflow';
 import { isSemiAutoTask } from '../utils/taskReviewProjection';
 import { TaskDetailEmbeddedView, TaskDetailSidePanel, type TaskPanelNavigationPayload } from './TaskDetailSidePanel';
 import {
@@ -960,12 +961,13 @@ export function CaseView({
 
   useEffect(() => {
     const ctx = activeCasePanelContextId;
+    if (!ctx) return;
     if (ctx.startsWith('document:') && activeTab === 'documents') return;
     if (ctx.startsWith('task:') && activeTab === 'tasks') return;
     if (ctx.startsWith('requirement:') && activeTab === 'requirements') return;
-    if (ctx.startsWith('scoring:') && activeTab === 'scoring') return;
+    if (ctx.startsWith('scoring:') && (activeTab === 'scoring' || scoringSidePanelEnabled)) return;
     closeCaseSidePanel();
-  }, [activeCasePanelContextId, activeTab, data.id, closeCaseSidePanel]);
+  }, [activeCasePanelContextId, activeTab, closeCaseSidePanel, scoringSidePanelEnabled]);
 
   useEffect(() => {
     setActiveTab('overview');
@@ -2065,12 +2067,9 @@ export function CaseView({
             onDecisionRecorded={(decision) => {
               data.humanDecision = decision;
               data.decisionTabState = 'completed';
-              if (data.phase === 'pre-approval' && data.preApprovalStages.length > 0) {
-                data.activeStage = data.preApprovalStages.length;
-              }
+              applyDecisionToCaseWorkflow(data, decision);
               const label = decision.decisionOutcome?.title ?? decision.decisionTitle ?? (decision.decisionType === 'approve' ? 'Approved' : decision.decisionType === 'decline' ? 'Declined' : decision.decisionType === 'close_case' ? 'Recovery Complete' : decision.decisionType === 'modified_offer' ? 'Modified Offer' : 'Info Requested');
-              if (caseSummary) caseSummary.status = `Closed: ${label}`;
-              data.caseStatus = `Closed: ${label}`;
+              if (caseSummary) caseSummary.status = data.caseStatus;
               setActiveTab('decision');
               bumpData();
               appToast.success(`Decision recorded — ${label}`);

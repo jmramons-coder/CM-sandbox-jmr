@@ -22,7 +22,7 @@ import { EMPIRE_ACTIVITY_RECORDS } from './empire-activity-records';
 import { applyEmpireAddressChangeOverlay } from './empireAddressChangeOverlay';
 import type { DatasetDocumentRecord } from './multi-case-dataset';
 import type { DocumentEvidenceRecord } from './multi-case-dataset';
-import { getEmpireDocumentPreviewUrl } from '../utils/empire-document-assets';
+import { getEmpireDocumentPreviewUrl, isEmpirePreviewDocumentId } from '../utils/empire-document-assets';
 
 function tabIdFromLabel(label: string): CaseTabConfiguration {
   const normalized = label.toLowerCase();
@@ -60,7 +60,8 @@ function fieldFromContextSlot(slot: { slot: number; label: string; value: string
 }
 
 function withEmpireDocumentAssets(document: DatasetDocumentRecord): DatasetDocumentRecord {
-  const previewUrl = getEmpireDocumentPreviewUrl(document.id, document.filename);
+  if (!isEmpirePreviewDocumentId(document.id)) return document;
+  const previewUrl = getEmpireDocumentPreviewUrl(document.id);
   if (!previewUrl) return document;
   return {
     ...document,

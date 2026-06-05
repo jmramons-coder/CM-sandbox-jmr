@@ -394,6 +394,8 @@ export interface CaseDecisionOutcome {
   title: string;
   subtitle: string;
   nextSteps: string[];
+  /** Narrative shown after the decision is recorded (replaces pre-decision AI recommendation). */
+  recordedContext?: string;
 }
 
 export interface CaseDecisionFlow {

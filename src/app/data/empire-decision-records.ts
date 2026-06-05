@@ -67,6 +67,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--green-t)',
         title: 'Disability benefit approved',
         subtitle: 'Monthly benefit of $3,800 queued from May 2026. Advisor and life insured notifications within 24 hours.',
+        recordedContext: 'Monthly disability benefit approved at $3,800 retroactive to waiting-period end. Medical evidence supports own-occupation incapacity for software development duties.',
         nextSteps: ['Payment file sent to finance', 'Advisor notification sent', 'Case status updated to Approved'],
       },
       defer: {
@@ -76,6 +77,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--amber-t)',
         title: 'Decision deferred',
         subtitle: 'Case held pending employer physician statement. Chase task created.',
+        recordedContext: 'Decision deferred until employer physician statement confirms inability to perform own occupation. Maple Tech Solutions HR chase continues.',
         nextSteps: ['Employer chase task created', 'Life insured notified of delay', 'Case returns to requirement gathering'],
       },
       decline: {
@@ -85,6 +87,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--red-t)',
         title: 'Claim declined',
         subtitle: 'Decline letter generated. Appeal window opened per policy terms.',
+        recordedContext: 'Claim declined after review of available medical and employer evidence. Decline correspondence issued with appeal rights.',
         nextSteps: ['Decline letter issued', 'Appeal rights communicated'],
       },
     },
@@ -153,6 +156,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--green-t)',
         title: 'CI claim approved',
         subtitle: '$125,000 payment queued. Advisor and life insured notifications within 24 hours.',
+        recordedContext: 'Critical illness claim approved in full. Specialist diagnosis satisfies policy definitions; no exclusions or contestability issues identified.',
         nextSteps: ['Payment file sent to finance', 'Advisor notification sent', 'Case status updated to Approved'],
       },
       partial: {
@@ -162,6 +166,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--amber-t)',
         title: 'Partial payout approved',
         subtitle: 'Reduced amount per partial definitions. Medical director attestation recorded.',
+        recordedContext: 'Partial critical illness payout approved per policy partial definitions. Medical director attestation recorded on file.',
         nextSteps: ['Partial payment queued', 'Advisor notified of partial settlement'],
       },
       decline: {
@@ -171,6 +176,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--red-t)',
         title: 'Claim declined',
         subtitle: 'Decline letter generated. Appeal window opened per policy terms.',
+        recordedContext: 'Critical illness claim declined after definition review. Decline letter issued with appeal rights communicated.',
         nextSteps: ['Decline letter issued', 'Appeal rights communicated'],
       },
     },
@@ -242,6 +248,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--green-t)',
         title: 'Final death benefit approved',
         subtitle: '$385,000 payment queued to Margaret MacDonald. Advisor notified.',
+        recordedContext: 'Final death benefit of $385,000 approved for release to beneficiary Margaret MacDonald. Probate certificate verified; compassionate advance of $15,000 previously paid.',
         nextSteps: ['Final payment file sent to finance', 'Beneficiary notification sent', 'Case closed'],
       },
       defer: {
@@ -251,6 +258,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--amber-t)',
         title: 'Final payment deferred',
         subtitle: 'Case held pending probate certificate. Weekly estate chase continues.',
+        recordedContext: 'Final balance held pending probate certificate. Compassionate advance remains paid; estate documentation chase continues weekly.',
         nextSteps: ['Estate documentation chase continues', 'Beneficiary updated on status'],
       },
       decline: {
@@ -260,6 +268,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--red-t)',
         title: 'Remaining benefit declined',
         subtitle: 'Decline letter generated for final balance. Appeal rights communicated.',
+        recordedContext: 'Remaining death benefit declined. Decline correspondence issued for final balance; compassionate advance remains paid.',
         nextSteps: ['Decline letter issued', 'Appeal rights communicated'],
       },
     },
@@ -339,6 +348,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--green-t)',
         title: 'Standard terms issued',
         subtitle: 'Solution 20 participating at $500,000 queued for contract issuance. Advisor notified.',
+        recordedContext: 'Underwriter issued standard non-smoker terms at $500,000 Solution 20 participating. Preliminary scoring maps to Standard NT; APS, blood and urine, and scuba questionnaire remain in flight and will be cleared during contract issuance.',
         nextSteps: ['Contract issuance file created', 'Advisor notification sent', 'Case moves to contract issuance'],
       },
       rated: {
@@ -348,6 +358,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--blue-t)',
         title: 'Rated offer issued',
         subtitle: 'Modified illustration sent to advisor. Applicant review window opened.',
+        recordedContext: 'Rated offer issued reflecting Rx findings (treated hyperlipidemia and hypertension). Modified illustration sent to advisor Jean-Philippe Morin for applicant review.',
         nextSteps: ['Rated illustration issued', 'Advisor notified', 'Case held for applicant acceptance'],
       },
       defer: {
@@ -357,6 +368,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--amber-t)',
         title: 'Decision deferred',
         subtitle: 'Case held pending APS, labs, and scuba questionnaire. Requirement gathering continues.',
+        recordedContext: 'Formal offer deferred until APS, lab results, and scuba questionnaire are received. Requirement gathering and chase tasks continue.',
         nextSteps: ['APS order task available', 'Chase reminders scheduled', 'Case returns to requirement gathering'],
       },
       decline: {
@@ -366,6 +378,7 @@ export const EMPIRE_DECISION_FLOW_RECORDS: Record<string, CaseDecisionFlow & { c
         iconColor: 'var(--red-t)',
         title: 'Application declined',
         subtitle: 'Decline letter generated. Advisor and applicant notified per provincial regulations.',
+        recordedContext: 'Application declined. Decline letter issued; advisor and applicant notified per provincial regulations.',
         nextSteps: ['Decline letter issued', 'Advisor notification sent', 'Case closed'],
       },
     },

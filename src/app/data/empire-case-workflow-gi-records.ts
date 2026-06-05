@@ -186,7 +186,7 @@ export const EMPIRE_CASE_WORKFLOW_GI_RECORDS: Record<string, EmpireCaseWorkflowG
       contextBar: [
         { slot: 1, label: 'Applicant', value: 'Amélie Dubois', sub: null, valueColor: null },
         { slot: 2, label: 'Product', value: 'Solution 20 participating', sub: '$500,000', subType: 'descriptor', valueColor: null },
-        { slot: 3, label: 'Decision', value: 'Standard · Non-smoker', sub: '0 pts', subType: 'descriptor', valueColor: null },
+        { slot: 3, label: 'Scoring', value: 'Standard · Non-smoker', sub: '0 pts', subType: 'descriptor', valueColor: null },
         { slot: 4, label: 'SLA', value: '27 May 2026', sub: null, valueColor: 'warning' },
       ],
       subwayStages: [

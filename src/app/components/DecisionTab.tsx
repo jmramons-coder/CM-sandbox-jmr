@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, ArrowRight, Check, CheckCircle2, Clock, ClipboardCheck, FileCheck2, X, XCircle } from 'lucide-react';
 import type { AssessmentFactor, CaseDecisionFlow, CaseDecisionOutcome, CaseOverview, DecisionTabState, DecisionType, HumanDecision } from '../types';
-import { AiConfidenceKpi } from './AiSummaryWithConfidenceCard';
+import type { UnderwritingRequirementAssessment } from '../domain/objectRefs';
 
 interface DecisionTabProps {
   caseData: CaseOverview;
@@ -66,24 +66,123 @@ function RecommendedActionCallout({ option }: { option: CaseDecisionFlow['option
   );
 }
 
-function DecisionSummaryWithConfidence({ text, confidence }: { text: string; confidence?: number | null }) {
-  const showConfidence = confidence != null && !Number.isNaN(confidence);
+function DecisionSection({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">{label}</p>
+      <div className="mt-2">{children}</div>
+    </div>
+  );
+}
+
+function resolveDecisionBenefitPosition(
+  caseData: CaseOverview,
+  flow?: CaseDecisionFlow,
+): string | undefined {
+  const fromRecommendation = caseData.aiDecisionRecommendation?.benefitAmount;
+  if (fromRecommendation && fromRecommendation !== 'N/A') return fromRecommendation;
+  const fromFacts = flow?.keyFacts.find((fact) => {
+    const label = fact.label.toLowerCase();
+    return label.includes('coverage') || label.includes('benefit') || label.includes('payout');
+  })?.value;
+  return fromFacts || caseData.monthlyBenefit || undefined;
+}
+
+function buildRecordedContextSummary(
+  caseData: CaseOverview,
+  decision: HumanDecision,
+  flow?: CaseDecisionFlow,
+): string {
+  if (decision.notes.trim()) return decision.notes.trim();
+  const freshOutcome = decision.decisionOptionId ? flow?.outcomes[decision.decisionOptionId] : undefined;
+  if (freshOutcome?.recordedContext) return freshOutcome.recordedContext;
+  if (decision.decisionOutcome?.recordedContext) return decision.decisionOutcome.recordedContext;
+  const selectedOption = flow?.options.find((option) => option.id === decision.decisionOptionId);
+  return decision.decisionOutcome?.subtitle ?? selectedOption?.description ?? '';
+}
+
+function RequirementAssessmentsTable({ rows }: { rows: UnderwritingRequirementAssessment[] }) {
+  return (
+    <div className="overflow-hidden rounded-md border border-border-soft">
+      <table className="w-full text-[12px]">
+        <thead>
+          <tr className="border-b border-border-soft bg-surface-muted/60">
+            <th className="px-2.5 py-2 text-left font-semibold text-text-muted">Requirement</th>
+            <th className="px-2.5 py-2 text-left font-semibold text-text-muted">Assessment</th>
+            <th className="px-2.5 py-2 text-right font-semibold text-text-muted">Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id} className="border-b border-border-soft last:border-b-0">
+              <td className="px-2.5 py-2 font-medium text-text-primary">{row.requirement}</td>
+              <td className="px-2.5 py-2 text-text-secondary">
+                {row.assessment}
+                {row.pending ? <span className="ml-1 text-[10px] font-semibold uppercase text-[#8a5a00]">Pending</span> : null}
+              </td>
+              <td className="px-2.5 py-2 text-right font-semibold text-text-primary">
+                {row.negativeScore && row.negativeScore !== '—' && row.negativeScore !== 'N/A'
+                  ? row.negativeScore
+                  : row.positiveScore && row.positiveScore !== '—' && row.positiveScore !== 'N/A'
+                    ? row.positiveScore
+                    : '—'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function DecisionRecordedSupportPanel({
+  caseData,
+  decision,
+  flow,
+}: {
+  caseData: CaseOverview;
+  decision: HumanDecision;
+  flow?: CaseDecisionFlow;
+}) {
+  const contextSummary = buildRecordedContextSummary(caseData, decision, flow);
+  const scoring = caseData.underwritingScoring;
+  const requirementRows = scoring?.requirementAssessments ?? [];
+  const factors =
+    requirementRows.length === 0
+      ? (caseData.assessmentFactors.length > 0
+        ? caseData.assessmentFactors
+        : caseData.aiDecisionRecommendation?.factors ?? [])
+      : [];
+
+  if (!contextSummary && requirementRows.length === 0 && factors.length === 0) return null;
 
   return (
-    <div className="flex overflow-hidden">
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Summary</p>
-        <p className="mt-2 text-[12px] leading-relaxed text-text-primary">{text}</p>
-      </div>
-      {showConfidence ? (
-        <>
-          <div className="mx-4 w-px shrink-0 self-stretch bg-border-soft" aria-hidden />
-          <div className="flex shrink-0 items-center pr-1">
-            <AiConfidenceKpi value={confidence} description="Confidence in recommended action" />
-          </div>
-        </>
+    <section className="rounded-lg border border-border-soft bg-white p-4">
+      {contextSummary ? (
+        <DecisionSection label="Underwriting context">
+          <p className="text-[12px] leading-relaxed text-text-primary">{contextSummary}</p>
+        </DecisionSection>
       ) : null}
-    </div>
+
+      {scoring && requirementRows.length > 0 ? (
+        <div className={contextSummary ? 'mt-4 border-t border-border-soft pt-4' : ''}>
+          <DecisionSection label="Scoring basis">
+            <p className="mb-2 text-[12px] text-text-secondary">
+              {scoring.riskClass} · Net {scoring.netScore}
+            </p>
+            <RequirementAssessmentsTable rows={requirementRows} />
+          </DecisionSection>
+        </div>
+      ) : null}
+
+      {factors.length > 0 ? (
+        <div className={contextSummary || requirementRows.length > 0 ? 'mt-4 border-t border-border-soft pt-3' : 'pt-1'}>
+          <DecisionSection label="Assessment factors">
+            <AssessmentFactorsTable factors={factors} netScore={caseData.netAssessmentScore} />
+          </DecisionSection>
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -266,64 +365,34 @@ function AssessmentFactorsTable({ factors, netScore }: { factors: AssessmentFact
   );
 }
 
-function DecisionAiSummaryPanel({ caseData }: { caseData: CaseOverview }) {
-  const flow = caseData.decisionFlow;
-  const flowRecommendation = flow?.aiRecommendation;
-  const structuredRecommendation = caseData.aiDecisionRecommendation;
-  const recommendedOption = flow ? getRecommendedDecisionOption(flow) : undefined;
-  const confidence =
-    structuredRecommendation?.confidence ?? flowRecommendation?.confidence ?? caseData.aiConfidence;
-  const summaryText =
-    flowRecommendation?.text ?? structuredRecommendation?.narrative ?? caseData.aiNarrative;
-  const factors =
-    caseData.assessmentFactors.length > 0
-      ? caseData.assessmentFactors
-      : structuredRecommendation?.factors ?? [];
-
-  if (!summaryText && factors.length === 0) return null;
-
-  return (
-    <section className="rounded-lg border border-border-soft bg-white p-4">
-      {summaryText ? <DecisionSummaryWithConfidence text={summaryText} confidence={confidence} /> : null}
-      {recommendedOption ? (
-        <div className={summaryText ? 'mt-4 border-t border-border-soft pt-4' : ''}>
-          <RecommendedActionCallout option={recommendedOption} />
-        </div>
-      ) : null}
-      {factors.length > 0 ? (
-        <div className={summaryText ? 'mt-4 border-t border-border-soft pt-3' : 'pt-1'}>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Assessment factors</p>
-          <AssessmentFactorsTable factors={factors} netScore={caseData.netAssessmentScore} />
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
 function FinalDecisionSection({
   caseData,
   decision,
   outcome,
+  flow,
 }: {
   caseData: CaseOverview;
   decision: HumanDecision;
   outcome: CaseDecisionOutcome;
+  flow?: CaseDecisionFlow;
 }) {
-  const aiRecommendation = caseData.aiDecisionRecommendation;
+  const benefitPosition = resolveDecisionBenefitPosition(caseData, flow);
+  const showBenefitPosition =
+    Boolean(benefitPosition)
+    && (decision.decisionType === 'approve' || decision.decisionOptionId === 'standard' || decision.decisionOptionId === 'approve');
 
   return (
     <section className="rounded-lg border border-border-soft bg-white p-5">
       <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">Final decision</p>
-      <div className="mt-3 flex flex-wrap items-start gap-3">
-        <span className={`inline-flex rounded-full px-3 py-1 text-[12px] font-semibold ${outcomeToneClass(outcome)}`}>
-          {decision.decisionTitle ?? outcome.title}
-        </span>
+      <div className="mt-3 flex items-start gap-3">
         <div className={`flex size-10 shrink-0 items-center justify-center rounded-full ${outcomeToneClass(outcome)}`}>
           <OutcomeIcon outcome={outcome} />
         </div>
+        <div className="min-w-0">
+          <h3 className="text-[18px] font-semibold text-text-heading">{outcome.title}</h3>
+          <p className="mt-1 text-[13px] leading-relaxed text-text-secondary">{outcome.subtitle}</p>
+        </div>
       </div>
-      <h3 className="mt-3 text-[18px] font-semibold text-text-heading">{outcome.title}</h3>
-      <p className="mt-2 text-[13px] leading-relaxed text-text-secondary">{outcome.subtitle}</p>
 
       <dl className="mt-4 grid gap-3 border-t border-border-soft pt-4 text-[12px] sm:grid-cols-2">
         <div>
@@ -334,10 +403,10 @@ function FinalDecisionSection({
           <dt className="text-text-muted">Recorded at</dt>
           <dd className="mt-0.5 font-semibold text-text-primary">{formatRecordedAt(decision.recordedAt)}</dd>
         </div>
-        {aiRecommendation?.benefitAmount && decision.decisionType === 'approve' ? (
+        {showBenefitPosition ? (
           <div>
-            <dt className="text-text-muted">Benefit position</dt>
-            <dd className="mt-0.5 font-semibold text-text-primary">{aiRecommendation.benefitAmount}</dd>
+            <dt className="text-text-muted">{caseData.caseKind === 'new_business' ? 'Coverage amount' : 'Benefit position'}</dt>
+            <dd className="mt-0.5 font-semibold text-text-primary">{benefitPosition}</dd>
           </div>
         ) : null}
         {decision.modifiedTerms ? (
@@ -364,7 +433,7 @@ function FinalDecisionSection({
             <dd className="mt-0.5 text-text-primary">{decision.declineRationale}</dd>
           </div>
         ) : null}
-        {decision.notes ? (
+        {decision.notes && decision.notes !== buildRecordedContextSummary(caseData, decision, flow) ? (
           <div className="sm:col-span-2">
             <dt className="text-text-muted">Rationale</dt>
             <dd className="mt-0.5 leading-relaxed text-text-primary">{decision.notes}</dd>
@@ -392,11 +461,12 @@ function FinalDecisionSection({
 function DecisionOutcomeView({ caseData }: { caseData: CaseOverview }) {
   const decision = caseData.humanDecision;
   const outcome = decision?.decisionOutcome;
+  const flow = caseData.decisionFlow;
   if (!decision || !outcome) return <DecisionEmptyState caseData={caseData} onOpen={() => undefined} />;
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
-      <FinalDecisionSection caseData={caseData} decision={decision} outcome={outcome} />
-      <DecisionAiSummaryPanel caseData={caseData} />
+      <FinalDecisionSection caseData={caseData} decision={decision} outcome={outcome} flow={flow} />
+      <DecisionRecordedSupportPanel caseData={caseData} decision={decision} flow={flow} />
     </div>
   );
 }
