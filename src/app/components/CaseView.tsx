@@ -1614,6 +1614,7 @@ export function CaseView({
     'decision' as CaseTab,
   ];
 
+  const hasDecisionFlow = Boolean(data.decisionFlow);
   const decisionActionLabel = hasDecisionFlow
     ? 'DECISION'
     : (
@@ -1630,7 +1631,6 @@ export function CaseView({
     data.caseKind,
     caseAnatomy,
   );
-  const hasDecisionFlow = Boolean(data.decisionFlow);
   const isDecisionTabLocked =
     !hasDecisionFlow && data.decisionTabState === 'locked' && data.phase !== 'post-approval';
   const decisionButtonClass = `group/dec relative inline-flex items-center justify-center rounded-full transition-colors ${
