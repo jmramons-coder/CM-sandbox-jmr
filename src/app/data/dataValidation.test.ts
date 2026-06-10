@@ -243,10 +243,11 @@ describe('dataset validation gates', () => {
     expect(env!.settings.dataSource.displayCurrency).toBe('USD');
     expect(env!.settings.branding.productName).toBe('Homesteaders Case Management');
     expect(env!.settings.branding.headerColor).toBe('#004b91');
-    expect(env!.settings.branding.primaryColor).toBe('#2d6a4f');
-    expect(env!.settings.branding.accentColor).toBe('#40916c');
+    expect(env!.settings.branding.primaryColor).toBe('#004b91');
+    expect(env!.settings.branding.accentColor).toBe('#0066b3');
     expect(env!.settings.branding.logoMode).toBe('custom');
-    expect(env!.settings.branding.logoDarkDataUrl).toMatch(/^data:image\/svg\+xml;base64,/);
+    expect(env!.settings.branding.logoDarkDataUrl).toMatch(/^data:image\/png;base64,/);
+    expect(env!.settings.branding.logoLightDataUrl).toMatch(/^data:image\/png;base64,/);
     expect(env!.settings.dataSource.legacyMockOverlayEnabled).toBe(false);
   });
 
