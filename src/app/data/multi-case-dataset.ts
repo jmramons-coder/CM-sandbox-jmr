@@ -1,6 +1,7 @@
 import type { CaseKind, CaseRecord, ObjectRef, WorkObjectKind, DisplayCurrency } from '../domain/objectRefs';
 import { GUARDIAN_DATASET } from './guardian-dataset';
 import { EMPIRE_DATASET } from './empire-dataset';
+import { HOMESTEADERS_DATASET } from './homesteaders-dataset';
 import { SBLI_DATASET } from './sbli-dataset';
 import type {
   PlatformUserRole,
@@ -447,4 +448,5 @@ export const SYSTEM_DATASETS: SystemDataset[] = [
   MULTI_CASE_DEMO_DATASET,
   GUARDIAN_DATASET,
   EMPIRE_DATASET,
+  HOMESTEADERS_DATASET,
 ];

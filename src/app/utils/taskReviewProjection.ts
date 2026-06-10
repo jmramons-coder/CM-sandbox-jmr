@@ -89,6 +89,7 @@ function buildFallbackCrewSteps(
   if (seed?.length) return seed;
 
   if (!reasoning?.length) return undefined;
+  if (!row.aiNarrative?.text?.trim()) return undefined;
 
   const agent = row.aiNarrative?.generatedBy ?? 'AI Agent';
   const completedAt = row.aiNarrative?.generatedAt ?? row.createdDate;

@@ -13,7 +13,7 @@ import { buildSchemaGraph, getDatasetRowsForKind } from '../domain/schemaGraph';
 import { createCase, createRequest, createTask, deleteEntity, linkObject } from './datasetMutations';
 import { datasetRegistry } from './datasetRegistry';
 import { SEEDED_DEMO_ENVIRONMENTS } from './demo-environment-presets';
-import { DEMO_ENV_EMPIRE_ID, DEMO_ENV_GUARDIAN_ID } from './demo-environment-deploy';
+import { DEMO_ENV_EMPIRE_ID, DEMO_ENV_GUARDIAN_ID, DEMO_ENV_HOMESTEADERS_ID } from './demo-environment-deploy';
 import {
   resolveContextSupportCards,
   type TaskContextCardKind,
@@ -200,6 +200,53 @@ describe('dataset validation gates', () => {
     expect(env!.settings.branding.headerColor).toBe('#8c9538');
     expect(env!.settings.branding.logoMode).toBe('custom');
     expect(env!.settings.branding.logoDarkDataUrl).toMatch(/^data:image\/png;base64,/);
+    expect(env!.settings.dataSource.legacyMockOverlayEnabled).toBe(false);
+  });
+
+  it('validates Homesteaders Life Company US dataset', () => {
+    const dataset = SYSTEM_DATASETS.find((row) => row.id === 'homesteaders-us-demo');
+    expect(dataset).toBeDefined();
+    expect(validateSystemDataset(dataset!).errors).toEqual([]);
+    expect(dataset!.cases).toHaveLength(5);
+    expect(dataset!.displayCurrency).toBe('USD');
+    expect(dataset!.legacyMockOverlayEnabled).toBe(false);
+    expect(dataset!.documents.length).toBeGreaterThanOrEqual(18);
+    expect(dataset!.requirements.length).toBeGreaterThanOrEqual(18);
+    expect(dataset!.tasks.length).toBeGreaterThanOrEqual(18);
+    expect(dataset!.requests).toHaveLength(5);
+    expect(dataset!.assistantResponses.length).toBeGreaterThanOrEqual(6);
+    expect(dataset!.activityEvents.length).toBeGreaterThanOrEqual(5);
+    expect(dataset!.documents.every((doc) => doc.fileAvailable === false)).toBe(true);
+    expect(dataset!.documents.filter((doc) => doc.insights?.length).length).toBeGreaterThanOrEqual(2);
+    expect(dataset!.cases.every((row) => !row.id.startsWith('IP26-') && !row.id.startsWith('CD26-'))).toBe(true);
+
+    const nbSubTypes = dataset!.cases
+      .filter((row) => row.caseKind === 'new_business')
+      .map((row) => row.caseSubType);
+    expect(nbSubTypes).toEqual(
+      expect.arrayContaining(['full_underwriting', 'simplified_underwriting', 'guaranteed_underwriting']),
+    );
+
+    const decisionCase = dataset!.cases.find((row) => row.id === 'CLM-PN-2026-0287');
+    expect(decisionCase?.decisionFlow).toBeDefined();
+    expect(decisionCase?.activeStepId).toBe('decision');
+
+    const scoringCase = dataset!.cases.find((row) => row.id === 'NB-2026-7721');
+    expect(scoringCase?.underwritingScoring).toBeDefined();
+  });
+
+  it('seeds Homesteaders Life Company demo environment with USD dataset and branding', () => {
+    const env = SEEDED_DEMO_ENVIRONMENTS.find((row) => row.id === DEMO_ENV_HOMESTEADERS_ID);
+    expect(env).toBeDefined();
+    expect(env!.name).toBe('Homesteaders Life Company');
+    expect(env!.settings.dataSource.activeDatasetId).toBe('homesteaders-us-demo');
+    expect(env!.settings.dataSource.displayCurrency).toBe('USD');
+    expect(env!.settings.branding.productName).toBe('Homesteaders Case Management');
+    expect(env!.settings.branding.headerColor).toBe('#004b91');
+    expect(env!.settings.branding.primaryColor).toBe('#2d6a4f');
+    expect(env!.settings.branding.accentColor).toBe('#40916c');
+    expect(env!.settings.branding.logoMode).toBe('custom');
+    expect(env!.settings.branding.logoDarkDataUrl).toMatch(/^data:image\/svg\+xml;base64,/);
     expect(env!.settings.dataSource.legacyMockOverlayEnabled).toBe(false);
   });
 

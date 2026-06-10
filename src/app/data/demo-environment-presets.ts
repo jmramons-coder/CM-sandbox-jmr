@@ -4,10 +4,12 @@ import equisoftPreset from './demo-environments/equisoft.preset.json';
 import sbliPreset from './demo-environments/sbli.preset.json';
 import guardianPreset from './demo-environments/guardian.preset.json';
 import empirePreset from './demo-environments/empire.preset.json';
+import homesteadersPreset from './demo-environments/homesteaders.preset.json';
 import {
   DEMO_ENV_EQUISOFT_ID,
   DEMO_ENV_EMPIRE_ID,
   DEMO_ENV_GUARDIAN_ID,
+  DEMO_ENV_HOMESTEADERS_ID,
   DEMO_ENV_SBLI_ID,
   SHARED_DEMO_DATASET_ID,
   hydrateDeployablePreset,
@@ -16,14 +18,16 @@ import {
 import { DEFAULT_DATA_SOURCE_SETTINGS } from '../domain/objectRefs';
 import { GUARDIAN_DATASET_ID } from './guardianDemoCaseIds';
 import { EMPIRE_DATASET_ID } from './empireDemoCaseIds';
+import { HOMESTEADERS_DATASET_ID } from './homesteadersDemoCaseIds';
 
-export { DEMO_ENV_EQUISOFT_ID, DEMO_ENV_SBLI_ID, DEMO_ENV_GUARDIAN_ID, DEMO_ENV_EMPIRE_ID, SHARED_DEMO_DATASET_ID };
+export { DEMO_ENV_EQUISOFT_ID, DEMO_ENV_SBLI_ID, DEMO_ENV_GUARDIAN_ID, DEMO_ENV_EMPIRE_ID, DEMO_ENV_HOMESTEADERS_ID, SHARED_DEMO_DATASET_ID };
 
 const BUILT_IN_DEMO_ENVIRONMENT_IDS = new Set([
   DEMO_ENV_EQUISOFT_ID,
   DEMO_ENV_SBLI_ID,
   DEMO_ENV_GUARDIAN_ID,
   DEMO_ENV_EMPIRE_ID,
+  DEMO_ENV_HOMESTEADERS_ID,
 ]);
 
 export function isBuiltInDemoEnvironment(id: string): boolean {
@@ -35,6 +39,7 @@ export const SEEDED_DEMO_ENVIRONMENTS: SavedDemoConfiguration[] = [
   hydrateDeployablePreset(sbliPreset as DeployableDemoPresetFile),
   hydrateDeployablePreset(guardianPreset as DeployableDemoPresetFile),
   hydrateDeployablePreset(empirePreset as DeployableDemoPresetFile),
+  hydrateDeployablePreset(homesteadersPreset as DeployableDemoPresetFile),
 ];
 
 const STALE_DEMO_NAME_PATTERN =
@@ -75,14 +80,18 @@ export function applyActiveDemoEnvironment(
       ? GUARDIAN_DATASET_ID
       : activeId === DEMO_ENV_EMPIRE_ID
         ? EMPIRE_DATASET_ID
-        : SHARED_DEMO_DATASET_ID);
+        : activeId === DEMO_ENV_HOMESTEADERS_ID
+          ? HOMESTEADERS_DATASET_ID
+          : SHARED_DEMO_DATASET_ID);
   const displayCurrency =
     target.settings.dataSource?.displayCurrency ??
     (activeDatasetId === GUARDIAN_DATASET_ID
       ? 'GBP'
       : activeDatasetId === EMPIRE_DATASET_ID
         ? 'CAD'
-        : 'USD');
+        : activeDatasetId === HOMESTEADERS_DATASET_ID
+          ? 'USD'
+          : 'USD');
 
   return {
     ...target.settings,

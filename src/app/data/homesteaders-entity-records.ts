@@ -1,0 +1,306 @@
+import type { ObjectRef } from '../domain/objectRefs';
+import type { AgentRecord, ApplicationRecord, ClientRecord, PolicyRecord } from './multi-case-dataset';
+import { HOMESTEADERS_DEMO_CASE_IDS } from './homesteadersDemoCaseIds';
+
+const PN_MID = HOMESTEADERS_DEMO_CASE_IDS.preneedClaimMid;
+const PN_DEC = HOMESTEADERS_DEMO_CASE_IDS.preneedClaimDecision;
+const NB = HOMESTEADERS_DEMO_CASE_IDS.nbFullUw;
+const NB_S = HOMESTEADERS_DEMO_CASE_IDS.nbSimplified;
+const NB_G = HOMESTEADERS_DEMO_CASE_IDS.nbGuaranteed;
+
+export const HOMESTEADERS_CASE_ENTITY_LINKS: Record<string, ObjectRef[]> = {
+  [PN_MID]: [
+    { kind: 'client', id: 'CLI-HSL-001', label: 'Helen Martinez', role: 'deceased' },
+    { kind: 'client', id: 'CLI-HSL-002', label: 'Sandra Martinez', role: 'contact' },
+    { kind: 'policy', id: 'POL-HSL-PN-2015-001142', label: 'Preneed funeral plan' },
+    { kind: 'agent', id: 'AGT-HSL-002', label: 'Oak Grove Funeral Home', role: 'funeral director' },
+  ],
+  [PN_DEC]: [
+    { kind: 'client', id: 'CLI-HSL-003', label: 'James Whitfield', role: 'deceased' },
+    { kind: 'client', id: 'CLI-HSL-004', label: 'Linda Whitfield', role: 'contact' },
+    { kind: 'policy', id: 'POL-HSL-PN-2014-002287', label: 'Preneed funeral plan' },
+    { kind: 'agent', id: 'AGT-HSL-001', label: 'Riverside Memorial Chapel', role: 'funeral director' },
+  ],
+  [NB]: [
+    { kind: 'client', id: 'CLI-HSL-005', label: 'Margaret Chen', role: 'applicant' },
+    { kind: 'application', id: 'APP-7721', label: 'Preneed plan — Margaret Chen' },
+    { kind: 'agent', id: 'AGT-HSL-001', label: 'Riverside Memorial Chapel', role: 'writing funeral director' },
+  ],
+  [NB_S]: [
+    { kind: 'client', id: 'CLI-HSL-006', label: 'Robert Sullivan', role: 'applicant' },
+    { kind: 'application', id: 'APP-8804', label: 'Preneed plan — Robert Sullivan' },
+    { kind: 'agent', id: 'AGT-HSL-001', label: 'Riverside Memorial Chapel', role: 'writing funeral director' },
+  ],
+  [NB_G]: [
+    { kind: 'client', id: 'CLI-HSL-007', label: 'Dorothy Hayes', role: 'applicant' },
+    { kind: 'application', id: 'APP-9905', label: 'Preneed plan — Dorothy Hayes' },
+    { kind: 'agent', id: 'AGT-HSL-002', label: 'Oak Grove Funeral Home', role: 'writing funeral director' },
+  ],
+};
+
+export const HOMESTEADERS_CLIENT_RECORDS: ClientRecord[] = [
+  {
+    id: 'CLI-HSL-001',
+    kind: 'client',
+    name: 'Helen Martinez',
+    type: 'person',
+    status: 'inactive',
+    category: 'policyholder',
+    summary: 'Deceased preneed policy owner; Oak Grove Funeral Home assignment pending on death claim.',
+    profile: {
+      gender: 'Female',
+      dob: '1948-03-12',
+      age: 78,
+      smoker: 'Non-smoker',
+      location: 'Des Moines, IA',
+    },
+    linkedObjects: [
+      { kind: 'case', id: PN_MID, label: 'Claim — Preneed death benefit' },
+      { kind: 'policy', id: 'POL-HSL-PN-2015-001142', label: 'Preneed funeral plan' },
+    ],
+  },
+  {
+    id: 'CLI-HSL-002',
+    kind: 'client',
+    name: 'Sandra Martinez',
+    type: 'person',
+    status: 'active',
+    category: 'relatedParty',
+    summary: 'Surviving spouse and primary contact on Helen Martinez preneed death claim.',
+    profile: {
+      gender: 'Female',
+      dob: '1950-07-22',
+      age: 75,
+      location: 'Des Moines, IA',
+      email: 'sandra.martinez@example.com',
+      phone: '+1 515 555 0142',
+    },
+    linkedObjects: [{ kind: 'case', id: PN_MID, label: 'Claim — Preneed death benefit' }],
+  },
+  {
+    id: 'CLI-HSL-003',
+    kind: 'client',
+    name: 'James Whitfield',
+    type: 'person',
+    status: 'inactive',
+    category: 'policyholder',
+    summary: 'Deceased preneed policy owner; benefit payable to Riverside Memorial Chapel.',
+    profile: {
+      gender: 'Male',
+      dob: '1945-11-08',
+      age: 80,
+      smoker: 'Non-smoker',
+      location: 'Cedar Rapids, IA',
+    },
+    linkedObjects: [
+      { kind: 'case', id: PN_DEC, label: 'Claim — Preneed death benefit' },
+      { kind: 'policy', id: 'POL-HSL-PN-2014-002287', label: 'Preneed funeral plan' },
+    ],
+  },
+  {
+    id: 'CLI-HSL-004',
+    kind: 'client',
+    name: 'Linda Whitfield',
+    type: 'person',
+    status: 'active',
+    category: 'relatedParty',
+    summary: 'Surviving spouse; coordinated arrangements with Riverside Memorial Chapel.',
+    profile: {
+      gender: 'Female',
+      dob: '1947-02-14',
+      age: 79,
+      location: 'Cedar Rapids, IA',
+      email: 'linda.whitfield@example.com',
+      phone: '+1 319 555 0287',
+    },
+    linkedObjects: [{ kind: 'case', id: PN_DEC, label: 'Claim — Preneed death benefit' }],
+  },
+  {
+    id: 'CLI-HSL-005',
+    kind: 'client',
+    name: 'Margaret Chen',
+    type: 'person',
+    status: 'active',
+    category: 'policyholder',
+    summary: 'Applicant for $15,000 preneed funeral plan on full underwriting path.',
+    profile: {
+      gender: 'Female',
+      dob: '1962-09-30',
+      age: 63,
+      smoker: 'Non-smoker',
+      location: 'Des Moines, IA',
+      email: 'margaret.chen@example.com',
+      phone: '+1 515 555 7721',
+    },
+    linkedObjects: [
+      { kind: 'case', id: NB, label: 'New business — Full underwriting' },
+      { kind: 'application', id: 'APP-7721', label: 'APP-7721' },
+    ],
+  },
+  {
+    id: 'CLI-HSL-006',
+    kind: 'client',
+    name: 'Robert Sullivan',
+    type: 'person',
+    status: 'active',
+    category: 'policyholder',
+    summary: 'Funeral home agent sale — $8,500 preneed plan with Personal Expressions guide completed.',
+    profile: {
+      gender: 'Male',
+      dob: '1970-04-18',
+      age: 56,
+      smoker: 'Non-smoker',
+      location: 'Cedar Rapids, IA',
+      email: 'robert.sullivan@example.com',
+      phone: '+1 319 555 8804',
+    },
+    linkedObjects: [
+      { kind: 'case', id: NB_S, label: 'New business — Simplified underwriting' },
+      { kind: 'application', id: 'APP-8804', label: 'APP-8804' },
+    ],
+  },
+  {
+    id: 'CLI-HSL-007',
+    kind: 'client',
+    name: 'Dorothy Hayes',
+    type: 'person',
+    status: 'active',
+    category: 'policyholder',
+    summary: 'Guaranteed preneed applicant — $5,000 contract issuance with PAD pending.',
+    profile: {
+      gender: 'Female',
+      dob: '1955-12-05',
+      age: 70,
+      smoker: 'Non-smoker',
+      location: 'Omaha, NE',
+      email: 'dorothy.hayes@example.com',
+      phone: '+1 402 555 9905',
+    },
+    linkedObjects: [
+      { kind: 'case', id: NB_G, label: 'New business — Guaranteed issue' },
+      { kind: 'application', id: 'APP-9905', label: 'APP-9905' },
+    ],
+  },
+];
+
+export const HOMESTEADERS_AGENT_RECORDS: AgentRecord[] = [
+  {
+    id: 'AGT-HSL-001',
+    kind: 'agent',
+    name: 'Riverside Memorial Chapel',
+    status: 'active',
+    producerCode: 'HSL-RMC-001',
+    agencyName: 'Riverside Memorial Chapel',
+    email: 'claims@riversidememorial.example.com',
+    phone: '+1 319 555 1200',
+    jurisdictionSummary: 'Licensed funeral home — Iowa',
+    licenses: [{ id: 'ia-fh-1', jurisdiction: 'IA', status: 'active', effectiveDate: '2010-01-01' }],
+    contracts: [{ id: 'c-hsl-1', carrier: 'Homesteaders Life Company', status: 'active', effectiveDate: '2012-06-01' }],
+    linkedObjects: [
+      { kind: 'case', id: PN_DEC, label: 'Whitfield preneed claim' },
+      { kind: 'case', id: NB, label: 'Margaret Chen — NB' },
+      { kind: 'case', id: NB_S, label: 'Robert Sullivan — NB' },
+    ],
+  },
+  {
+    id: 'AGT-HSL-002',
+    kind: 'agent',
+    name: 'Oak Grove Funeral Home',
+    status: 'active',
+    producerCode: 'HSL-OGF-002',
+    agencyName: 'Oak Grove Funeral Home',
+    email: 'director@oakgrovefh.example.com',
+    phone: '+1 515 555 2300',
+    jurisdictionSummary: 'Licensed funeral home — Iowa',
+    licenses: [{ id: 'ia-fh-2', jurisdiction: 'IA', status: 'active' }],
+    contracts: [{ id: 'c-hsl-2', carrier: 'Homesteaders Life Company', status: 'active' }],
+    linkedObjects: [
+      { kind: 'case', id: PN_MID, label: 'Martinez preneed claim' },
+      { kind: 'case', id: NB_G, label: 'Dorothy Hayes — NB' },
+    ],
+  },
+];
+
+export const HOMESTEADERS_POLICY_RECORDS: PolicyRecord[] = [
+  {
+    id: 'POL-HSL-PN-2015-001142',
+    kind: 'policy',
+    label: 'Preneed funeral plan',
+    status: 'In force',
+    product: 'Homesteaders Preneed Funeral Plan',
+    policyNumber: 'POL-HSL-PN-2015-001142',
+    productType: 'preneed',
+    coverageAmount: '$10,000',
+    effectiveDate: '2015-06-01',
+    issueDate: '2015-05-18',
+    clientId: 'CLI-HSL-001',
+    participants: [
+      { clientId: 'CLI-HSL-001', role: 'owner' },
+      { clientId: 'CLI-HSL-002', role: 'beneficiary', allocationPct: 100 },
+    ],
+    agents: [{ kind: 'agent', id: 'AGT-HSL-002', label: 'Oak Grove Funeral Home', role: 'servicing funeral director' }],
+    linkedObjects: [{ kind: 'case', id: PN_MID, label: 'Preneed death claim' }],
+  },
+  {
+    id: 'POL-HSL-PN-2014-002287',
+    kind: 'policy',
+    label: 'Preneed funeral plan',
+    status: 'In force',
+    product: 'Homesteaders Preneed Funeral Plan',
+    policyNumber: 'POL-HSL-PN-2014-002287',
+    productType: 'preneed',
+    coverageAmount: '$12,500',
+    effectiveDate: '2014-03-01',
+    issueDate: '2014-02-14',
+    clientId: 'CLI-HSL-003',
+    participants: [
+      { clientId: 'CLI-HSL-003', role: 'owner' },
+      { clientId: 'CLI-HSL-004', role: 'beneficiary' },
+    ],
+    agents: [{ kind: 'agent', id: 'AGT-HSL-001', label: 'Riverside Memorial Chapel', role: 'assigned funeral home' }],
+    linkedObjects: [{ kind: 'case', id: PN_DEC, label: 'Preneed death claim' }],
+  },
+  {
+    id: 'POL-HSL-NB-2026-7721',
+    kind: 'policy',
+    label: 'Preneed funeral plan (pending)',
+    status: 'Pending',
+    product: 'Homesteaders Preneed Funeral Plan',
+    policyNumber: 'Pending — APP-7721',
+    coverageAmount: '$15,000',
+    clientId: 'CLI-HSL-005',
+    participants: [{ clientId: 'CLI-HSL-005', role: 'owner' }],
+    agents: [{ kind: 'agent', id: 'AGT-HSL-001', label: 'Riverside Memorial Chapel' }],
+    linkedObjects: [{ kind: 'application', id: 'APP-7721', label: 'APP-7721' }],
+  },
+];
+
+export const HOMESTEADERS_APPLICATION_RECORDS: ApplicationRecord[] = [
+  {
+    id: 'APP-7721',
+    kind: 'application',
+    label: 'Preneed plan — Margaret Chen',
+    status: 'Underwriting',
+    product: 'Homesteaders Preneed Funeral Plan',
+    clientId: 'CLI-HSL-005',
+    submitted: '2026-05-06',
+  },
+  {
+    id: 'APP-8804',
+    kind: 'application',
+    label: 'Preneed plan — Robert Sullivan',
+    status: 'Underwriting',
+    product: 'Homesteaders Preneed Funeral Plan',
+    clientId: 'CLI-HSL-006',
+    submitted: '2026-05-12',
+  },
+  {
+    id: 'APP-9905',
+    kind: 'application',
+    label: 'Preneed plan — Dorothy Hayes',
+    status: 'Contract issuance',
+    product: 'Homesteaders Guaranteed Preneed',
+    clientId: 'CLI-HSL-007',
+    submitted: '2026-05-15',
+  },
+];

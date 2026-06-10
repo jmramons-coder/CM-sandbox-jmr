@@ -482,17 +482,6 @@ function EmpowerTaskDetailContent({
             />
           ) : null}
 
-          {!semiAuto ? (
-            <ScoringMiniWidget
-              scoring={taskCaseRecord?.underwritingScoring}
-              onOpenScoring={
-                scoringPanelContext || onOpenCaseScoring || caseId
-                  ? openScoringView
-                  : undefined
-              }
-            />
-          ) : null}
-
           {evidencePreviews.length ? (
           <section className="mt-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.35px] text-text-muted">
@@ -535,6 +524,18 @@ function EmpowerTaskDetailContent({
               decision={addressDecision}
               selectedOptionId={selectedAddressOptionId}
               onSelectionChange={setSelectedAddressOptionId}
+            />
+          ) : null}
+
+          {!semiAuto ? (
+            <ScoringMiniWidget
+              compact
+              scoring={taskCaseRecord?.underwritingScoring}
+              onOpenScoring={
+                scoringPanelContext || onOpenCaseScoring || caseId
+                  ? openScoringView
+                  : undefined
+              }
             />
           ) : null}
 

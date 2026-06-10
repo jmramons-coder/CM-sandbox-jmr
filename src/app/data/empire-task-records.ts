@@ -269,6 +269,15 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
     dueDate: '2026-05-08',
     completedDate: '2026-05-08',
     aiSummary: 'AI flagged recreational scuba diving on application — questionnaire sent to advisor portal at submission.',
+    review: {
+      verdict: 'AI flagged recreational scuba diving on application — questionnaire sent to advisor portal at submission.',
+      confidence: 92,
+      reasoning: [
+        'Application hobbies section lists recreational scuba diving to 30 m.',
+        'Empire underwriting requires scuba questionnaire for depth and certification disclosure.',
+        'Questionnaire released to advisor portal same day as submission.',
+      ],
+    },
     linkedObjects: [{ kind: 'requirement', id: 'req_emp_nb_007', label: 'Scuba Questionnaire' }],
     actions: [{ type: 'complete', label: 'View', isPrimary: true }],
   }),
@@ -338,6 +347,14 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
     dueDate: '2026-05-11',
     completedDate: '2026-05-11',
     aiSummary: 'Underwriter approved AI-recommended APS after Rx review — lisinopril and amlodipine for treated hypertension.',
+    review: {
+      verdict:
+        'Underwriter approved AI-recommended APS after Rx review — lisinopril and amlodipine for treated hypertension.',
+      reasoning: [
+        'Reviewed AI recommendation from Review Rx report — treated hypertension disclosure gap is credible.',
+        'Authorized APS order to Clinique Médicale du Plateau for same-day release.',
+      ],
+    },
     evidenceDocuments: [
       { id: 'doc_emp_nb_rx', name: 'Rx report — IntelliScript', size: 'Metadata', category: 'Medical', aiSummary: 'Rx trigger for APS approval.', followUps: 0 },
     ],
@@ -359,6 +376,13 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
     dueDate: '2026-05-11',
     completedDate: '2026-05-11',
     aiSummary: 'APS request sent to Clinique Médicale du Plateau same day as Rx return and underwriter approval.',
+    review: {
+      verdict: 'APS request sent to Clinique Médicale du Plateau same day as Rx return and underwriter approval.',
+      reasoning: [
+        'APS request form generated with physician contact from the application.',
+        'Requirement due 22 May — automated follow-up scheduled if not received.',
+      ],
+    },
     evidenceDocuments: [
       { id: 'doc_emp_nb_aps_request', name: 'APS request — Clinique Médicale du Plateau', size: 'Metadata', category: 'Medical', aiSummary: 'APS order released to physician.', followUps: 0 },
     ],
@@ -380,6 +404,13 @@ export const EMPIRE_TASK_RECORDS: DatasetTaskRecord[] = [
     createdDate: '2026-05-11',
     dueDate: '2026-05-22',
     aiSummary: 'Automated chase schedule active — APS ordered 11 May; first physician follow-up due if not received.',
+    review: {
+      verdict: 'Automated chase schedule active — APS ordered 11 May; first physician follow-up due if not received.',
+      reasoning: [
+        'Chase cadence: reminder 15 May, second notice 19 May, escalation 22 May if still outstanding.',
+        'Monitoring Clinique Médicale du Plateau for APS return.',
+      ],
+    },
     linkedObjects: [
       { kind: 'requirement', id: 'req_emp_nb_002', label: 'APS' },
       { kind: 'document', id: 'doc_emp_nb_aps_request', label: 'APS request' },

@@ -1,6 +1,7 @@
 import { ClipboardList } from 'lucide-react';
 import type { Task, TaskExecutionMode, TaskReviewPayload } from '../types';
 import { resolveAiSummaryPresentation } from '../utils/aiSummaryPresentation';
+import { isTaskStatusCompleted } from '../utils/taskReviewProjection';
 import { SidePanelSummaryBox } from './AiSummaryWithConfidenceCard';
 import { TaskCrewReasoningPanel } from './TaskCrewReasoningPanel';
 import { TaskSuggestedRequirementsSection } from './tasks/TaskSuggestedRequirementsSection';
@@ -71,29 +72,68 @@ function SemiAutoWhatWasDone({
   );
 }
 
+function formatTaskPanelDate(value?: string) {
+  if (!value?.trim()) return undefined;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function normalizeSummaryText(value: string) {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/** Drop reasoning lines that repeat the headline summary or each other. */
+function distinctReasoningBullets(verdict: string, reasoning?: string[]): string[] {
+  if (!reasoning?.length) return [];
+  const verdictNorm = normalizeSummaryText(verdict);
+  const seen = new Set<string>();
+  return reasoning.filter((item) => {
+    const norm = normalizeSummaryText(item);
+    if (!norm || norm.length < 16 || seen.has(norm)) return false;
+    if (verdictNorm.includes(norm)) return false;
+    if (norm.length < 48 && verdictNorm.includes(norm.slice(0, Math.min(norm.length, 32)))) return false;
+    seen.add(norm);
+    return true;
+  }).slice(0, 4);
+}
+
 function ManualTaskBody({
+  task,
   review,
   alert,
 }: {
+  task: Task;
   review: TaskReviewPayload;
   alert?: Task['alert'];
 }) {
   const presentation = resolveAiSummaryPresentation(review.verdict, review.confidence);
-  const steps = review.reasoning?.slice(0, 3) ?? [];
+  const reasoningBullets = distinctReasoningBullets(presentation.text, review.reasoning);
+  const hasCrewSteps = Boolean(review.crewSteps?.length);
+  const completedDate = formatTaskPanelDate(task.completedDate);
+  const completedBy = task.pickedUpBy ?? task.assignee;
+  const showCompletionMeta = isTaskStatusCompleted(task.status) && (completedDate || completedBy);
 
   return (
     <>
       {alert ? <TaskAlertBanner type={alert.type} message={alert.message} /> : null}
       <p className="text-[13px] leading-relaxed text-text-primary">{presentation.text}</p>
-      {steps.length ? (
-        <ul className="mt-3 space-y-1.5 text-[12px] text-text-secondary">
-          {steps.map((item) => (
+      {reasoningBullets.length && !hasCrewSteps ? (
+        <ul className="mt-2.5 space-y-1.5 border-t border-border-soft/80 pt-2.5 text-[12px] leading-snug text-text-secondary">
+          {reasoningBullets.map((item) => (
             <li key={item} className="flex gap-2">
               <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-text-muted" />
               <span>{item}</span>
             </li>
           ))}
         </ul>
+      ) : null}
+      {hasCrewSteps ? <TaskCrewReasoningPanel steps={review.crewSteps ?? []} defaultOpen={false} /> : null}
+      {showCompletionMeta ? (
+        <p className="mt-2.5 text-[11px] text-text-muted">
+          {completedDate ? `Completed ${completedDate}` : 'Completed'}
+          {completedBy ? ` · ${completedBy}` : ''}
+        </p>
       ) : null}
     </>
   );
@@ -120,15 +160,15 @@ export function TaskReviewBody({
 
   if (!semiAuto) {
     return (
-      <SidePanelSummaryBox label="What was done">
-        <ManualTaskBody review={review} alert={task.alert ?? undefined} />
+      <SidePanelSummaryBox label="Task summary">
+        <ManualTaskBody task={task} review={review} alert={task.alert ?? undefined} />
       </SidePanelSummaryBox>
     );
   }
 
   return (
     <>
-      <SidePanelSummaryBox label="What was done">
+      <SidePanelSummaryBox label="Review summary">
         <SemiAutoWhatWasDone
           review={review}
           showExceptionAlert={executionMode === 'exception'}

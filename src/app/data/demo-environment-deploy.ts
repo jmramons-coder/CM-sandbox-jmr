@@ -6,11 +6,13 @@ import type { Branding } from '../contexts/PlatformSettingsContext';
 
 import { GUARDIAN_DATASET_ID } from './guardianDemoCaseIds';
 import { EMPIRE_DATASET_ID } from './empireDemoCaseIds';
+import { HOMESTEADERS_DATASET_ID } from './homesteadersDemoCaseIds';
 
 export const DEMO_ENV_EQUISOFT_ID = 'demo-equisoft';
 export const DEMO_ENV_SBLI_ID = 'demo-sbli';
 export const DEMO_ENV_GUARDIAN_ID = 'demo-guardian-1821';
 export const DEMO_ENV_EMPIRE_ID = 'demo-empire';
+export const DEMO_ENV_HOMESTEADERS_ID = 'demo-homesteaders';
 export const SHARED_DEMO_DATASET_ID = DEFAULT_DATASET_ID;
 
 /** Shape committed in `src/app/data/demo-environments/*.preset.json` */
@@ -36,6 +38,7 @@ export const DEPLOYABLE_PRESET_REPO_PATH: Record<string, string> = {
   [DEMO_ENV_SBLI_ID]: 'src/app/data/demo-environments/sbli.preset.json',
   [DEMO_ENV_GUARDIAN_ID]: 'src/app/data/demo-environments/guardian.preset.json',
   [DEMO_ENV_EMPIRE_ID]: 'src/app/data/demo-environments/empire.preset.json',
+  [DEMO_ENV_HOMESTEADERS_ID]: 'src/app/data/demo-environments/homesteaders.preset.json',
 };
 
 function datasetDefaultsForPreset(presetId: string, file?: DeployableDemoPresetFile['settings']['dataSource']) {
@@ -45,14 +48,18 @@ function datasetDefaultsForPreset(presetId: string, file?: DeployableDemoPresetF
       ? GUARDIAN_DATASET_ID
       : presetId === DEMO_ENV_EMPIRE_ID
         ? EMPIRE_DATASET_ID
-        : SHARED_DEMO_DATASET_ID);
+        : presetId === DEMO_ENV_HOMESTEADERS_ID
+          ? HOMESTEADERS_DATASET_ID
+          : SHARED_DEMO_DATASET_ID);
   const displayCurrency =
     file?.displayCurrency ??
     (activeDatasetId === GUARDIAN_DATASET_ID
       ? 'GBP'
       : activeDatasetId === EMPIRE_DATASET_ID
         ? 'CAD'
-        : 'USD');
+        : activeDatasetId === HOMESTEADERS_DATASET_ID
+          ? 'USD'
+          : 'USD');
   return { activeDatasetId, displayCurrency };
 }
 
@@ -167,7 +174,9 @@ export function downloadDeployablePreset(file: DeployableDemoPresetFile): void {
         ? 'guardian.preset.json'
         : file.id === DEMO_ENV_EMPIRE_ID
           ? 'empire.preset.json'
-          : 'equisoft.preset.json';
+          : file.id === DEMO_ENV_HOMESTEADERS_ID
+            ? 'homesteaders.preset.json'
+            : 'equisoft.preset.json';
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
